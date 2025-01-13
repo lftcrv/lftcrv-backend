@@ -14,13 +14,13 @@ import {
   ApiResponse,
   ApiProperty,
 } from '@nestjs/swagger';
-import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
+import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import {
   AccessCodeTokens,
   IAccessCodeMetricsService,
   IAccessCodeService,
 } from './interfaces';
-import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
+import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 
 class GenerateAccessCodesDto {
   @ApiProperty({
