@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: lftcrv-postgres
+    environment:
+      POSTGRES_USER: lftcrv
+      POSTGRES_PASSWORD: lftcrv
+      POSTGRES_DB: lftcrv
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
