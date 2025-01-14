@@ -23,7 +23,7 @@ docker compose up -d postgres || docker-compose up -d postgres
 echo "PostgreSQL is ready!"
 
 # Create the database if it doesn't exist
-PGPASSWORD=carbonable psql -h localhost -U carbonable -d postgres -c "CREATE DATABASE \"ccrp-projectdev\";" 2>/dev/null || true
+PGPASSWORD=leftcurve psql -h localhost -U leftcurve -d postgres -c "CREATE DATABASE \"lftcrv\";" 2>/dev/null || true
 
 echo "Database created or already exists"
 
