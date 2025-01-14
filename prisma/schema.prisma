@@ -25,4 +25,23 @@ model FailedAttempt {
 
   @@index([createdAt])
   @@index([codeHash])
-} 
+}
+
+enum AgentStatus {
+  STARTING
+  RUNNING
+  STOPPED
+  ERROR
+}
+
+model ElizaAgent {
+  id             String      @id @default(uuid())
+  name           String      @unique
+  status         AgentStatus @default(STARTING)
+  containerId    String?
+  characterConfig Json
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@map("eliza_agents")
+}

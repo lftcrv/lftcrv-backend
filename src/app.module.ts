@@ -9,6 +9,7 @@ import {
   validationSchema,
 } from './shared/config/env.config';
 import { AccessCodeModule } from './domains/access-code/access-code.module';
+import { ElizaAgentModule } from './domains/eliza-agent/eliza-agent.module';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { AccessCodeModule } from './domains/access-code/access-code.module';
         if (missingVars.length > 0) {
           throw new Error(
             'Missing required environment variables:\n' +
-              missingVars.join('\n'),
+            missingVars.join('\n'),
           );
         }
 
@@ -40,8 +41,9 @@ import { AccessCodeModule } from './domains/access-code/access-code.module';
     },
     PrismaModule,
     AccessCodeModule,
+    ElizaAgentModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

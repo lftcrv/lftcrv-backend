@@ -36,9 +36,9 @@ async function bootstrap() {
   });
 
   // Start the server
-  const port = configService.get('PORT', 8080);
+  const port = configService.get('PORT', 3000);
   const host = configService.get('HOST', '0.0.0.0');
-
+  console.log("will Start server on port:", port, "host:", host)
   await app.listen(port, host);
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(
