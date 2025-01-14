@@ -1,0 +1,72 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# Development files
+.env
+.env.*
+!.env.example
+
+# AWS CDK
+infrastructure/
+cdk.out/
+cdk.context.json
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+*.md
+
+# IDE
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Testing
+coverage
+.nyc_output
+test/
+**/*.spec.ts
+**/*.test.ts
+jest.config.js
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Docker
+Dockerfile*
+docker-compose*
+.docker
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Other unnecessary files
+.editorconfig
+.eslintrc
+.prettierrc
+.gitlab-ci.yml
+.travis.yml
