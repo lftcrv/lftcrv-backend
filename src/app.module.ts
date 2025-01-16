@@ -10,6 +10,7 @@ import {
 } from './shared/config/env.config';
 import { AccessCodeModule } from './domains/access-code/access-code.module';
 import { HealthModule } from './shared/health/health.module';
+import { ElizaAgentModule } from './domains/eliza-agent/eliza-agent.module';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { HealthModule } from './shared/health/health.module';
         if (missingVars.length > 0) {
           throw new Error(
             'Missing required environment variables:\n' +
-              missingVars.join('\n'),
+            missingVars.join('\n'),
           );
         }
 
@@ -42,8 +43,9 @@ import { HealthModule } from './shared/health/health.module';
     PrismaModule,
     AccessCodeModule,
     HealthModule,
+    ElizaAgentModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
