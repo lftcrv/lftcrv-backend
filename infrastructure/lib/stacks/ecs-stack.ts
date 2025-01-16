@@ -6,11 +6,15 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
 interface EcsStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   database: rds.DatabaseInstance;
+  databaseSecret: secretsmanager.ISecret;
+  ecsSecurityGroup: ec2.SecurityGroup;
+  albSecurityGroup: ec2.SecurityGroup;
 }
 
 export class EcsStack extends cdk.Stack {
@@ -18,24 +22,34 @@ export class EcsStack extends cdk.Stack {
     super(scope, id, props);
 
     // Create ECR Repository
-    const repository = new ecr.Repository(this, 'Repository', {
-      repositoryName: 'leftcurve-api',
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      imageTagMutability: ecr.TagMutability.MUTABLE,
-      imageScanOnPush: true,
-      lifecycleRules: [
-        {
-          description: 'Keep only last 3 images',
-          maxImageCount: 3,
-          rulePriority: 1,
-        },
-      ],
-    });
+    let repository: ecr.IRepository;
 
-    // Create Log Group
+    try {
+      // Try to import existing repository
+      repository = ecr.Repository.fromRepositoryName(
+        this,
+        'ExistingRepository',
+        'leftcurve-api',
+      );
+    } catch {
+      // If it doesn't exist, create new one
+      repository = new ecr.Repository(this, 'Repository', {
+        repositoryName: 'leftcurve-api',
+        imageScanOnPush: true,
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+      });
+    }
+
+    // Enhanced logging configuration
     const logGroup = new logs.LogGroup(this, 'ServiceLogs', {
       logGroupName: '/ecs/leftcurve-api',
       retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const migrationLogGroup = new logs.LogGroup(this, 'MigrationLogs', {
+      logGroupName: '/ecs/leftcurve-migrations',
+      retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
@@ -44,34 +58,15 @@ export class EcsStack extends cdk.Stack {
       vpc: props.vpc,
       clusterName: 'leftcurve-cluster',
       containerInsights: true,
+      enableFargateCapacityProviders: true,
     });
 
-    // Security Groups
-    const albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSecurityGroup', {
-      vpc: props.vpc,
-      allowAllOutbound: true,
-      description: 'Security group for ALB',
-    });
-
-    const ecsSecurityGroup = new ec2.SecurityGroup(this, 'ECSSecurityGroup', {
-      vpc: props.vpc,
-      allowAllOutbound: true,
-      description: 'Security group for ECS tasks',
-    });
-
-    // Allow inbound from ALB to ECS tasks
-    ecsSecurityGroup.connections.allowFrom(
-      albSecurityGroup,
-      ec2.Port.tcp(8080),
-      'Allow inbound from ALB',
-    );
-
-    // Create Task Role
+    // Task role with permissions
     const taskRole = new iam.Role(this, 'ECSTaskRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+      description: 'Role for ECS tasks with logging permissions',
     });
 
-    // Add necessary permissions
     taskRole.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName(
         'service-role/AmazonECSTaskExecutionRolePolicy',
@@ -81,17 +76,29 @@ export class EcsStack extends cdk.Stack {
     taskRole.addToPolicy(
       new iam.PolicyStatement({
         actions: [
-          'secretsmanager:GetSecretValue',
           'ecr:GetAuthorizationToken',
           'ecr:BatchCheckLayerAvailability',
           'ecr:GetDownloadUrlForLayer',
           'ecr:BatchGetImage',
         ],
-        resources: [props.database.secret!.secretArn, repository.repositoryArn],
+        resources: ['*'], // ECR authorization token needs * permission
       }),
     );
 
-    // Create Task Definition
+    taskRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'ecr:GetRepositoryPolicy',
+          'ecr:ListImages',
+          'ecr:DescribeImages',
+          'ecr:BatchGetImage',
+          'ecr:GetDownloadUrlForLayer',
+        ],
+        resources: [repository.repositoryArn],
+      }),
+    );
+
+    // Task definition
     const taskDefinition = new ecs.FargateTaskDefinition(this, 'TaskDef', {
       memoryLimitMiB: 512,
       cpu: 256,
@@ -99,28 +106,31 @@ export class EcsStack extends cdk.Stack {
       executionRole: taskRole,
     });
 
-    // Add container to task definition
+    // Main container
     const container = taskDefinition.addContainer('ApiContainer', {
       image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'LeftCurveAPI',
+        streamPrefix: 'ApiContainer',
         logGroup,
+        datetimeFormat: 'DATETIME',
+        multilinePattern: '^\\w{3}\\s\\d{2}\\s\\d{2}:\\d{2}:\\d{2}',
+        mode: ecs.AwsLogDriverMode.NON_BLOCKING,
       }),
       environment: {
         NODE_ENV: 'production',
         PORT: '8080',
-        DATABASE_HOST: props.database.instanceEndpoint.hostname,
-        DATABASE_PORT: '5432',
-        DATABASE_NAME: 'leftcurve',
+        LOG_LEVEL: 'debug',
+        HOST: '0.0.0.0',
+        RATE_LIMIT: process.env.RATE_LIMIT || '10',
+        RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '60',
+        API_KEY: process.env.API_KEY,
+        CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
+        RUN_MIGRATIONS: 'false', // Don't run migrations in the main container
       },
       secrets: {
-        DATABASE_USER: ecs.Secret.fromSecretsManager(
-          props.database.secret!,
-          'username',
-        ),
-        DATABASE_PASSWORD: ecs.Secret.fromSecretsManager(
-          props.database.secret!,
-          'password',
+        DATABASE_URL: ecs.Secret.fromSecretsManager(
+          props.databaseSecret,
+          'database_url',
         ),
       },
     });
@@ -130,50 +140,106 @@ export class EcsStack extends cdk.Stack {
       protocol: ecs.Protocol.TCP,
     });
 
-    // Create ALB
+    // Migration task definition
+    const migrationTaskDefinition = new ecs.FargateTaskDefinition(
+      this,
+      'MigrationTaskDef',
+      {
+        family: 'leftcurve-migration-task',
+        memoryLimitMiB: 512,
+        cpu: 256,
+        taskRole,
+        executionRole: taskRole,
+      },
+    );
+
+    // Migration container
+    migrationTaskDefinition.addContainer('MigrationContainer', {
+      image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'MigrationContainer',
+        logGroup: migrationLogGroup,
+        datetimeFormat: 'DATETIME',
+        multilinePattern: '^\\w{3}\\s\\d{2}\\s\\d{2}:\\d{2}:\\d{2}',
+        mode: ecs.AwsLogDriverMode.NON_BLOCKING,
+      }),
+      environment: {
+        NODE_ENV: 'production',
+        PORT: '8080',
+        LOG_LEVEL: 'debug',
+        RATE_LIMIT: '10',
+        RATE_LIMIT_WINDOW: '60',
+        API_KEY: process.env.API_KEY || '',
+        CORS_ORIGIN: '*',
+        RUN_MIGRATIONS: 'true', // This container will run migrations
+      },
+      secrets: {
+        DATABASE_URL: ecs.Secret.fromSecretsManager(
+          props.databaseSecret,
+          'database_url',
+        ),
+      },
+    });
+
+    // Load Balancer
     const alb = new elbv2.ApplicationLoadBalancer(this, 'ALB', {
       vpc: props.vpc,
       internetFacing: true,
-      securityGroup: albSecurityGroup,
+      securityGroup: props.albSecurityGroup,
     });
 
-    // Create Target Group
+    // Target Group
     const targetGroup = new elbv2.ApplicationTargetGroup(this, 'TargetGroup', {
       vpc: props.vpc,
       protocol: elbv2.ApplicationProtocol.HTTP,
       port: 8080,
       targetType: elbv2.TargetType.IP,
-      healthCheck: {
-        enabled: true,
-        path: '/api/health',
-        port: '8080',
-        protocol: elbv2.Protocol.HTTP,
-        healthyThresholdCount: 2,
-        unhealthyThresholdCount: 3,
-        timeout: cdk.Duration.seconds(5),
-        interval: cdk.Duration.seconds(30),
-      },
       deregistrationDelay: cdk.Duration.seconds(30),
     });
 
-    // Add listener
-    alb.addListener('Listener', {
-      port: 80,
-      defaultTargetGroups: [targetGroup],
+    // ECS Service
+    const service = new ecs.FargateService(this, 'Service', {
+      cluster,
+      serviceName: 'leftcurve-service',
+      taskDefinition,
+      desiredCount: parseInt(process.env.ECS_SERVICE_DESIRED_COUNT || '1'),
+      assignPublicIp: true,
+      securityGroups: [props.ecsSecurityGroup],
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      enableExecuteCommand: true,
+      capacityProviderStrategies: [
+        {
+          capacityProvider: 'FARGATE',
+          weight: 1,
+        },
+      ],
     });
 
-    // Create ECS Service with load balancer target group
-    new ecs.FargateService(this, 'Service', {
-      cluster,
-      taskDefinition,
-      desiredCount: 1,
-      assignPublicIp: true,
-      securityGroups: [ecsSecurityGroup],
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      healthCheckGracePeriod: cdk.Duration.seconds(60),
-    }).attachToApplicationTargetGroup(targetGroup);
+    service.attachToApplicationTargetGroup(targetGroup);
+    service.node.addDependency(logGroup);
 
-    // Add outputs
+    // ALB Listener
+    const listener = alb.addListener('Listener', {
+      port: 80,
+      defaultAction: elbv2.ListenerAction.forward([targetGroup]),
+    });
+
+    // 404 Rule
+    listener.addAction('NotFoundAction', {
+      action: elbv2.ListenerAction.fixedResponse(404, {
+        contentType: 'application/json',
+        messageBody: JSON.stringify({
+          status: 404,
+          message: 'Route not found',
+        }),
+      }),
+      conditions: [
+        elbv2.ListenerCondition.pathPatterns(['*/not-found', '*/*not-found*']),
+      ],
+      priority: 10,
+    });
+
+    // Outputs
     new cdk.CfnOutput(this, 'LoadBalancerDNS', {
       value: alb.loadBalancerDnsName,
       description: 'Application Load Balancer DNS Name',
@@ -186,16 +252,34 @@ export class EcsStack extends cdk.Stack {
       exportName: 'LeftCurveServiceLogGroup',
     });
 
+    new cdk.CfnOutput(this, 'MigrationLogGroup', {
+      value: migrationLogGroup.logGroupName,
+      description: 'Migration CloudWatch Log Group Name',
+      exportName: 'LeftCurveMigrationLogGroup',
+    });
+
     new cdk.CfnOutput(this, 'ECRRepositoryURI', {
       value: repository.repositoryUri,
       description: 'ECR Repository URI',
       exportName: 'LeftCurveRepositoryUri',
     });
 
-    new cdk.CfnOutput(this, 'ECRRepositoryName', {
-      value: repository.repositoryName,
-      description: 'ECR Repository Name',
-      exportName: 'LeftCurveRepositoryName',
+    new cdk.CfnOutput(this, 'ServiceName', {
+      value: service.serviceName,
+      description: 'ECS Service Name',
+      exportName: 'LeftCurveServiceName',
+    });
+
+    new cdk.CfnOutput(this, 'ClusterName', {
+      value: cluster.clusterName,
+      description: 'ECS Cluster Name',
+      exportName: 'LeftCurveClusterName',
+    });
+
+    new cdk.CfnOutput(this, 'ListenerArn', {
+      value: listener.listenerArn,
+      description: 'ALB Listener ARN',
+      exportName: 'LeftCurveListenerArn',
     });
   }
 }

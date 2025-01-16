@@ -2,46 +2,26 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 interface DatabaseStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
+  dbSecurityGroup: ec2.SecurityGroup;
 }
 
 export class DatabaseStack extends cdk.Stack {
   public readonly database: rds.DatabaseInstance;
-  public readonly credentials: secretsmanager.Secret;
+  public readonly credentials: secretsmanager.ISecret;
 
   constructor(scope: Construct, id: string, props: DatabaseStackProps) {
     super(scope, id, props);
 
-    // Create database credentials
-    this.credentials = new secretsmanager.Secret(this, 'DBCredentials', {
-      secretName: 'leftcurve/database',
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({
-          username: 'leftcurve_admin',
-        }),
-        generateStringKey: 'password',
-        excludeCharacters: '"@/\\',
-      },
-    });
+    // Database configuration
+    const dbName = process.env.DATABASE_NAME || 'lftcrv';
+    const dbUser = process.env.DATABASE_USER || 'lftcrv';
 
-    // Create security group for database
-    const dbSecurityGroup = new ec2.SecurityGroup(
-      this,
-      'DatabaseSecurityGroup',
-      {
-        vpc: props.vpc,
-        description: 'Security group for LeftCurve database',
-        allowAllOutbound: true,
-      },
-    );
-
-    // Determine if we're in production
-    const isProduction = process.env.ENVIRONMENT === 'production';
-
-    // Create RDS instance
+    // Create RDS instance first
     this.database = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_13,
@@ -54,38 +34,60 @@ export class DatabaseStack extends cdk.Stack {
         ec2.InstanceClass.BURSTABLE3,
         ec2.InstanceSize.MEDIUM,
       ),
-      credentials: rds.Credentials.fromSecret(this.credentials),
-      securityGroups: [dbSecurityGroup],
-      multiAz: isProduction,
+      credentials: rds.Credentials.fromGeneratedSecret(dbUser),
+      databaseName: dbName,
+      securityGroups: [props.dbSecurityGroup],
+      multiAz: process.env.ENVIRONMENT === 'production',
       allocatedStorage: 20,
       maxAllocatedStorage: 100,
-      allowMajorVersionUpgrade: false,
       autoMinorVersionUpgrade: true,
-      backupRetention: isProduction
-        ? cdk.Duration.days(7)
-        : cdk.Duration.days(1),
-      deleteAutomatedBackups: !isProduction,
-      removalPolicy: isProduction
-        ? cdk.RemovalPolicy.RETAIN
-        : cdk.RemovalPolicy.DESTROY,
-      deletionProtection: isProduction,
-      databaseName: 'leftcurve',
-      preferredBackupWindow: isProduction ? '03:00-04:00' : undefined,
-      preferredMaintenanceWindow: isProduction
-        ? 'Mon:04:00-Mon:05:00'
-        : undefined,
-      cloudwatchLogsExports: ['postgresql'],
-      monitoringInterval: cdk.Duration.minutes(isProduction ? 1 : 0),
+      backupRetention: cdk.Duration.days(7),
+      deleteAutomatedBackups: process.env.ENVIRONMENT !== 'production',
+      removalPolicy:
+        process.env.ENVIRONMENT === 'production'
+          ? cdk.RemovalPolicy.RETAIN
+          : cdk.RemovalPolicy.DESTROY,
+      deletionProtection: process.env.ENVIRONMENT === 'production',
     });
 
-    // Output database endpoint
+    // Get the generated secret from RDS
+    const generatedSecret = this.database.secret!;
+
+    // Create our custom secret with the correct format including database_url
+    this.credentials = new secretsmanager.Secret(this, 'DBSecret', {
+      secretName: 'leftcurve/database',
+      secretStringValue: cdk.SecretValue.unsafePlainText(
+        JSON.stringify({
+          username: generatedSecret
+            .secretValueFromJson('username')
+            .unsafeUnwrap(),
+          password: generatedSecret
+            .secretValueFromJson('password')
+            .unsafeUnwrap(),
+          dbname: dbName,
+          host: this.database.instanceEndpoint.hostname,
+          port: this.database.instanceEndpoint.port,
+          database_url: `postgresql://${generatedSecret.secretValueFromJson('username').unsafeUnwrap()}:${generatedSecret.secretValueFromJson('password').unsafeUnwrap()}@${this.database.instanceEndpoint.hostname}:${this.database.instanceEndpoint.port}/${dbName}?schema=public`,
+        }),
+      ),
+    });
+
+    // Grant ECS task execution role access to secret
+    this.credentials.addToResourcePolicy(
+      new iam.PolicyStatement({
+        actions: ['secretsmanager:GetSecretValue'],
+        principals: [new iam.ServicePrincipal('ecs-tasks.amazonaws.com')],
+        resources: ['*'],
+      }),
+    );
+
+    // Stack outputs
     new cdk.CfnOutput(this, 'DatabaseEndpoint', {
       value: this.database.instanceEndpoint.hostname,
       description: 'Database endpoint',
       exportName: 'LeftCurveDatabaseEndpoint',
     });
 
-    // Output database credentials ARN
     new cdk.CfnOutput(this, 'DatabaseCredentialsArn', {
       value: this.credentials.secretArn,
       description: 'Database credentials ARN',

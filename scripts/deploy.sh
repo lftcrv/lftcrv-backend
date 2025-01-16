@@ -1,53 +1,23 @@
 #!/bin/bash
 set -e
 
-# Function to check stack status
-check_stack_status() {
-    local stack_name=$1
-    local status=$(aws cloudformation describe-stacks \
-        --stack-name "$stack_name" \
-        --query 'Stacks[0].StackStatus' \
-        --output text 2>/dev/null || echo "STACK_NOT_FOUND")
-    echo $status
+# Define cleanup function
+cleanup() {
+    echo "🧹 Cleaning up resources..."
+    docker buildx rm multiarch-builder 2>/dev/null || true
+    rm -f build.log 2>/dev/null || true
 }
 
-# Function to wait for stack to be ready
-wait_for_stack() {
-    local stack_name=$1
-    local max_attempts=30
-    local attempt=1
-    
-    echo "Checking status of stack: $stack_name"
-    
-    while [ $attempt -le $max_attempts ]; do
-        local status=$(check_stack_status "$stack_name")
-        echo "Current status: $status"
-        
-        case $status in
-            *_COMPLETE)
-                echo "Stack $stack_name is ready"
-                return 0
-                ;;
-            *_IN_PROGRESS)
-                echo "Stack $stack_name is still in progress. Waiting... ($attempt/$max_attempts)"
-                sleep 30
-                ;;
-            STACK_NOT_FOUND)
-                echo "Stack $stack_name not found"
-                return 0
-                ;;
-            *)
-                echo "Stack $stack_name is in state $status"
-                return 1
-                ;;
-        esac
-        
-        attempt=$((attempt + 1))
-    done
-    
-    echo "Timeout waiting for stack $stack_name"
-    return 1
+# Enhanced error handling
+handle_error() {
+    local exit_code=$?
+    echo "❌ Error occurred in script at line $1"
+    cleanup
+    exit $exit_code
 }
+
+trap 'handle_error ${LINENO}' ERR
+trap cleanup EXIT
 
 # Get the absolute path to the project root
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
@@ -56,7 +26,7 @@ PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 if [ -f "$PROJECT_ROOT/.env" ]; then
     source "$PROJECT_ROOT/.env"
 else
-    echo "Error: .env file not found in $PROJECT_ROOT"
+    echo "❌ Error: .env file not found in $PROJECT_ROOT"
     exit 1
 fi
 
@@ -67,11 +37,19 @@ required_vars=(
     "AWS_DEFAULT_REGION"
     "AWS_ACCOUNT_ID"
     "ENVIRONMENT"
+    "DATABASE_NAME"
+    "DATABASE_PORT"
+    "API_KEY"
+    "RATE_LIMIT"
+    "RATE_LIMIT_WINDOW"
+    "ECS_CONTAINER_MEMORY"
+    "ECS_CONTAINER_CPU"
+    "ECS_SERVICE_DESIRED_COUNT"
 )
 
 for var in "${required_vars[@]}"; do
     if [ -z "${!var}" ]; then
-        echo "Error: $var is not set in .env file"
+        echo "❌ Error: $var is not set in .env file"
         exit 1
     fi
 done
@@ -81,6 +59,45 @@ echo "🚀 Starting deployment process for environment: $ENVIRONMENT"
 # Set AWS account ID for CDK
 export CDK_DEFAULT_ACCOUNT=$AWS_ACCOUNT_ID
 export CDK_DEFAULT_REGION=$AWS_DEFAULT_REGION
+
+# Construct ECR repository URI
+ECR_REPO_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/leftcurve-api"
+
+# Check if Docker daemon is running
+echo "🔄 Checking Docker daemon..."
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ Error: Docker daemon is not running"
+    exit 1
+fi
+
+# Create ECR repository if it doesn't exist
+echo "🔄 Creating/verifying ECR repository..."
+aws ecr describe-repositories --repository-names leftcurve-api || \
+    aws ecr create-repository \
+        --repository-name leftcurve-api \
+        --region $AWS_DEFAULT_REGION \
+        --image-tag-mutability MUTABLE \
+        --image-scanning-configuration scanOnPush=true
+
+# Login to ECR
+echo "🔑 Logging into ECR..."
+aws ecr get-login-password --region $AWS_DEFAULT_REGION | \
+    docker login --username AWS --password-stdin "$ECR_REPO_URI"
+
+# Build and push Docker image
+echo "🏗️ Building Docker image..."
+IMAGE_TAG=${GITHUB_SHA:-$(git rev-parse --short HEAD)}
+FULL_IMAGE_URI="$ECR_REPO_URI:$IMAGE_TAG"
+LATEST_IMAGE_URI="$ECR_REPO_URI:latest"
+
+# Build the image
+docker build -t $FULL_IMAGE_URI .
+docker tag $FULL_IMAGE_URI $LATEST_IMAGE_URI
+
+# Push images
+echo "📤 Pushing images to ECR..."
+docker push $FULL_IMAGE_URI
+docker push $LATEST_IMAGE_URI
 
 # Deploy infrastructure
 echo "📦 Deploying infrastructure..."
@@ -100,71 +117,49 @@ pnpm run build
 echo "Bootstrapping CDK..."
 pnpm cdk bootstrap "aws://${AWS_ACCOUNT_ID}/${AWS_DEFAULT_REGION}" || true
 
-# Wait for stacks to be ready
-echo "Checking stack statuses..."
-for stack in "leftcurve-vpc" "leftcurve-db" "leftcurve-ecs"; do
-    if ! wait_for_stack "$stack"; then
-        echo "Error: Stack $stack is in a failed state"
-        exit 1
-    fi
-done
-
-# Deploy all stacks
+export API_KEY  #
+# Deploy stacks
 echo "Deploying CDK stacks..."
-pnpm cdk deploy --all --require-approval never
+pnpm cdk deploy LeftCurveVpcStack \
+    LeftCurveSecurityGroupStack \
+    LeftCurveDbStack \
+    LeftCurveEcsStack \
+    --require-approval never
 
-cd "$PROJECT_ROOT"
+# Run migrations and update service
+if [ $? -eq 0 ]; then
+    echo "🔄 Running database migrations..."
+    TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+        --task-definition leftcurve-migration-task \
+        --query 'taskDefinition.taskDefinitionArn' \
+        --output text)
 
-echo "🏗️ Building Docker image..."
-docker build -t leftcurve-api:latest .
+    NETWORK_CONFIG=$(aws ecs describe-services \
+        --cluster leftcurve-cluster \
+        --services leftcurve-service \
+        --query 'services[0].networkConfiguration.awsvpcConfiguration' \
+        --output json)
 
-# Construct ECR repository URI
-ECR_REPO_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/leftcurve-api"
-echo "Using ECR Repository URI: $ECR_REPO_URI"
+    SUBNET_ID=$(echo "$NETWORK_CONFIG" | jq -r '.subnets[0]')
+    SG_ID=$(echo "$NETWORK_CONFIG" | jq -r '.securityGroups[0]')
 
-# Create ECR repository if it doesn't exist
-aws ecr describe-repositories --repository-names leftcurve-api || \
-    aws ecr create-repository --repository-name leftcurve-api
+    aws ecs run-task \
+        --cluster leftcurve-cluster \
+        --task-definition "$TASK_DEFINITION_ARN" \
+        --launch-type FARGATE \
+        --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SG_ID],assignPublicIp=ENABLED}"
 
-echo "🔑 Logging into ECR..."
-aws ecr get-login-password --region $AWS_DEFAULT_REGION | \
-    docker login --username AWS --password-stdin "$ECR_REPO_URI"
+    echo "🔄 Updating ECS service..."
+    aws ecs update-service \
+        --cluster leftcurve-cluster \
+        --service leftcurve-service \
+        --force-new-deployment
 
-# Tag and push the image
-echo "📤 Pushing image to ECR..."
-IMAGE_TAG=${GITHUB_SHA:-$(git rev-parse --short HEAD)}
-docker tag leftcurve-api:latest "$ECR_REPO_URI:$IMAGE_TAG"
-docker tag leftcurve-api:latest "$ECR_REPO_URI:latest"
-docker push "$ECR_REPO_URI:$IMAGE_TAG"
-docker push "$ECR_REPO_URI:latest"
-
-# Wait for ECS stack to be ready before running migrations
-wait_for_stack "leftcurve-ecs"
-
-echo "🔄 Running database migrations..."
-SUBNET_ID=$(aws ec2 describe-subnets \
-    --filters Name=tag:Name,Values='*Private*' \
-    --query 'Subnets[0].SubnetId' \
-    --output text)
-
-SG_ID=$(aws ec2 describe-security-groups \
-    --filters Name=group-name,Values='*ECSSecurityGroup*' \
-    --query 'SecurityGroups[0].GroupId' \
-    --output text)
-
-aws ecs run-task \
-    --cluster leftcurve-cluster \
-    --task-definition leftcurve-migration-task \
-    --launch-type FARGATE \
-    --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID],securityGroups=[$SG_ID],assignPublicIp=DISABLED}"
-
-echo "⏳ Waiting for migrations to complete..."
-sleep 30
-
-echo "🔄 Updating ECS service..."
-aws ecs update-service \
-    --cluster leftcurve-cluster \
-    --service leftcurve-service \
-    --force-new-deployment
-
-echo "✅ Deployment completed successfully!"
+    echo "✅ Deployment completed successfully!"
+    echo "Deployment time: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "Image tag: $IMAGE_TAG"
+    echo "Repository: $ECR_REPO_URI"
+else
+    echo "❌ Stack deployment failed"
+    exit 1
+fi

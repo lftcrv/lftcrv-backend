@@ -4,18 +4,7 @@
       {
           "Effect": "Allow",
           "Action": [
-              "cloudformation:*",
-              "ecr:*",
-              "ecs:*",
-              "ec2:*",
-              "elasticloadbalancing:*",
-              "iam:*",
-              "logs:*",
-              "rds:*",
-              "s3:*",
-              "secretsmanager:*",
-              "ssm:*",
-              "sts:*"
+              "*"
           ],
           "Resource": "*"
       }

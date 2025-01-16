@@ -1,25 +1,31 @@
 #!/bin/sh
 set -e
 
-# Wait for database to be ready
-echo "Waiting for database to be ready..."
-max_retries=30
-counter=0
+# Function to wait for database and run migrations
+wait_for_db_and_migrate() {
+    echo "Waiting for database to be ready..."
+    max_retries=30
+    counter=0
 
-until pnpm prisma db push --skip-generate; do
-    counter=$((counter + 1))
-    if [ $counter -gt $max_retries ]; then
-        echo "Failed to connect to database after $max_retries attempts. Exiting..."
-        exit 1
-    fi
-    echo "Database not ready. Retrying in 5 seconds... ($counter/$max_retries)"
-    sleep 5
-done
+    until pnpm prisma migrate deploy || [ $counter -gt $max_retries ]
+    do
+        counter=$((counter+1))
+        if [ $counter -gt $max_retries ]; then
+            echo "Failed to connect to database after $max_retries attempts"
+            exit 1
+        fi
+        echo "Database not ready. Retrying in 5 seconds... ($counter/$max_retries)"
+        sleep 5
+    done
 
-# Run migrations
-echo "Running database migrations..."
-pnpm prisma migrate deploy
+    echo "Migrations completed successfully"
+}
 
-# Start the application
-echo "Starting the application..."
-exec pnpm start:prod
+# Check if we're running in migration mode
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    wait_for_db_and_migrate
+else
+    # Start the application
+    echo "Starting application..."
+    exec node dist/main
+fi
