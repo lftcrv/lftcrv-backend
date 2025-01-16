@@ -13,6 +13,8 @@ Service to manage Eliza agents in Docker containers, providing API endpoints to 
 1. Pull Eliza image:
 ```bash
 docker pull julienbrs/eliza:latest
+if on mac m1/m2/m3:
+docker pull --platform linux/amd64 julienbrs/eliza:latest
 ```
 
 
