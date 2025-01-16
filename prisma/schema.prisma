@@ -42,6 +42,17 @@ model ElizaAgent {
   characterConfig Json
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+  TradingInformation TradingInformation[]
 
   @@map("eliza_agents")
+}
+
+model TradingInformation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  elizaAgentId   String
+  elizaAgent     ElizaAgent @relation(fields: [elizaAgentId], references: [id])
+  information Json
+
+  @@map("trading_information")
 }
