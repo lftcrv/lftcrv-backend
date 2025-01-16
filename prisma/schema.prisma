@@ -36,7 +36,7 @@ enum AgentStatus {
 
 model ElizaAgent {
   id             String      @id @default(uuid())
-  name           String      @unique
+  name           String
   status         AgentStatus @default(STARTING)
   containerId    String?
   characterConfig Json
