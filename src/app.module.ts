@@ -9,6 +9,7 @@ import {
   validationSchema,
 } from './shared/config/env.config';
 import { AccessCodeModule } from './domains/access-code/access-code.module';
+import { HealthModule } from './shared/health/health.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AccessCodeModule } from './domains/access-code/access-code.module';
     },
     PrismaModule,
     AccessCodeModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
