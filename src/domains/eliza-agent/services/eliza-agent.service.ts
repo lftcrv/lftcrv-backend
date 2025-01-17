@@ -41,6 +41,12 @@ export class ElizaAgentService implements IElizaAgentService {
     return this.prisma.elizaAgent.findMany();
   }
 
+  async listRunningAgents(): Promise<ElizaAgent[]> {
+    return this.prisma.elizaAgent.findMany({
+      where: { status: AgentStatus.RUNNING },
+    });
+  }
+
   async stopAgent(id: string): Promise<void> {
     const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
     if (agent && agent.containerId) {
