@@ -11,6 +11,8 @@ export class DockerService implements IDockerService, OnModuleInit {
   private readonly elizaEnvPath: string;
   private readonly dataPath: string;
   private readonly charactersPath: string;
+  private readonly startPort = 3001;
+  private readonly maxPort = 3999;
 
   constructor() {
     this.docker = new Docker();
@@ -82,8 +84,13 @@ export class DockerService implements IDockerService, OnModuleInit {
           `${characterPath}:/app/characters/${config.name}.character.json`,
           `${agentDataPath}:/app/agent/data`,
         ],
-        NetworkMode: 'host',
+        PortBindings: {
+          '3000/tcp': [{ HostPort: "3000" }]  // Port hardcodé pour le test
+        }
       },
+      ExposedPorts: {
+        '3000/tcp': {}
+      }
     });
 
     return container.id;

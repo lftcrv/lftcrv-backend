@@ -9,9 +9,9 @@ export class TasksService {
   constructor(private readonly messageService: MessageService) {}
 
   // 🕒 Exécution toutes les minutes
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async handleCron() {
     this.logger.log('🚀 Lancement de l\'envoi des messages aux agents actifs');
-    await this.messageService.sendMessagesToRunningAgents();  // ✅ Appel de la bonne méthode
+    await this.messageService.sendMessagesToRunningAgents();
   }
 }

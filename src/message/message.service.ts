@@ -11,9 +11,16 @@ export class MessageService {
 
   async sendMessagesToRunningAgents() {
     try {
+      this.logger.debug('Fetching running agents...');
+      
       const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany({
-        where: { status: AgentStatus.RUNNING },
+        where: { 
+          status: AgentStatus.RUNNING,
+          runtimeAgentId: { not: null }
+        },
       });
+
+      this.logger.debug(`Found ${runningAgents.length} running agents`);
 
       if (runningAgents.length === 0) {
         this.logger.warn('⚠️ No active agent found.');
@@ -21,33 +28,46 @@ export class MessageService {
       }
 
       for (const agent of runningAgents) {
-        await this.sendMessage(agent.id);
+        if (agent.runtimeAgentId) {
+          // Lancement des requêtes sans attendre la réponse
+          this.sendMessage(agent).catch(err => {
+            this.logger.error(`Failed to send message to ${agent.name}: ${err.message}`);
+          });
+        }
       }
     } catch (error) {
       this.logger.error(`❌ Error : ${error.message}`);
     }
   }
 
-
-  public async sendMessage(runtimeAgentId: string) {
-    const url = `http://localhost:3000/${runtimeAgentId}/message`;
+  private async sendMessage(agent: ElizaAgent) {
+    const url = `http://localhost:3000/${agent.runtimeAgentId}/message`;
+    
     const data = {
       text: 'trade',
       userId: 'user1234',
-      userName: `dzk`,
+      userName: 'dzk',
       roomId: 'room456',
       name: 'Basic Interaction',
+      agentId: agent.runtimeAgentId,
     };
 
     try {
-      const response = await axios.post(url, data, {
+      this.logger.debug(`Sending message to ${url}`);
+      
+      // Envoi sans attendre la réponse
+      axios.post(url, data, {
         headers: {
           'Content-Type': 'application/json',
         },
+      }).catch(() => {
+        // Ignorer les erreurs silencieusement
       });
-      this.logger.log(`✅ Message sent to the agent ${runtimeAgentId} : ${JSON.stringify(response.data)}`);
+
+      this.logger.debug(`Message sent to agent ${agent.name}`);
     } catch (error) {
-      this.logger.error(`❌ Error while sending to agent ${runtimeAgentId} : ${error.message}`);
+      // Log uniquement pour le debugging
+      this.logger.debug(`Error sending to agent ${agent.name}: ${error.message}`);
     }
   }
 }
