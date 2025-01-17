@@ -39,12 +39,13 @@ model ElizaAgent {
   name           String
   status         AgentStatus @default(STARTING)
   containerId    String?
-  runtimeAgentId   String?
+  runtimeAgentId String?
+  port           Int?
   characterConfig Json
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   TradingInformation TradingInformation[]
-
+  
   @@map("eliza_agents")
 }
 

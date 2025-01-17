@@ -14,7 +14,7 @@ export class ElizaAgentService implements IElizaAgentService {
   ) {}
 
   async createAgent(dto: CreateElizaAgentDto): Promise<ElizaAgent> {
-    const containerId = await this.dockerService.createContainer({
+    const { containerId, port } = await this.dockerService.createContainer({
       name: dto.name,
       characterConfig: dto.characterConfig,
     });
@@ -24,29 +24,29 @@ export class ElizaAgentService implements IElizaAgentService {
         name: dto.name,
         status: AgentStatus.STARTING,
         containerId,
+        port,
         characterConfig: dto.characterConfig,
       },
     });
 
     await this.dockerService.startContainer(containerId);
-
-    const runtimeAgentId = await this.dockerService.getRuntimeAgentId(containerId);
     
+    const runtimeAgentId = await this.dockerService.getRuntimeAgentId(containerId);
     if (runtimeAgentId) {
       const updatedAgent = await this.prisma.elizaAgent.update({
         where: { id: agent.id },
-        data: { 
+        data: {
           runtimeAgentId,
-          status: AgentStatus.RUNNING 
+          status: AgentStatus.RUNNING
         },
       });
       return updatedAgent;
     }
 
-    // If we really didn't retrieve agent ID, we still return the agent
     console.warn(`Could not retrieve runtime ID for agent ${agent.id}`);
     return agent;
   }
+
 
   async getAgent(id: string): Promise<ElizaAgent> {
     const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
