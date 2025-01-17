@@ -5,7 +5,7 @@ export class TradingInformationDto {
   @ApiProperty({ description: 'Id of the agent' })
   @IsString()
   @IsNotEmpty()
-  agentId: string;
+  databaseId: string;
 
   @ApiProperty({ description: 'Information about the trade' })
   @IsObject()

@@ -12,11 +12,11 @@ export class TradingInformationService implements ITradingInformation {
   }
 
   getTradingInformationPerAgent(
-    agentId: string,
+    databaseId: string,
   ): Promise<TradingInformation[]> {
     return this.prisma.tradingInformation.findMany({
       where: {
-        elizaAgentId: agentId,
+        elizaAgentId: databaseId,
       },
     });
   }
@@ -32,7 +32,7 @@ export class TradingInformationService implements ITradingInformation {
       data: {
         createdAt: new Date(),
         information: data.information,
-        elizaAgentId: data.agentId,
+        elizaAgentId: data.databaseId,
       },
     });
   }

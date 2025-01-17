@@ -39,6 +39,7 @@ model ElizaAgent {
   name           String
   status         AgentStatus @default(STARTING)
   containerId    String?
+  runtimeAgentId   String?
   characterConfig Json
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt

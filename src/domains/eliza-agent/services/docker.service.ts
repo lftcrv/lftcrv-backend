@@ -89,6 +89,43 @@ export class DockerService implements IDockerService, OnModuleInit {
     return container.id;
   }
 
+  private async waitForLog(containerId: string, timeoutMs = 30000, intervalMs = 1000): Promise<string | null> {
+    const startTime = Date.now();
+    const container = this.docker.getContainer(containerId);
+    
+    while (Date.now() - startTime < timeoutMs) {
+      try {
+        // Get logs since container start
+        const logs = await container.logs({
+          stdout: true,
+          stderr: true,
+          timestamps: true,
+          since: Math.floor(startTime / 1000)
+        });
+
+        const logsStr = logs.toString('utf8');
+        const match = logsStr.match(/Agent ID[^\n]*\n[^\n]*([a-f0-9-]{36})/);
+        
+        if (match && match[1]) {
+          return match[1];
+        }
+
+        // Wait before next attempt
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      } catch (error) {
+        console.error('Error reading container logs:', error);
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      }
+    }
+
+    console.warn(`Timeout reached while waiting for Agent ID in container ${containerId}`);
+    return null;
+  }
+
+  async getRuntimeAgentId(containerId: string): Promise<string | null> {
+    return this.waitForLog(containerId);
+  }
+  
   /**
    * Starts a container by its ID
    * @param containerId The ID of the container to start

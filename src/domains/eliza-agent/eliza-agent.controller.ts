@@ -30,7 +30,7 @@ export class ElizaAgentController {
   @ApiOperation({ summary: 'Create a new Eliza agent' })
   @ApiResponse({
     status: 201,
-    description: 'Agent created successfully',
+    description: 'Agent created successfully. Returns database ID, container ID, and runtime ID when available',
     type: ElizaAgent,
   })
   @ApiResponse({ status: 400, description: 'Invalid configuration provided' })
@@ -39,7 +39,14 @@ export class ElizaAgentController {
       const agent = await this.elizaAgentService.createAgent(dto);
       return {
         status: 'success',
-        data: { agent },
+        data: { 
+          agent,
+          runtimeInfo: agent.runtimeAgentId ? {
+            databaseId: agent.id,
+            containerId: agent.containerId,
+            runtimeAgentId: agent.runtimeAgentId
+          } : undefined
+        },
       };
     } catch (error) {
       throw new InternalServerErrorException(
@@ -80,10 +87,10 @@ export class ElizaAgentController {
     };
   }
 
-  @Get(':id')
+  @Get(':id') // databaseID of the agent
   @RequireApiKey()
   @ApiOperation({ summary: 'Get a specific Eliza agent' })
-  @ApiParam({ name: 'id', description: 'Agent ID' })
+  @ApiParam({ name: 'id', description: 'Agent Database ID' })
   @ApiResponse({
     status: 200,
     description: 'Agent retrieved successfully',
@@ -101,10 +108,10 @@ export class ElizaAgentController {
     };
   }
 
-  @Post(':id/start')
+  @Post(':id/start') // databaseID of the agent
   @RequireApiKey()
   @ApiOperation({ summary: 'Start a specific Eliza agent' })
-  @ApiParam({ name: 'id', description: 'Agent ID' })
+  @ApiParam({ name: 'id', description: 'Agent Database ID' })
   @ApiResponse({ status: 200, description: 'Agent started successfully' })
   @ApiResponse({ status: 404, description: 'Agent not found' })
   async startAgent(@Param('id') id: string) {
@@ -124,10 +131,10 @@ export class ElizaAgentController {
     }
   }
 
-  @Post(':id/stop')
+  @Post(':id/stop') // databaseID of the agent
   @RequireApiKey()
   @ApiOperation({ summary: 'Stop a specific Eliza agent' })
-  @ApiParam({ name: 'id', description: 'Agent ID' })
+  @ApiParam({ name: 'id', description: 'Agent Database ID' })
   @ApiResponse({ status: 200, description: 'Agent stopped successfully' })
   @ApiResponse({ status: 404, description: 'Agent not found' })
   async stopAgent(@Param('id') id: string) {

@@ -6,6 +6,7 @@ export class ElizaAgent {
   name: string;
   status: AgentStatus;
   containerId?: string;
+  runtimeAgentId?: string;
   characterConfig: JsonValue;
   createdAt: Date;
   updatedAt: Date;
