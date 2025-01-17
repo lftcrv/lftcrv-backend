@@ -22,6 +22,7 @@ export class ElizaAgentService implements IElizaAgentService {
     const agent = await this.prisma.elizaAgent.create({
       data: {
         name: dto.name,
+        curveSide: dto.curveSide,
         status: AgentStatus.STARTING,
         containerId,
         characterConfig: dto.characterConfig,
