@@ -30,7 +30,8 @@ export class ElizaAgentController {
   @ApiOperation({ summary: 'Create a new Eliza agent' })
   @ApiResponse({
     status: 201,
-    description: 'Agent created successfully. Returns database ID, container ID, and runtime ID when available',
+    description:
+      'Agent created successfully. Returns database ID, container ID, and runtime ID when available',
     type: ElizaAgent,
   })
   @ApiResponse({ status: 400, description: 'Invalid configuration provided' })
@@ -39,13 +40,15 @@ export class ElizaAgentController {
       const agent = await this.elizaAgentService.createAgent(dto);
       return {
         status: 'success',
-        data: { 
+        data: {
           agent,
-          runtimeInfo: agent.runtimeAgentId ? {
-            databaseId: agent.id,
-            containerId: agent.containerId,
-            runtimeAgentId: agent.runtimeAgentId
-          } : undefined
+          runtimeInfo: agent.runtimeAgentId
+            ? {
+                databaseId: agent.id,
+                containerId: agent.containerId,
+                runtimeAgentId: agent.runtimeAgentId,
+              }
+            : undefined,
         },
       };
     } catch (error) {

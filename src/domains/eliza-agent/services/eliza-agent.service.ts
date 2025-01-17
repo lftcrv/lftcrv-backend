@@ -31,14 +31,15 @@ export class ElizaAgentService implements IElizaAgentService {
 
     await this.dockerService.startContainer(containerId);
 
-    const runtimeAgentId = await this.dockerService.getRuntimeAgentId(containerId);
-    
+    const runtimeAgentId =
+      await this.dockerService.getRuntimeAgentId(containerId);
+
     if (runtimeAgentId) {
       const updatedAgent = await this.prisma.elizaAgent.update({
         where: { id: agent.id },
-        data: { 
+        data: {
           runtimeAgentId,
-          status: AgentStatus.RUNNING 
+          status: AgentStatus.RUNNING,
         },
       });
       return updatedAgent;
