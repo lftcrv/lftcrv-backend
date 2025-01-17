@@ -29,8 +29,8 @@ export class MessageService {
   }
 
 
-  public async sendMessage(agentId: string) {
-    const url = `http://localhost:3000/${agentId}/message`;
+  public async sendMessage(runtimeAgentId: string) {
+    const url = `http://localhost:3000/${runtimeAgentId}/message`;
     const data = {
       text: 'trade',
       userId: 'user1234',
@@ -45,9 +45,9 @@ export class MessageService {
           'Content-Type': 'application/json',
         },
       });
-      this.logger.log(`✅ Message sent to the agent ${agentId} : ${JSON.stringify(response.data)}`);
+      this.logger.log(`✅ Message sent to the agent ${runtimeAgentId} : ${JSON.stringify(response.data)}`);
     } catch (error) {
-      this.logger.error(`❌ Error while sending to agent ${agentId} : ${error.message}`);
+      this.logger.error(`❌ Error while sending to agent ${runtimeAgentId} : ${error.message}`);
     }
   }
 }

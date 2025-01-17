@@ -3,4 +3,5 @@ export interface IDockerService {
   startContainer(containerId: string): Promise<void>;
   stopContainer(containerId: string): Promise<void>;
   removeContainer(containerId: string): Promise<void>;
+  getRuntimeAgentId(containerId: string): Promise<string | null>;
 }

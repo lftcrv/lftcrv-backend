@@ -34,7 +34,7 @@ export class TradingInformationController {
     @Body() dto: TradingInformationDto,
   ): Promise<TradingInformation> {
     return this.tradingInformationService.createTradingInformation({
-      agentId: dto.agentId,
+      databaseId: dto.databaseId,
       information: dto.information,
     });
   }
@@ -50,7 +50,7 @@ export class TradingInformationController {
     return this.tradingInformationService.getAllTradingInformation();
   }
 
-  @Get(':agentId')
+  @Get(':id') // databaseID of the agent
   @RequireApiKey()
   @ApiOperation({ summary: 'List trading information for a specific agent' })
   @ApiResponse({
@@ -58,14 +58,14 @@ export class TradingInformationController {
     description: 'List of trading information retrieved successfully',
   })
   async getTradingInformationPerAgent(
-    agentId: string,
+    databaseId: string,
   ): Promise<TradingInformation[]> {
     return this.tradingInformationService.getTradingInformationPerAgent(
-      agentId,
+      databaseId,
     );
   }
 
-  @Get(':id')
+  @Get(':id') // databaseID of the agent
   @RequireApiKey()
   @ApiOperation({ summary: 'Get a specific trading information' })
   @ApiResponse({

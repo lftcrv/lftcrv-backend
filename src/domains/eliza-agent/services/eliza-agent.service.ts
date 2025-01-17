@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { IElizaAgentService } from '../interfaces/eliza-agent-service.interface';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
@@ -30,11 +30,30 @@ export class ElizaAgentService implements IElizaAgentService {
 
     await this.dockerService.startContainer(containerId);
 
+    const runtimeAgentId = await this.dockerService.getRuntimeAgentId(containerId);
+    
+    if (runtimeAgentId) {
+      const updatedAgent = await this.prisma.elizaAgent.update({
+        where: { id: agent.id },
+        data: { 
+          runtimeAgentId,
+          status: AgentStatus.RUNNING 
+        },
+      });
+      return updatedAgent;
+    }
+
+    // If we really didn't retrieve agent ID, we still return the agent
+    console.warn(`Could not retrieve runtime ID for agent ${agent.id}`);
     return agent;
   }
 
   async getAgent(id: string): Promise<ElizaAgent> {
-    return this.prisma.elizaAgent.findUnique({ where: { id } });
+    const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
+    if (!agent) {
+      throw new NotFoundException(`Agent with ID ${id} not found`);
+    }
+    return agent;
   }
 
   async listAgents(): Promise<ElizaAgent[]> {
