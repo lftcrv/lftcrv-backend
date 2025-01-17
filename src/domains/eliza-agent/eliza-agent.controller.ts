@@ -64,6 +64,22 @@ export class ElizaAgentController {
     };
   }
 
+  @Get('running')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'List all running Eliza agents' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of running agents retrieved successfully',
+    type: [ElizaAgent],
+  })
+  async listRunningAgents() {
+    const agents = await this.elizaAgentService.listRunningAgents();
+    return {
+      status: 'success',
+      data: { agents },
+    };
+  }
+
   @Get(':id')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get a specific Eliza agent' })

@@ -1,4 +1,4 @@
-import { MessageService } from '../domains/message/message.service';
+import { MessageService } from '../message/message.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
