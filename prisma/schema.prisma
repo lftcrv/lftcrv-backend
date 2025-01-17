@@ -34,9 +34,15 @@ enum AgentStatus {
   ERROR
 }
 
+enum CurveSide {
+  LEFT
+  RIGHT
+}
+
 model ElizaAgent {
   id             String      @id @default(uuid())
   name           String
+  curveSide      CurveSide
   status         AgentStatus @default(STARTING)
   containerId    String?
   runtimeAgentId   String?
