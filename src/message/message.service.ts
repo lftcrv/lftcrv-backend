@@ -7,29 +7,27 @@ import { AgentStatus, ElizaAgent } from '@prisma/client';
 export class MessageService {
   private readonly logger = new Logger(MessageService.name);
 
-  constructor(private readonly prisma: PrismaService) {} 
+  constructor(private readonly prisma: PrismaService) {}
 
   async sendMessagesToRunningAgents() {
     try {
       this.logger.debug('Fetching running agents...');
-      
       const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany({
-        where: { 
+        where: {
           status: AgentStatus.RUNNING,
-          runtimeAgentId: { not: null }
+          runtimeAgentId: { not: null },
+          port: { not: null }
         },
       });
 
       this.logger.debug(`Found ${runningAgents.length} running agents`);
-
       if (runningAgents.length === 0) {
         this.logger.warn('⚠️ No active agent found.');
         return;
       }
 
       for (const agent of runningAgents) {
-        if (agent.runtimeAgentId) {
-          // Lancement des requêtes sans attendre la réponse
+        if (agent.runtimeAgentId && agent.port) {
           this.sendMessage(agent).catch(err => {
             this.logger.error(`Failed to send message to ${agent.name}: ${err.message}`);
           });
@@ -41,10 +39,10 @@ export class MessageService {
   }
 
   private async sendMessage(agent: ElizaAgent) {
-    const url = `http://localhost:3000/${agent.runtimeAgentId}/message`;
+    const url = `http://localhost:${agent.port}/${agent.runtimeAgentId}/message`;
     
     const data = {
-      text: 'trade',
+      text: 'execute EXECUTE_STARKNET_TRADE',
       userId: 'user1234',
       userName: 'dzk',
       roomId: 'room456',
@@ -53,9 +51,8 @@ export class MessageService {
     };
 
     try {
-      this.logger.debug(`Sending message to ${url}`);
+      this.logger.debug(`Sending message to ${url} for agent ${agent.name} on port ${agent.port}`);
       
-      // Envoi sans attendre la réponse
       axios.post(url, data, {
         headers: {
           'Content-Type': 'application/json',
@@ -64,10 +61,9 @@ export class MessageService {
         // Ignorer les erreurs silencieusement
       });
 
-      this.logger.debug(`Message sent to agent ${agent.name}`);
+      this.logger.debug(`Message sent to agent ${agent.name} on port ${agent.port}`);
     } catch (error) {
-      // Log uniquement pour le debugging
-      this.logger.debug(`Error sending to agent ${agent.name}: ${error.message}`);
+      this.logger.debug(`Error sending to agent ${agent.name} on port ${agent.port}: ${error.message}`);
     }
   }
 }
