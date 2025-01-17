@@ -6,6 +6,7 @@ export interface IElizaAgentService {
   getAgent(id: string): Promise<ElizaAgent>;
   listAgents(): Promise<ElizaAgent[]>;
   listRunningAgents(): Promise<ElizaAgent[]>;
+  listLatestAgents(): Promise<ElizaAgent[]>;
   stopAgent(id: string): Promise<void>;
   startAgent(id: string): Promise<void>;
 }

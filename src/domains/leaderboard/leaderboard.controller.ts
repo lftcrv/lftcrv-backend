@@ -21,7 +21,11 @@ export class LeaderboardController {
     description: 'Left curve retrieved successfully',
   })
   async getLeftCurveLeaderboard() {
-    return this.leaderboardService.getLeftCurveLeaderboard();
+    const leaderboard = await this.leaderboardService.getLeftCurveLeaderboard();
+    return {
+      status: 'success',
+      data: leaderboard,
+    };
   }
 
   @Get('right-curve')
@@ -32,6 +36,10 @@ export class LeaderboardController {
     description: 'Right curve retrieved successfully',
   })
   async getRightCurveLeaderboard() {
-    return this.leaderboardService.getRightCurveLeaderboard();
+    const leaderboard = this.leaderboardService.getRightCurveLeaderboard();
+    return {
+      status: 'success',
+      data: leaderboard,
+    };
   }
 }
