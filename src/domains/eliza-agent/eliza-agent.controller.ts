@@ -146,4 +146,20 @@ export class ElizaAgentController {
       );
     }
   }
+
+  @Get('latest')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'List latest Eliza agents' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of latest agents retrieved successfully',
+    type: [ElizaAgent],
+  })
+  async listLatestAgents() {
+    const agents = await this.elizaAgentService.listLatestAgents();
+    return {
+      status: 'success',
+      data: { agents },
+    };
+  }
 }

@@ -48,6 +48,12 @@ export class ElizaAgentService implements IElizaAgentService {
     });
   }
 
+  async listLatestAgents(): Promise<ElizaAgent[]> {
+    return this.prisma.elizaAgent.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async stopAgent(id: string): Promise<void> {
     const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
     if (agent && agent.containerId) {
