@@ -34,7 +34,7 @@ export class TradingInformationController {
     @Body() dto: TradingInformationDto,
   ): Promise<TradingInformation> {
     return this.tradingInformationService.createTradingInformation({
-      databaseId: dto.databaseId,
+      runtimeAgentId: dto.runtimeAgentId,
       information: dto.information,
     });
   }

@@ -32,7 +32,7 @@ export class TradingInformationService implements ITradingInformation {
       data: {
         createdAt: new Date(),
         information: data.information,
-        elizaAgentId: data.databaseId,
+        elizaAgentId: data.runtimeAgentId,
       },
     });
   }
