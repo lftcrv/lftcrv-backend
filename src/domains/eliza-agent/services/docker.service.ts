@@ -89,7 +89,7 @@ export class DockerService implements IDockerService, OnModuleInit {
     return container.id;
   }
 
-  private async waitForLog(containerId: string, timeoutMs = 30000, intervalMs = 1000): Promise<string | null> {
+  private async waitForLog(containerId: string, timeoutMs = 60000, intervalMs = 5000): Promise<string | null> {
     const startTime = Date.now();
     const container = this.docker.getContainer(containerId);
     
