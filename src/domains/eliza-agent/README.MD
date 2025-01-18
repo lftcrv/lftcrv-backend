@@ -143,3 +143,18 @@ Example of a JSON to create an agent:
 - The `.env` file in `docker/eliza` is shared between all agents
 - When using specific clients (e.g., Twitter), make sure to add corresponding credentials in the `.env` file
 - Each agent runs in its own Docker container but shares the environment configuration
+
+
+# To test a new eliza agent image
+Build the agent's Docker image: ./scripts/docker.sh build in the agent's repository.
+Wait 20 minutes since Docker is slow. In the end, a newly created image named eliza will appear in Docker Desktop.
+Tag the image:
+`docker tag image_id dockerhub_username/eliza:latest`
+For example:
+`docker tag sha256:2c3fdd2fc7520b89e95d043a3b3445ca8ce3155b1a2cc1eb4d21d8f7a3299f34 julienbrs/eliza:latest`
+
+Then, go to the lftcrv-backend repository and do the following:
+
+    Temporarily replace all occurrences of julienbrs/eliza:latest with dockerhub_username/eliza:latest.
+    Run ./scripts/setup.sh.
+    Execute pnpm run start:dev.
