@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ITradingInformation } from '../interfaces/trading-information.interface';
 import { TradingInformation } from '../entities/trading-information.entity';
 import { TradingInformationDto } from '../dtos/trading-information.dto';
@@ -25,14 +25,27 @@ export class TradingInformationService implements ITradingInformation {
     return this.prisma.tradingInformation.findUnique({ where: { id } });
   }
 
-  createTradingInformation(
+  async createTradingInformation(
     data: TradingInformationDto,
   ): Promise<TradingInformation> {
+    // find agent with runtimeAgentID, TODO normally no need to do that, we should use directly id
+    const agent = await this.prisma.elizaAgent.findFirst({
+      where: {
+        runtimeAgentId: data.runtimeAgentId,
+      },
+    });
+
+    if (!agent) {
+      throw new NotFoundException(
+        `Agent with runtime ID ${data.runtimeAgentId} not found`,
+      );
+    }
+
     return this.prisma.tradingInformation.create({
       data: {
         createdAt: new Date(),
         information: data.information,
-        elizaAgentId: data.runtimeAgentId,
+        elizaAgentId: agent.id,  // Use DB id
       },
     });
   }
