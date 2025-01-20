@@ -22,6 +22,7 @@ export class ElizaAgentService implements IElizaAgentService {
     const agent = await this.prisma.elizaAgent.create({
       data: {
         name: dto.name,
+        curveSide: dto.curveSide,
         status: AgentStatus.STARTING,
         containerId,
         port,
@@ -30,14 +31,16 @@ export class ElizaAgentService implements IElizaAgentService {
     });
 
     await this.dockerService.startContainer(containerId);
-    
-    const runtimeAgentId = await this.dockerService.getRuntimeAgentId(containerId);
+
+    const runtimeAgentId =
+      await this.dockerService.getRuntimeAgentId(containerId);
+
     if (runtimeAgentId) {
       const updatedAgent = await this.prisma.elizaAgent.update({
         where: { id: agent.id },
         data: {
           runtimeAgentId,
-          status: AgentStatus.RUNNING
+          status: AgentStatus.RUNNING,
         },
       });
       return updatedAgent;
@@ -63,6 +66,12 @@ export class ElizaAgentService implements IElizaAgentService {
   async listRunningAgents(): Promise<ElizaAgent[]> {
     return this.prisma.elizaAgent.findMany({
       where: { status: AgentStatus.RUNNING },
+    });
+  }
+
+  async listLatestAgents(): Promise<ElizaAgent[]> {
+    return this.prisma.elizaAgent.findMany({
+      orderBy: { createdAt: 'desc' },
     });
   }
 

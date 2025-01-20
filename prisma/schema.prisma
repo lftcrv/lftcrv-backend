@@ -34,9 +34,15 @@ enum AgentStatus {
   ERROR
 }
 
+enum CurveSide {
+  LEFT
+  RIGHT
+}
+
 model ElizaAgent {
   id             String      @id @default(uuid())
   name           String
+  curveSide      CurveSide
   status         AgentStatus @default(STARTING)
   containerId    String?
   runtimeAgentId String?
@@ -45,7 +51,9 @@ model ElizaAgent {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   TradingInformation TradingInformation[]
-  
+  degenScore     Float? @default(0)
+  winScore       Float? @default(0)
+
   @@map("eliza_agents")
 }
 
