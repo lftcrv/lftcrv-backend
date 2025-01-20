@@ -14,6 +14,7 @@ import { ElizaAgentModule } from './domains/eliza-agent/eliza-agent.module';
 import { TasksModule } from './cron/tasks.module';
 import { MessageModule } from './message/message.module';
 import { TradingInformationModule } from './domains/trading/trading-information.module';
+import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { TradingInformationModule } from './domains/trading/trading-information.
     ElizaAgentModule,
     TradingInformationModule,
     TasksModule,
-    MessageModule
+    MessageModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
