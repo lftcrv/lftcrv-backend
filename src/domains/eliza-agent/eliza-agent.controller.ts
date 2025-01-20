@@ -124,6 +124,22 @@ export class ElizaAgentController {
     };
   }
 
+  @Get('latest')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'List latest Eliza agents' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of latest agents retrieved successfully',
+    type: [ElizaAgent],
+  })
+  async listLatestAgents() {
+    const agents = await this.queryService.listLatestAgents();
+    return {
+      status: 'success',
+      data: { agents },
+    };
+  }
+
   @Get('search')
   @RequireApiKey()
   @ApiOperation({ summary: 'Search for Eliza agents by name or token' })
@@ -209,21 +225,5 @@ export class ElizaAgentController {
         `Failed to stop agent: ${error.message}`,
       );
     }
-  }
-
-  @Get('latest')
-  @RequireApiKey()
-  @ApiOperation({ summary: 'List latest Eliza agents' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of latest agents retrieved successfully',
-    type: [ElizaAgent],
-  })
-  async listLatestAgents() {
-    const agents = await this.queryService.listLatestAgents();
-    return {
-      status: 'success',
-      data: { agents },
-    };
   }
 }
