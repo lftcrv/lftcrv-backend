@@ -1,16 +1,22 @@
-import { IsString, IsObject, IsNotEmpty } from 'class-validator';
+// dtos/eliza-agent.dto.ts
+import { IsString, IsEnum, IsObject, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CurveSide } from '@prisma/client';
 
 export class CreateElizaAgentDto {
-  @ApiProperty({ description: 'Name of the agent' })
+  @ApiProperty({
+    description: 'Name of the Eliza agent',
+    example: 'TraderBot01',
+  })
   @IsString()
-  @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Curve side for the agent' })
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Side of the curve',
+    enum: CurveSide,
+    example: CurveSide.LEFT,
+  })
+  @IsEnum(CurveSide)
   curveSide: CurveSide;
 
   @ApiProperty({ description: 'Character configuration for the agent' })

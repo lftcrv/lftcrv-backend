@@ -15,13 +15,14 @@ import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.deco
 import { CreateElizaAgentDto } from './dtos/eliza-agent.dto';
 import { ElizaAgent } from './entities/eliza-agent.entity';
 import { IElizaAgentService } from './interfaces/eliza-agent-service.interface';
+import { ServiceTokens } from './interfaces';
 
 @ApiTags('Eliza Agents')
 @Controller('api/eliza-agent')
 @UseInterceptors(LoggingInterceptor)
 export class ElizaAgentController {
   constructor(
-    @Inject('IElizaAgentService')
+    @Inject(ServiceTokens.ElizaAgent)
     private readonly elizaAgentService: IElizaAgentService,
   ) {}
 

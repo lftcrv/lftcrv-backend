@@ -53,6 +53,7 @@ model ElizaAgent {
   TradingInformation TradingInformation[]
   degenScore     Float? @default(0)
   winScore       Float? @default(0)
+  LatestMarketData     LatestMarketData?
 
   @@map("eliza_agents")
 }
@@ -65,4 +66,22 @@ model TradingInformation {
   information Json
 
   @@map("trading_information")
+}
+
+model LatestMarketData {
+  id             String      @id @default(uuid())
+  elizaAgentId   String      @unique
+  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
+  price          Float @default(0)
+  priceChange24h Float @default(0)
+  holders        Int @default(0)
+  marketCap      Float @default(0)
+  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime    @default(now())
+
+  @@index([price])
+  @@index([priceChange24h])
+  @@index([holders])
+  @@index([marketCap])
+  @@map("latest_market_data")
 }

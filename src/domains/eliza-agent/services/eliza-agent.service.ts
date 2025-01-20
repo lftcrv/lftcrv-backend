@@ -2,15 +2,20 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { IElizaAgentService } from '../interfaces/eliza-agent-service.interface';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { ElizaAgent } from '../entities/eliza-agent.entity';
-import { AgentStatus } from '@prisma/client';
+import {
+  AgentStatus,
+  ElizaAgent,
+  LatestMarketData,
+} from '../entities/eliza-agent.entity';
 import { CreateElizaAgentDto } from '../dtos/eliza-agent.dto';
+import { ServiceTokens } from '../interfaces';
 
 @Injectable()
 export class ElizaAgentService implements IElizaAgentService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject('IDockerService') private readonly dockerService: IDockerService,
+    @Inject(ServiceTokens.Docker)
+    private readonly dockerService: IDockerService,
   ) {}
 
   async createAgent(dto: CreateElizaAgentDto): Promise<ElizaAgent> {
@@ -19,6 +24,7 @@ export class ElizaAgentService implements IElizaAgentService {
       characterConfig: dto.characterConfig,
     });
 
+    // Create the agent with the new default fields
     const agent = await this.prisma.elizaAgent.create({
       data: {
         name: dto.name,
@@ -27,6 +33,19 @@ export class ElizaAgentService implements IElizaAgentService {
         containerId,
         port,
         characterConfig: dto.characterConfig,
+        degenScore: 0,
+        winScore: 0,
+        LatestMarketData: {
+          create: {
+            price: 0,
+            priceChange24h: 0,
+            holders: 0,
+            marketCap: 0,
+          },
+        },
+      },
+      include: {
+        LatestMarketData: true,
       },
     });
 
@@ -42,6 +61,9 @@ export class ElizaAgentService implements IElizaAgentService {
           runtimeAgentId,
           status: AgentStatus.RUNNING,
         },
+        include: {
+          LatestMarketData: true,
+        },
       });
       return updatedAgent;
     }
@@ -50,9 +72,14 @@ export class ElizaAgentService implements IElizaAgentService {
     return agent;
   }
 
-
   async getAgent(id: string): Promise<ElizaAgent> {
-    const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id },
+      include: {
+        LatestMarketData: true, // Include related data
+        TradingInformation: true,
+      },
+    });
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
@@ -60,18 +87,28 @@ export class ElizaAgentService implements IElizaAgentService {
   }
 
   async listAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany();
+    return this.prisma.elizaAgent.findMany({
+      include: {
+        LatestMarketData: true,
+      },
+    });
   }
 
   async listRunningAgents(): Promise<ElizaAgent[]> {
     return this.prisma.elizaAgent.findMany({
       where: { status: AgentStatus.RUNNING },
+      include: {
+        LatestMarketData: true,
+      },
     });
   }
 
   async listLatestAgents(): Promise<ElizaAgent[]> {
     return this.prisma.elizaAgent.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        LatestMarketData: true,
+      },
     });
   }
 
@@ -95,5 +132,25 @@ export class ElizaAgentService implements IElizaAgentService {
         data: { status: AgentStatus.RUNNING },
       });
     }
+  }
+
+  async updateMarketData(
+    agentId: string,
+    marketData: Partial<LatestMarketData>,
+  ): Promise<ElizaAgent> {
+    return this.prisma.elizaAgent.update({
+      where: { id: agentId },
+      data: {
+        LatestMarketData: {
+          update: {
+            ...marketData,
+            updatedAt: new Date(),
+          },
+        },
+      },
+      include: {
+        LatestMarketData: true,
+      },
+    });
   }
 }
