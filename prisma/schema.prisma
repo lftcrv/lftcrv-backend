@@ -85,3 +85,29 @@ model LatestMarketData {
   @@index([marketCap])
   @@map("latest_market_data")
 }
+
+enum OrchestrationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model Orchestration {
+  id            String              @id @default(uuid())
+  type          String              // Type of orchestration (e.g., "agent-creation")
+  status        OrchestrationStatus
+  currentStepId String
+  result        Json?               // Store result data
+  error         String?             // Error message if failed
+  progress      Float               @default(0)
+  metadata      Json?               // Store metadata
+  data          Json                // Store orchestration input data
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orchestrations")
+}

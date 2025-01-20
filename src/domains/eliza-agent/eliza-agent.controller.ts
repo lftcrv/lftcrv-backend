@@ -16,19 +16,23 @@ import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.deco
 import { CreateElizaAgentDto } from './dtos/eliza-agent.dto';
 import { ElizaAgent } from './entities/eliza-agent.entity';
 import {
-  IElizaAgentCreateService,
   IElizaAgentQueryService,
   IElizaAgentLifecycleService,
   ServiceTokens,
 } from './interfaces';
+import {
+  IOrchestrator,
+  OrchestrationServiceTokens,
+} from '../orchestration/interfaces';
+import { AGENT_CREATION_DEFINITION } from './orchestration/agent-creation.definition';
 
 @ApiTags('Eliza Agents')
 @Controller('api/eliza-agent')
 @UseInterceptors(LoggingInterceptor)
 export class ElizaAgentController {
   constructor(
-    @Inject(ServiceTokens.ElizaAgentCreate)
-    private readonly createService: IElizaAgentCreateService,
+    @Inject(OrchestrationServiceTokens.Orchestrator)
+    private readonly orchestrator: IOrchestrator,
     @Inject(ServiceTokens.ElizaAgentQuery)
     private readonly queryService: IElizaAgentQueryService,
     @Inject(ServiceTokens.ElizaAgentLifecycle)
@@ -37,31 +41,53 @@ export class ElizaAgentController {
 
   @Post()
   @RequireApiKey()
-  @ApiOperation({ summary: 'Create a new Eliza agent' })
+  @ApiOperation({ summary: 'Initiate creation of a new Eliza agent' })
   @ApiResponse({
-    status: 201,
-    description: 'Agent created successfully',
-    type: ElizaAgent,
+    status: 202,
+    description: 'Agent creation initiated',
   })
   async createAgent(@Body() dto: CreateElizaAgentDto) {
     try {
-      const agent = await this.createService.createAgent(dto);
+      const orchestrationId = await this.orchestrator.startOrchestration(
+        AGENT_CREATION_DEFINITION.type,
+        dto,
+      );
+
       return {
         status: 'success',
         data: {
-          agent,
-          runtimeInfo: agent.runtimeAgentId
-            ? {
-                databaseId: agent.id,
-                containerId: agent.containerId,
-                runtimeAgentId: agent.runtimeAgentId,
-              }
-            : undefined,
+          orchestrationId,
+          message: 'Agent creation initiated successfully',
         },
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        `Failed to create agent: ${error.message}`,
+        `Failed to initiate agent creation: ${error.message}`,
+      );
+    }
+  }
+
+  @Get('creation/:orchestrationId')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get the status of an agent creation process' })
+  async getCreationStatus(@Param('orchestrationId') orchestrationId: string) {
+    try {
+      const status =
+        await this.orchestrator.getOrchestrationStatus(orchestrationId);
+
+      return {
+        status: 'success',
+        data: {
+          orchestrationStatus: status.status,
+          progress: status.progress,
+          currentStepId: status.currentStepId,
+          result: status.result,
+          error: status.error,
+        },
+      };
+    } catch (error) {
+      throw new NotFoundException(
+        `Creation process ${orchestrationId} not found`,
       );
     }
   }
