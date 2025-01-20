@@ -45,7 +45,8 @@ model ElizaAgent {
   curveSide      CurveSide
   status         AgentStatus @default(STARTING)
   containerId    String?
-  runtimeAgentId   String?
+  runtimeAgentId String?
+  port           Int?
   characterConfig Json
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt

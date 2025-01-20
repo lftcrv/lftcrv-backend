@@ -3,6 +3,8 @@ import { IDockerService } from '../interfaces/docker-service.interface';
 import * as Docker from 'dockerode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { AgentStatus } from '@prisma/client';
+import { PrismaService } from 'src/shared/prisma/prisma.service';
 
 @Injectable()
 export class DockerService implements IDockerService, OnModuleInit {
@@ -11,13 +13,37 @@ export class DockerService implements IDockerService, OnModuleInit {
   private readonly elizaEnvPath: string;
   private readonly dataPath: string;
   private readonly charactersPath: string;
+  private readonly startPort = 3001;
+  private readonly maxPort = 3999;
 
-  constructor() {
+  constructor(private readonly prisma: PrismaService) {
     this.docker = new Docker();
     this.elizaBasePath = path.join(process.cwd(), 'docker', 'eliza');
     this.elizaEnvPath = path.join(this.elizaBasePath, '.env');
     this.dataPath = path.join(this.elizaBasePath, 'agent', 'data');
     this.charactersPath = path.join(this.elizaBasePath, 'characters');
+  }
+
+  private async findAvailablePort(): Promise<number> {
+    // Récupérer tous les ports utilisés
+    const usedPorts = await this.prisma.elizaAgent.findMany({
+      where: {
+        port: { not: null },
+        status: { not: AgentStatus.STOPPED }
+      },
+      select: { port: true }
+    });
+
+    const usedPortSet = new Set(usedPorts.map(a => a.port));
+
+    // Chercher le premier port disponible
+    for (let port = this.startPort; port <= this.maxPort; port++) {
+      if (!usedPortSet.has(port)) {
+        return port;
+      }
+    }
+
+    throw new Error('No available ports found');
   }
 
   /**
@@ -50,11 +76,13 @@ export class DockerService implements IDockerService, OnModuleInit {
   }
 
   /**
-   * Creates a new Docker container with the specified configuration
+   * Creates a new Docker container with the specified configuration, listening on returned port
    * @param config Container configuration including name and character settings
-   * @returns Container ID
+   * @returns Container ID, Port used
    */
-  async createContainer(config: Record<string, any>): Promise<string> {
+  async createContainer(config: Record<string, any>): Promise<{ containerId: string; port: number }> {
+    const port = await this.findAvailablePort();
+    
     const agentDataPath = path.join(this.dataPath, config.name);
     await fs.mkdir(agentDataPath, { recursive: true });
 
@@ -82,14 +110,19 @@ export class DockerService implements IDockerService, OnModuleInit {
           `${characterPath}:/app/characters/${config.name}.character.json`,
           `${agentDataPath}:/app/agent/data`,
         ],
-        NetworkMode: 'host',
+        PortBindings: {
+          '3000/tcp': [{ HostPort: port.toString() }]
+        }
       },
+      ExposedPorts: {
+        '3000/tcp': {}
+      }
     });
 
-    return container.id;
+    return { containerId: container.id, port };
   }
 
-  private async waitForLog(containerId: string, timeoutMs = 30000, intervalMs = 1000): Promise<string | null> {
+  private async waitForLog(containerId: string, timeoutMs = 300000, intervalMs = 5000): Promise<string | null> {
     const startTime = Date.now();
     const container = this.docker.getContainer(containerId);
     
