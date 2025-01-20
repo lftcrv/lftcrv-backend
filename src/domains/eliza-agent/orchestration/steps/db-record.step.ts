@@ -37,9 +37,6 @@ export class CreateDbRecordStep extends BaseStepExecutor {
             },
           },
         },
-        include: {
-          LatestMarketData: true,
-        },
       });
 
       return this.success(agent, { agentId: agent.id });

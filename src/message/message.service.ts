@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { PrismaService } from '../shared/prisma/prisma.service';
 import { AgentStatus, ElizaAgent } from '@prisma/client';
 
 @Injectable()
@@ -12,13 +12,15 @@ export class MessageService {
   async sendMessagesToRunningAgents() {
     try {
       this.logger.debug('Fetching running agents...');
-      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany({
-        where: {
-          status: AgentStatus.RUNNING,
-          runtimeAgentId: { not: null },
-          port: { not: null }
+      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany(
+        {
+          where: {
+            status: AgentStatus.RUNNING,
+            runtimeAgentId: { not: null },
+            port: { not: null },
+          },
         },
-      });
+      );
 
       this.logger.debug(`Found ${runningAgents.length} running agents`);
       if (runningAgents.length === 0) {
@@ -28,8 +30,10 @@ export class MessageService {
 
       for (const agent of runningAgents) {
         if (agent.runtimeAgentId && agent.port) {
-          this.sendMessage(agent).catch(err => {
-            this.logger.error(`Failed to send message to ${agent.name}: ${err.message}`);
+          this.sendMessage(agent).catch((err) => {
+            this.logger.error(
+              `Failed to send message to ${agent.name}: ${err.message}`,
+            );
           });
         }
       }
@@ -40,7 +44,7 @@ export class MessageService {
 
   private async sendMessage(agent: ElizaAgent) {
     const url = `http://localhost:${agent.port}/${agent.runtimeAgentId}/message`;
-    
+
     const data = {
       text: 'execute EXECUTE_STARKNET_TRADE',
       userId: 'user1234',
@@ -51,19 +55,27 @@ export class MessageService {
     };
 
     try {
-      this.logger.debug(`Sending message to ${url} for agent ${agent.name} on port ${agent.port}`);
-      
-      axios.post(url, data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).catch(() => {
-        // Ignorer les erreurs silencieusement
-      });
+      this.logger.debug(
+        `Sending message to ${url} for agent ${agent.name} on port ${agent.port}`,
+      );
 
-      this.logger.debug(`Message sent to agent ${agent.name} on port ${agent.port}`);
+      axios
+        .post(url, data, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        .catch(() => {
+          // Ignorer les erreurs silencieusement
+        });
+
+      this.logger.debug(
+        `Message sent to agent ${agent.name} on port ${agent.port}`,
+      );
     } catch (error) {
-      this.logger.debug(`Error sending to agent ${agent.name} on port ${agent.port}: ${error.message}`);
+      this.logger.debug(
+        `Error sending to agent ${agent.name} on port ${agent.port}: ${error.message}`,
+      );
     }
   }
 }

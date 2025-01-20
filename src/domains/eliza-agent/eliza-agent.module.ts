@@ -1,7 +1,7 @@
 import { Inject, Module, OnModuleInit } from '@nestjs/common';
 import { ElizaAgentController } from './eliza-agent.controller';
 import { DockerService } from './services/docker.service';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ServiceTokens } from './interfaces';
 import { ElizaAgentQueryService } from './services/eliza-agent-query.service';
 import { ElizaAgentLifecycleService } from './services/eliza-agent-lifecycle.service';

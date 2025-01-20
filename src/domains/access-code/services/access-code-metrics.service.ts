@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IAccessCodeMetricsService } from '../interfaces';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class AccessCodeMetricsService implements IAccessCodeMetricsService {

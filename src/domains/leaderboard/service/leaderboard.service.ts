@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ILeaderboardService } from '../interfaces/leaderboard.interface';
 import { LeaderboardEntry } from '../entities/leaderboard.entity';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class LeaderboardService implements ILeaderboardService {

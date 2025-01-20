@@ -1,4 +1,3 @@
-// src/shared/infrastructure/auth/constants/auth.constants.ts
 export const AUTH_CONSTANTS = {
   METADATA: {
     API_KEY_PROTECTED: 'API_KEY_PROTECTED',

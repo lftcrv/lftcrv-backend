@@ -4,7 +4,7 @@ import * as Docker from 'dockerode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { AgentStatus } from '@prisma/client';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class DockerService implements IDockerService, OnModuleInit {

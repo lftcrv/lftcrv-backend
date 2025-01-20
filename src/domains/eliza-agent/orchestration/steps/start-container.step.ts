@@ -42,9 +42,6 @@ export class StartContainerStep extends BaseStepExecutor {
           runtimeAgentId,
           status: AgentStatus.RUNNING,
         },
-        include: {
-          LatestMarketData: true,
-        },
       });
 
       return this.success(updatedAgent, { runtimeAgentId });

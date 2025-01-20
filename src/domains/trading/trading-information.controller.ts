@@ -7,9 +7,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
+import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { ITradingInformation, TradingInformationTokens } from './interfaces';
-import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
+import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { TradingInformation } from './entities/trading-information.entity';
 import { TradingInformationDto } from './dtos/trading-information.dto';
 

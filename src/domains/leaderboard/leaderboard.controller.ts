@@ -1,8 +1,8 @@
 import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
+import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { ILeaderboardService, LeaderboardTokens } from './interfaces';
-import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
+import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 
 @ApiTags('Leaderboard')
 @Controller('api/leaderboard')

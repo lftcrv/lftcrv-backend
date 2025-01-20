@@ -6,12 +6,14 @@ import {
   StepExecutionResult,
 } from 'src/domains/orchestration/interfaces';
 import { BaseStepExecutor } from 'src/domains/orchestration/services/base-step-executor';
+import { PrismaService } from 'src/shared/prisma/prisma.service';
 
 @Injectable()
 export class CreateContainerStep extends BaseStepExecutor {
   constructor(
     @Inject(ServiceTokens.Docker)
     private readonly dockerService: IDockerService,
+    private readonly prisma: PrismaService,
   ) {
     super({
       stepId: 'create-container',
@@ -24,12 +26,22 @@ export class CreateContainerStep extends BaseStepExecutor {
     try {
       const dto = context.data;
 
+      const { agentId } = context.metadata;
+
       const { containerId, port } = await this.dockerService.createContainer({
         name: dto.name,
         characterConfig: dto.characterConfig,
       });
 
-      return this.success(null, { containerId, port });
+      const updatedAgent = await this.prisma.elizaAgent.update({
+        where: { id: agentId },
+        data: {
+          containerId,
+          port,
+        },
+      });
+
+      return this.success(updatedAgent, { containerId, port });
     } catch (error) {
       return this.failure(`Failed to create container: ${error.message}`);
     }

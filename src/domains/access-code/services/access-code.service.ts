@@ -5,7 +5,7 @@ import {
   IAccessCodeGenerator,
   IAccessCodeService,
 } from '../interfaces';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { PrismaService } from '../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class AccessCodeService implements IAccessCodeService {
