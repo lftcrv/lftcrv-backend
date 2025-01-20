@@ -1,9 +1,11 @@
-import { IDockerService } from './docker-service.interface';
-import { IElizaAgentService } from './eliza-agent-service.interface';
-
-export type { IDockerService, IElizaAgentService };
+export * from './eliza-agent-create.interface';
+export * from './eliza-agent-query.interface';
+export * from './eliza-agent-lifecycle.interface';
+export * from './docker-service.interface';
 
 export const ServiceTokens = {
   Docker: Symbol('IDockerService'),
-  ElizaAgent: Symbol('IElizaAgentService'),
+  ElizaAgentCreate: Symbol('IElizaAgentCreateService'),
+  ElizaAgentQuery: Symbol('IElizaAgentQueryService'),
+  ElizaAgentLifecycle: Symbol('IElizaAgentLifecycleService'),
 } as const;

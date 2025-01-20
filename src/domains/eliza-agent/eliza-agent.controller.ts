@@ -8,22 +8,31 @@ import {
   Inject,
   NotFoundException,
   InternalServerErrorException,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { CreateElizaAgentDto } from './dtos/eliza-agent.dto';
 import { ElizaAgent } from './entities/eliza-agent.entity';
-import { IElizaAgentService } from './interfaces/eliza-agent-service.interface';
-import { ServiceTokens } from './interfaces';
+import {
+  IElizaAgentCreateService,
+  IElizaAgentQueryService,
+  IElizaAgentLifecycleService,
+  ServiceTokens,
+} from './interfaces';
 
 @ApiTags('Eliza Agents')
 @Controller('api/eliza-agent')
 @UseInterceptors(LoggingInterceptor)
 export class ElizaAgentController {
   constructor(
-    @Inject(ServiceTokens.ElizaAgent)
-    private readonly elizaAgentService: IElizaAgentService,
+    @Inject(ServiceTokens.ElizaAgentCreate)
+    private readonly createService: IElizaAgentCreateService,
+    @Inject(ServiceTokens.ElizaAgentQuery)
+    private readonly queryService: IElizaAgentQueryService,
+    @Inject(ServiceTokens.ElizaAgentLifecycle)
+    private readonly lifecycleService: IElizaAgentLifecycleService,
   ) {}
 
   @Post()
@@ -31,14 +40,12 @@ export class ElizaAgentController {
   @ApiOperation({ summary: 'Create a new Eliza agent' })
   @ApiResponse({
     status: 201,
-    description:
-      'Agent created successfully. Returns database ID, container ID, and runtime ID when available',
+    description: 'Agent created successfully',
     type: ElizaAgent,
   })
-  @ApiResponse({ status: 400, description: 'Invalid configuration provided' })
   async createAgent(@Body() dto: CreateElizaAgentDto) {
     try {
-      const agent = await this.elizaAgentService.createAgent(dto);
+      const agent = await this.createService.createAgent(dto);
       return {
         status: 'success',
         data: {
@@ -68,7 +75,7 @@ export class ElizaAgentController {
     type: [ElizaAgent],
   })
   async listAgents() {
-    const agents = await this.elizaAgentService.listAgents();
+    const agents = await this.queryService.listAgents();
     return {
       status: 'success',
       data: { agents },
@@ -84,14 +91,37 @@ export class ElizaAgentController {
     type: [ElizaAgent],
   })
   async listRunningAgents() {
-    const agents = await this.elizaAgentService.listRunningAgents();
+    const agents = await this.queryService.listRunningAgents();
     return {
       status: 'success',
       data: { agents },
     };
   }
 
-  @Get(':id') // databaseID of the agent
+  @Get('search')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Search for Eliza agents by name or token' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of matching agents retrieved successfully',
+    type: [ElizaAgent],
+  })
+  async searchAgents(@Query('term') searchTerm: string) {
+    if (!searchTerm || searchTerm.trim().length === 0) {
+      return {
+        status: 'success',
+        data: { agents: [] },
+      };
+    }
+
+    const agents = await this.queryService.searchAgents(searchTerm);
+    return {
+      status: 'success',
+      data: { agents },
+    };
+  }
+
+  @Get(':id')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get a specific Eliza agent' })
   @ApiParam({ name: 'id', description: 'Agent Database ID' })
@@ -100,9 +130,8 @@ export class ElizaAgentController {
     description: 'Agent retrieved successfully',
     type: ElizaAgent,
   })
-  @ApiResponse({ status: 404, description: 'Agent not found' })
   async getAgent(@Param('id') id: string) {
-    const agent = await this.elizaAgentService.getAgent(id);
+    const agent = await this.queryService.getAgent(id);
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
@@ -112,15 +141,14 @@ export class ElizaAgentController {
     };
   }
 
-  @Post(':id/start') // databaseID of the agent
+  @Post(':id/start')
   @RequireApiKey()
   @ApiOperation({ summary: 'Start a specific Eliza agent' })
   @ApiParam({ name: 'id', description: 'Agent Database ID' })
   @ApiResponse({ status: 200, description: 'Agent started successfully' })
-  @ApiResponse({ status: 404, description: 'Agent not found' })
   async startAgent(@Param('id') id: string) {
     try {
-      await this.elizaAgentService.startAgent(id);
+      await this.lifecycleService.startAgent(id);
       return {
         status: 'success',
         message: 'Agent started successfully',
@@ -135,15 +163,14 @@ export class ElizaAgentController {
     }
   }
 
-  @Post(':id/stop') // databaseID of the agent
+  @Post(':id/stop')
   @RequireApiKey()
   @ApiOperation({ summary: 'Stop a specific Eliza agent' })
   @ApiParam({ name: 'id', description: 'Agent Database ID' })
   @ApiResponse({ status: 200, description: 'Agent stopped successfully' })
-  @ApiResponse({ status: 404, description: 'Agent not found' })
   async stopAgent(@Param('id') id: string) {
     try {
-      await this.elizaAgentService.stopAgent(id);
+      await this.lifecycleService.stopAgent(id);
       return {
         status: 'success',
         message: 'Agent stopped successfully',
@@ -167,7 +194,7 @@ export class ElizaAgentController {
     type: [ElizaAgent],
   })
   async listLatestAgents() {
-    const agents = await this.elizaAgentService.listLatestAgents();
+    const agents = await this.queryService.listLatestAgents();
     return {
       status: 'success',
       data: { agents },
