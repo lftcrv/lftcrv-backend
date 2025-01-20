@@ -1,5 +1,5 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IElizaAgentService } from '../interfaces/eliza-agent-service.interface';
+import { Injectable, Inject } from '@nestjs/common';
+import { IElizaAgentCreateService } from '../interfaces';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import {
@@ -11,7 +11,7 @@ import { CreateElizaAgentDto } from '../dtos/eliza-agent.dto';
 import { ServiceTokens } from '../interfaces';
 
 @Injectable()
-export class ElizaAgentService implements IElizaAgentService {
+export class ElizaAgentCreateService implements IElizaAgentCreateService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(ServiceTokens.Docker)
@@ -24,7 +24,6 @@ export class ElizaAgentService implements IElizaAgentService {
       characterConfig: dto.characterConfig,
     });
 
-    // Create the agent with the new default fields
     const agent = await this.prisma.elizaAgent.create({
       data: {
         name: dto.name,
@@ -50,12 +49,11 @@ export class ElizaAgentService implements IElizaAgentService {
     });
 
     await this.dockerService.startContainer(containerId);
-
     const runtimeAgentId =
       await this.dockerService.getRuntimeAgentId(containerId);
 
     if (runtimeAgentId) {
-      const updatedAgent = await this.prisma.elizaAgent.update({
+      return this.prisma.elizaAgent.update({
         where: { id: agent.id },
         data: {
           runtimeAgentId,
@@ -65,73 +63,10 @@ export class ElizaAgentService implements IElizaAgentService {
           LatestMarketData: true,
         },
       });
-      return updatedAgent;
     }
 
     console.warn(`Could not retrieve runtime ID for agent ${agent.id}`);
     return agent;
-  }
-
-  async getAgent(id: string): Promise<ElizaAgent> {
-    const agent = await this.prisma.elizaAgent.findUnique({
-      where: { id },
-      include: {
-        LatestMarketData: true, // Include related data
-        TradingInformation: true,
-      },
-    });
-    if (!agent) {
-      throw new NotFoundException(`Agent with ID ${id} not found`);
-    }
-    return agent;
-  }
-
-  async listAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany({
-      include: {
-        LatestMarketData: true,
-      },
-    });
-  }
-
-  async listRunningAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany({
-      where: { status: AgentStatus.RUNNING },
-      include: {
-        LatestMarketData: true,
-      },
-    });
-  }
-
-  async listLatestAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        LatestMarketData: true,
-      },
-    });
-  }
-
-  async stopAgent(id: string): Promise<void> {
-    const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
-    if (agent && agent.containerId) {
-      await this.dockerService.stopContainer(agent.containerId);
-      await this.prisma.elizaAgent.update({
-        where: { id },
-        data: { status: AgentStatus.STARTING },
-      });
-    }
-  }
-
-  async startAgent(id: string): Promise<void> {
-    const agent = await this.prisma.elizaAgent.findUnique({ where: { id } });
-    if (agent && agent.containerId) {
-      await this.dockerService.startContainer(agent.containerId);
-      await this.prisma.elizaAgent.update({
-        where: { id },
-        data: { status: AgentStatus.RUNNING },
-      });
-    }
   }
 
   async updateMarketData(
