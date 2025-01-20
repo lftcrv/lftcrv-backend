@@ -32,11 +32,13 @@ CREATE TABLE "eliza_agents" (
     "curveSide" "CurveSide" NOT NULL,
     "status" "AgentStatus" NOT NULL DEFAULT 'STARTING',
     "containerId" TEXT,
+    "runtimeAgentId" TEXT,
+    "port" INTEGER,
     "characterConfig" JSONB NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "degenScore" DOUBLE PRECISION,
-    "winScore" DOUBLE PRECISION,
+    "degenScore" DOUBLE PRECISION DEFAULT 0,
+    "winScore" DOUBLE PRECISION DEFAULT 0,
 
     CONSTRAINT "eliza_agents_pkey" PRIMARY KEY ("id")
 );
