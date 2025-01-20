@@ -29,12 +29,12 @@ export class DockerService implements IDockerService, OnModuleInit {
     const usedPorts = await this.prisma.elizaAgent.findMany({
       where: {
         port: { not: null },
-        status: { not: AgentStatus.STOPPED }
+        status: { not: AgentStatus.STOPPED },
       },
-      select: { port: true }
+      select: { port: true },
     });
 
-    const usedPortSet = new Set(usedPorts.map(a => a.port));
+    const usedPortSet = new Set(usedPorts.map((a) => a.port));
 
     // Chercher le premier port disponible
     for (let port = this.startPort; port <= this.maxPort; port++) {
@@ -80,9 +80,11 @@ export class DockerService implements IDockerService, OnModuleInit {
    * @param config Container configuration including name and character settings
    * @returns Container ID, Port used
    */
-  async createContainer(config: Record<string, any>): Promise<{ containerId: string; port: number }> {
+  async createContainer(
+    config: Record<string, any>,
+  ): Promise<{ containerId: string; port: number }> {
     const port = await this.findAvailablePort();
-    
+
     const agentDataPath = path.join(this.dataPath, config.name);
     await fs.mkdir(agentDataPath, { recursive: true });
 
@@ -111,21 +113,25 @@ export class DockerService implements IDockerService, OnModuleInit {
           `${agentDataPath}:/app/agent/data`,
         ],
         PortBindings: {
-          '3000/tcp': [{ HostPort: port.toString() }]
-        }
+          '3000/tcp': [{ HostPort: port.toString() }],
+        },
       },
       ExposedPorts: {
-        '3000/tcp': {}
-      }
+        '3000/tcp': {},
+      },
     });
 
     return { containerId: container.id, port };
   }
 
-  private async waitForLog(containerId: string, timeoutMs = 300000, intervalMs = 5000): Promise<string | null> {
+  private async waitForLog(
+    containerId: string,
+    timeoutMs = 300000,
+    intervalMs = 5000,
+  ): Promise<string | null> {
     const startTime = Date.now();
     const container = this.docker.getContainer(containerId);
-    
+
     while (Date.now() - startTime < timeoutMs) {
       try {
         // Get logs since container start
@@ -133,32 +139,34 @@ export class DockerService implements IDockerService, OnModuleInit {
           stdout: true,
           stderr: true,
           timestamps: true,
-          since: Math.floor(startTime / 1000)
+          since: Math.floor(startTime / 1000),
         });
 
         const logsStr = logs.toString('utf8');
         const match = logsStr.match(/Agent ID[^\n]*\n[^\n]*([a-f0-9-]{36})/);
-        
+
         if (match && match[1]) {
           return match[1];
         }
 
         // Wait before next attempt
-        await new Promise(resolve => setTimeout(resolve, intervalMs));
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
       } catch (error) {
         console.error('Error reading container logs:', error);
-        await new Promise(resolve => setTimeout(resolve, intervalMs));
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
       }
     }
 
-    console.warn(`Timeout reached while waiting for Agent ID in container ${containerId}`);
+    console.warn(
+      `Timeout reached while waiting for Agent ID in container ${containerId}`,
+    );
     return null;
   }
 
   async getRuntimeAgentId(containerId: string): Promise<string | null> {
     return this.waitForLog(containerId);
   }
-  
+
   /**
    * Starts a container by its ID
    * @param containerId The ID of the container to start

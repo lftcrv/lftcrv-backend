@@ -53,6 +53,20 @@ CREATE TABLE "trading_information" (
     CONSTRAINT "trading_information_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "latest_market_data" (
+    "id" TEXT NOT NULL,
+    "elizaAgentId" TEXT NOT NULL,
+    "price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "priceChange24h" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "holders" INTEGER NOT NULL DEFAULT 0,
+    "marketCap" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "latest_market_data_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "OTP_code_key" ON "OTP"("code");
 
@@ -65,5 +79,23 @@ CREATE INDEX "FailedAttempt_createdAt_idx" ON "FailedAttempt"("createdAt");
 -- CreateIndex
 CREATE INDEX "FailedAttempt_codeHash_idx" ON "FailedAttempt"("codeHash");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "latest_market_data_elizaAgentId_key" ON "latest_market_data"("elizaAgentId");
+
+-- CreateIndex
+CREATE INDEX "latest_market_data_price_idx" ON "latest_market_data"("price");
+
+-- CreateIndex
+CREATE INDEX "latest_market_data_priceChange24h_idx" ON "latest_market_data"("priceChange24h");
+
+-- CreateIndex
+CREATE INDEX "latest_market_data_holders_idx" ON "latest_market_data"("holders");
+
+-- CreateIndex
+CREATE INDEX "latest_market_data_marketCap_idx" ON "latest_market_data"("marketCap");
+
 -- AddForeignKey
 ALTER TABLE "trading_information" ADD CONSTRAINT "trading_information_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "latest_market_data" ADD CONSTRAINT "latest_market_data_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
