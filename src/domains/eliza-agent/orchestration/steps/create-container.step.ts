@@ -4,9 +4,9 @@ import { ServiceTokens } from '../../interfaces';
 import {
   StepExecutionContext,
   StepExecutionResult,
-} from 'src/domains/orchestration/interfaces';
-import { BaseStepExecutor } from 'src/domains/orchestration/services/base-step-executor';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+} from '../../../../domains/orchestration/interfaces';
+import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
+import { PrismaService } from '../../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class CreateContainerStep extends BaseStepExecutor {
