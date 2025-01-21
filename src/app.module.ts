@@ -15,6 +15,7 @@ import { TasksModule } from './cron/tasks.module';
 import { MessageModule } from './message/message.module';
 import { TradingInformationModule } from './domains/trading/trading-information.module';
 import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
+import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
     TasksModule,
     MessageModule,
     LeaderboardModule,
+    StarknetModule,
   ],
   controllers: [AppController],
   providers: [AppService],
