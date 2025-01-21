@@ -12,9 +12,20 @@ if [ ! -f .env ]; then
     echo "Please update the .env file with your local settings if necessary."
 fi
 
-# Install dependencies
-echo "Installing dependencies..."
+# Install main project dependencies
+echo "Installing main project dependencies..."
 pnpm install
+
+# Install infrastructure project dependencies
+echo "Installing infrastructure project dependencies..."
+if [ -d "infrastructure" ]; then
+    cd infrastructure
+    pnpm install
+    cd ..
+    echo "Infrastructure dependencies installed successfully!"
+else
+    echo "Warning: Infrastructure directory not found. Skipping infrastructure setup."
+fi
 
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
