@@ -1,3 +1,4 @@
+// domains/eliza-agent/eliza-agent.module.ts
 import { Inject, Module, OnModuleInit } from '@nestjs/common';
 import { ElizaAgentController } from './eliza-agent.controller';
 import { DockerService } from './services/docker.service';
@@ -6,6 +7,9 @@ import { ServiceTokens } from './interfaces';
 import { ElizaAgentQueryService } from './services/eliza-agent-query.service';
 import { ElizaAgentLifecycleService } from './services/eliza-agent-lifecycle.service';
 import { CreateDbRecordStep } from './orchestration/steps/db-record.step';
+import { CreateWalletStep } from './orchestration/steps/create-wallet.step';
+import { FundWalletStep } from './orchestration/steps/fund-wallet.step';
+import { DeployWalletStep } from './orchestration/steps/deploy-wallet.step';
 import { CreateContainerStep } from './orchestration/steps/create-container.step';
 import { StartContainerStep } from './orchestration/steps/start-container.step';
 import {
@@ -15,12 +19,16 @@ import {
 } from '../orchestration/interfaces';
 import { AGENT_CREATION_DEFINITION } from './orchestration/agent-creation.definition';
 import { OrchestrationModule } from '../orchestration/orchestration.module';
+import { StarknetModule } from '../blockchain/starknet/starknet.module';
 
 @Module({
-  imports: [OrchestrationModule],
+  imports: [OrchestrationModule, StarknetModule],
   controllers: [ElizaAgentController],
   providers: [
     CreateDbRecordStep,
+    CreateWalletStep,
+    FundWalletStep,
+    DeployWalletStep,
     CreateContainerStep,
     StartContainerStep,
     {
@@ -45,6 +53,9 @@ export class ElizaAgentModule implements OnModuleInit {
     @Inject(OrchestrationServiceTokens.StepExecutorRegistry)
     private readonly executorRegistry: IStepExecutorRegistry,
     private readonly createDbRecordStep: CreateDbRecordStep,
+    private readonly createWalletStep: CreateWalletStep,
+    private readonly fundWalletStep: FundWalletStep,
+    private readonly deployWalletStep: DeployWalletStep,
     private readonly createContainerStep: CreateContainerStep,
     private readonly startContainerStep: StartContainerStep,
   ) {}
@@ -55,6 +66,9 @@ export class ElizaAgentModule implements OnModuleInit {
 
     // Register step executors
     this.executorRegistry.register(this.createDbRecordStep);
+    this.executorRegistry.register(this.createWalletStep);
+    this.executorRegistry.register(this.fundWalletStep);
+    this.executorRegistry.register(this.deployWalletStep);
     this.executorRegistry.register(this.createContainerStep);
     this.executorRegistry.register(this.startContainerStep);
   }

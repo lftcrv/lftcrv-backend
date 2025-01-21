@@ -54,6 +54,7 @@ model ElizaAgent {
   degenScore     Float? @default(0)
   winScore       Float? @default(0)
   LatestMarketData     LatestMarketData?
+  Wallet           AgentWallet?
 
   @@map("eliza_agents")
 }
@@ -110,4 +111,20 @@ model Orchestration {
   @@index([status])
   @@index([createdAt])
   @@map("orchestrations")
+}
+
+model AgentWallet {
+  id                    String     @id @default(uuid())
+  privateKey            String
+  publicKey            String
+  contractAddress      String
+  fundTransactionHash  String?
+  deployTransactionHash String?
+  deployedAddress      String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  elizaAgentId   String      @unique
+  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
+
+  @@map("agent_wallet")
 }
