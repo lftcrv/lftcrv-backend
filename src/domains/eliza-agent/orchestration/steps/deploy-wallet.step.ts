@@ -27,11 +27,12 @@ export class DeployWalletStep extends BaseStepExecutor {
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const { fundedWallet } = context.metadata;
-      const deployedWallet = await this.walletService.deployWallet(fundedWallet);
+      const deployedWallet =
+        await this.walletService.deployWallet(fundedWallet);
 
       // Update wallet record with deployment info
-      const updatedWallet = await this.prisma.AgentWallet.update({
-        where: { agentId: context.metadata.agentId },
+      const updatedWallet = await this.prisma.agentWallet.update({
+        where: { elizaAgentId: context.metadata.agentId },
         data: {
           deployTransactionHash: deployedWallet.deployTransactionHash,
           deployedAddress: deployedWallet.deployedContractAddress,
