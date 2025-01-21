@@ -20,6 +20,7 @@ import {
 import { AGENT_CREATION_DEFINITION } from './orchestration/agent-creation.definition';
 import { OrchestrationModule } from '../orchestration/orchestration.module';
 import { StarknetModule } from '../blockchain/starknet/starknet.module';
+import { ElizaConfigService } from './services/eliza-config.service';
 
 @Module({
   imports: [OrchestrationModule, StarknetModule],
@@ -42,6 +43,10 @@ import { StarknetModule } from '../blockchain/starknet/starknet.module';
     {
       provide: ServiceTokens.Docker,
       useClass: DockerService,
+    },
+    {
+      provide: ServiceTokens.ElizaConfig,
+      useClass: ElizaConfigService,
     },
     PrismaService,
   ],

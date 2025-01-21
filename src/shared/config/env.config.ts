@@ -8,6 +8,7 @@ export interface EnvironmentVariables {
   ETH_TOKEN_ADDRESS: string;
   OZ_ACCOUNT_CLASSHASH: string;
   NODE_URL: string;
+  ANTHROPIC_API_KEY: string;
 }
 
 export const environmentConfig = () => ({
@@ -20,6 +21,7 @@ export const environmentConfig = () => ({
   nodeUrl: process.env.NODE_URL,
   ethTokenAddress: process.env.ETH_TOKEN_ADDRESS,
   ozAccountClassHash: process.env.OZ_ACCOUNT_CLASSHASH,
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export const validationSchema = {
@@ -46,5 +48,9 @@ export const validationSchema = {
   OZ_ACCOUNT_CLASSHASH: {
     required: true,
     message: 'OZ_ACCOUNT_CLASSHASH is required for agent deployment',
+  },
+  ANTHROPIC_API_KEY: {
+    required: true,
+    message: 'ANTHROPIC_API_KEY is required for agent deployment',
   },
 };

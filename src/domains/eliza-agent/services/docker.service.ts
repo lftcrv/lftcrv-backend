@@ -1,10 +1,16 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import * as Docker from 'dockerode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { AgentStatus } from '@prisma/client';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
+import {
+  CreateElizaContainerConfig,
+  ElizaContainerResult,
+  IElizaConfigService,
+  ServiceTokens,
+} from '../interfaces';
 
 @Injectable()
 export class DockerService implements IDockerService, OnModuleInit {
@@ -16,7 +22,11 @@ export class DockerService implements IDockerService, OnModuleInit {
   private readonly startPort = 3001;
   private readonly maxPort = 3999;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(ServiceTokens.ElizaConfig)
+    private readonly elizaConfig: IElizaConfigService,
+  ) {
     this.docker = new Docker();
     this.elizaBasePath = path.join(process.cwd(), 'docker', 'eliza');
     this.elizaEnvPath = path.join(this.elizaBasePath, '.env');
@@ -81,8 +91,8 @@ export class DockerService implements IDockerService, OnModuleInit {
    * @returns Container ID, Port used
    */
   async createContainer(
-    config: Record<string, any>,
-  ): Promise<{ containerId: string; port: number }> {
+    config: CreateElizaContainerConfig,
+  ): Promise<ElizaContainerResult> {
     const port = await this.findAvailablePort();
 
     const agentDataPath = path.join(this.dataPath, config.name);
@@ -97,10 +107,13 @@ export class DockerService implements IDockerService, OnModuleInit {
       JSON.stringify(config.characterConfig, null, 2),
     );
 
+    // Generate environment variables for the container
+    const containerEnv = this.elizaConfig.generateContainerEnv(config);
+
     const container = await this.docker.createContainer({
       Image: 'julienbrs/eliza:latest',
       name: `eliza-${config.name}`,
-      Env: ['SERVER_PORT=3000'],
+      Env: containerEnv,
       Cmd: [
         'pnpm',
         'start',
@@ -108,7 +121,6 @@ export class DockerService implements IDockerService, OnModuleInit {
       ],
       HostConfig: {
         Binds: [
-          `${this.elizaEnvPath}:/app/.env:ro`,
           `${characterPath}:/app/characters/${config.name}.character.json`,
           `${agentDataPath}:/app/agent/data`,
         ],
@@ -121,7 +133,10 @@ export class DockerService implements IDockerService, OnModuleInit {
       },
     });
 
-    return { containerId: container.id, port };
+    const containerId = container.id;
+    const runtimeAgentId = await this.getRuntimeAgentId(containerId);
+
+    return { containerId, port, runtimeAgentId };
   }
 
   private async waitForLog(
