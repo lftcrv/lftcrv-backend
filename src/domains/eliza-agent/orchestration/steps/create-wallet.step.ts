@@ -30,12 +30,12 @@ export class CreateWalletStep extends BaseStepExecutor {
       const wallet = this.walletService.createWallet();
 
       // Create wallet record in database
-      const agentWallet = await this.prisma.AgentWallet.create({
+      const agentWallet = await this.prisma.agentWallet.create({
         data: {
           privateKey: wallet.privateKey,
           publicKey: wallet.starkKeyPub,
           contractAddress: wallet.ozContractAddress,
-          agentId,
+          elizaAgentId: agentId,
         },
       });
 
