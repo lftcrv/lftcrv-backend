@@ -16,6 +16,7 @@ import { MessageModule } from './message/message.module';
 import { TradingInformationModule } from './domains/trading/trading-information.module';
 import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
 import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
+import { BondingCurveModule } from './domains/bonding-curve/bonding-curve.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
     MessageModule,
     LeaderboardModule,
     StarknetModule,
+    BondingCurveModule,
   ],
   controllers: [AppController],
   providers: [AppService],
