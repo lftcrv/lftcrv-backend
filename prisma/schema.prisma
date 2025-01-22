@@ -55,6 +55,7 @@ model ElizaAgent {
   winScore       Float? @default(0)
   LatestMarketData     LatestMarketData?
   Wallet           AgentWallet?
+  Token            AgentToken?
 
   @@map("eliza_agents")
 }
@@ -127,4 +128,15 @@ model AgentWallet {
   elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
 
   @@map("agent_wallet")
+}
+
+model AgentToken {
+  id                   String     @id @default(uuid())
+  token                String
+  symbol               String
+  contratAddress       String
+  elizaAgentId   String      @unique
+  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
+
+  @@map("agent_token")
 }

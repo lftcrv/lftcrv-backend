@@ -20,7 +20,7 @@ export class StartContainerStep extends BaseStepExecutor {
     super({
       stepId: 'start-container',
       stepType: 'agent-creation',
-      priority: 3,
+      priority: 7,
     });
   }
 

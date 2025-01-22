@@ -103,6 +103,17 @@ CREATE TABLE "agent_wallet" (
     CONSTRAINT "agent_wallet_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "agent_token" (
+    "id" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "symbol" TEXT NOT NULL,
+    "contratAddress" TEXT NOT NULL,
+    "elizaAgentId" TEXT NOT NULL,
+
+    CONSTRAINT "agent_token_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "OTP_code_key" ON "OTP"("code");
 
@@ -142,6 +153,9 @@ CREATE INDEX "orchestrations_createdAt_idx" ON "orchestrations"("createdAt");
 -- CreateIndex
 CREATE UNIQUE INDEX "agent_wallet_elizaAgentId_key" ON "agent_wallet"("elizaAgentId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "agent_token_elizaAgentId_key" ON "agent_token"("elizaAgentId");
+
 -- AddForeignKey
 ALTER TABLE "trading_information" ADD CONSTRAINT "trading_information_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -150,3 +164,6 @@ ALTER TABLE "latest_market_data" ADD CONSTRAINT "latest_market_data_elizaAgentId
 
 -- AddForeignKey
 ALTER TABLE "agent_wallet" ADD CONSTRAINT "agent_wallet_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "agent_token" ADD CONSTRAINT "agent_token_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
