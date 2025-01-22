@@ -33,8 +33,8 @@ export class CreateAgentTokenService implements ICreateAgentToken {
       _owner: this.configService.get('OWNER_WALLET'),
       _name: name,
       _symbol: symbol,
-      price_x1e9: this.configService.get('PRICE'),
-      exponent_x1e9: this.configService.get('EXPONENT'),
+      price_x1e18: this.configService.get('PRICE'),
+      exponent_x1e18: this.configService.get('EXPONENT'),
       buy_tax_percentage_x100: this.configService.get('BUY_TAX_PERCENTAGE'),
       sell_tax_percentage_x100: this.configService.get('SELL_TAX_PERCENTAGE'),
     };
