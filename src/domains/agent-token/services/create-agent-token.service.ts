@@ -1,24 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { ICreateBondingCurve } from '../interfaces';
+import { ICreateAgentToken } from '../interfaces';
 import { ConfigService } from '@nestjs/config';
 import { Account, CallData, Contract, RpcProvider } from 'starknet';
 import * as contractClassJson from '../contracts/tax_erc20_BondingCurve.contract_class.json';
 import * as compiledContractJson from '../contracts/tax_erc20_BondingCurve.compiled_contract_class.json';
 import {
-  CreateBondingCurveContract,
-  CreateBondingCurveProps,
-} from '../interfaces/create-bonding-curve.interface';
+  CreateAgentTokenContract,
+  CreateAgentTokenProps,
+} from '../interfaces/create-agent-token.interface';
 
 export const contractJson = contractClassJson;
 export const csmJson = compiledContractJson;
 
 @Injectable()
-export class CreateBondingCurveService implements ICreateBondingCurve {
+export class CreateAgentTokenService implements ICreateAgentToken {
   constructor(private readonly configService: ConfigService) {}
-  async createBondingCurve({
+  async createAgentToken({
     name,
     symbol,
-  }: CreateBondingCurveProps): Promise<CreateBondingCurveContract> {
+  }: CreateAgentTokenProps): Promise<CreateAgentTokenContract> {
     const provider = new RpcProvider({
       nodeUrl: `${this.configService.get('NODE_URL')}`,
     });
@@ -29,7 +29,7 @@ export class CreateBondingCurveService implements ICreateBondingCurve {
     const account = new Account(provider, accountAddress, privateKey);
 
     const args = {
-      _protocol_wallet: this.configService.get('ADMIN_WALLET_PK'),
+      _protocol_wallet: this.configService.get('PROTOCOL_WALLET'),
       _owner: this.configService.get('OWNER_WALLET'),
       _name: name,
       _symbol: symbol,
