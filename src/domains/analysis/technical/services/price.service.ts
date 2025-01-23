@@ -1,20 +1,18 @@
-import { Injectable } from "@nestjs/common";
-import { PriceDTO } from "../dto/price.dto";
+import { Injectable } from '@nestjs/common';
+import { PriceDTO } from '../dto/price.dto';
 
 @Injectable()
 export class PriceService {
-    constructor(
-    ) {}
+  constructor() {}
 
-    async getCurrentPrice(token: string): Promise<number> {
-        return;
-    }
+  async getCurrentPrice(token: string): Promise<number> {
+    return;
+  }
 
-    async getHistoricalPrices(
-        token: string, 
-        timeframe: string
-    ): Promise<PriceDTO[]> {
-        return
-    }
+  async getHistoricalPrices(
+    token: string,
+    timeframe: string,
+  ): Promise<PriceDTO[]> {
+    return;
+  }
 }
-
