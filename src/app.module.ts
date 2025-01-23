@@ -17,6 +17,7 @@ import { TradingInformationModule } from './domains/trading/trading-information.
 import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
 import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
 import { AgentTokenModule } from './domains/agent-token/agent-token.module';
+import { BlockchainModule } from './shared/blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { AgentTokenModule } from './domains/agent-token/agent-token.module';
       global: true,
     },
     PrismaModule,
+    BlockchainModule,
     AccessCodeModule,
     HealthModule,
     ElizaAgentModule,

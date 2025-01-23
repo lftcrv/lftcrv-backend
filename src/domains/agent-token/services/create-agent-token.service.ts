@@ -1,32 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ICreateAgentToken } from '../interfaces';
 import { ConfigService } from '@nestjs/config';
-import { Account, CallData, Contract, RpcProvider } from 'starknet';
+import { CallData, Contract } from 'starknet';
 import * as contractClassJson from '../contracts/tax_erc20_BondingCurve.contract_class.json';
 import * as compiledContractJson from '../contracts/tax_erc20_BondingCurve.compiled_contract_class.json';
 import {
   CreateAgentTokenContract,
   CreateAgentTokenProps,
 } from '../interfaces/create-agent-token.interface';
+import {
+  BlockchainTokens,
+  IAccountService,
+  IProviderService,
+} from 'src/shared/blockchain/interfaces';
 
 export const contractJson = contractClassJson;
 export const csmJson = compiledContractJson;
 
 @Injectable()
 export class CreateAgentTokenService implements ICreateAgentToken {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(BlockchainTokens.Provider)
+    private readonly providerService: IProviderService,
+    @Inject(BlockchainTokens.Account)
+    private readonly accountService: IAccountService,
+  ) {}
   async createAgentToken({
     name,
     symbol,
   }: CreateAgentTokenProps): Promise<CreateAgentTokenContract> {
-    const provider = new RpcProvider({
-      nodeUrl: `${this.configService.get('NODE_URL')}`,
-    });
+    const provider = this.providerService.getProvider();
 
-    const privateKey = this.configService.get('ADMIN_WALLET_PK');
-    const accountAddress = this.configService.get('ADMIN_WALLET_ADDRESS');
-
-    const account = new Account(provider, accountAddress, privateKey);
+    const account = this.accountService.getAdminAccount();
 
     const args = {
       _protocol_wallet: this.configService.get('PROTOCOL_WALLET'),
