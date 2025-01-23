@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import {
+  CrossoverResult,
+  IMovingAverageService,
+} from '../interfaces/moving-average.interface';
 
 @Injectable()
-export class MovingAverageService {
+export class MovingAverageService implements IMovingAverageService {
   calculateSMA(prices: number[], period: number): number[] {
     if (
       !prices ||
@@ -22,6 +26,7 @@ export class MovingAverageService {
       sum = sum - prices[i - period] + prices[i];
       sma.push(sum / period);
     }
+
     return sma;
   }
 
@@ -44,20 +49,17 @@ export class MovingAverageService {
       const value = (prices[i] - ema[i - 1]) * multiplier + ema[i - 1];
       ema.push(value);
     }
+
     return ema;
   }
 
-  detectCrossover(
-    shortMA: number[],
-    longMA: number[],
-  ): { type: 'bullish' | 'bearish' | null; index: number; shortMA: number; longMA: number } {
+  detectCrossover(shortMA: number[], longMA: number[]): CrossoverResult {
     if (shortMA.length < 2 || longMA.length < 2) {
       throw new Error('Need at least 2 points to detect crossover');
     }
 
     const lastIndex = Math.min(shortMA.length, longMA.length) - 1;
     const prevIndex = lastIndex - 1;
-
     let type: 'bullish' | 'bearish' | null = null;
 
     // Bullish crossover: short MA crosses above long MA

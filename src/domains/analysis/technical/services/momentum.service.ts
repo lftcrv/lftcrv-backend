@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 
 interface MACDResult {
   macd: number[];
@@ -7,8 +7,8 @@ interface MACDResult {
 }
 
 interface StochasticResult {
-  k: number[];  // Fast stochastic
-  d: number[];  // Slow stochastic
+  k: number[]; // Fast stochastic
+  d: number[]; // Slow stochastic
 }
 
 @Injectable()
@@ -20,7 +20,7 @@ export class MomentumService {
 
     const gains: number[] = [];
     const losses: number[] = [];
-    
+
     // Calculate price changes
     for (let i = 1; i < prices.length; i++) {
       const change = prices[i] - prices[i - 1];
@@ -29,17 +29,19 @@ export class MomentumService {
     }
 
     const rsi: number[] = [];
-    let avgGain = gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period;
-    let avgLoss = losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period;
+    let avgGain =
+      gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period;
+    let avgLoss =
+      losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period;
 
     // Calculate initial RSI
-    rsi.push(100 - (100 / (1 + avgGain / avgLoss)));
+    rsi.push(100 - 100 / (1 + avgGain / avgLoss));
 
     // Calculate subsequent RSI values
     for (let i = period; i < gains.length; i++) {
-      avgGain = ((avgGain * (period - 1)) + gains[i]) / period;
-      avgLoss = ((avgLoss * (period - 1)) + losses[i]) / period;
-      rsi.push(100 - (100 / (1 + avgGain / avgLoss)));
+      avgGain = (avgGain * (period - 1) + gains[i]) / period;
+      avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+      rsi.push(100 - 100 / (1 + avgGain / avgLoss));
     }
 
     return rsi;
@@ -49,12 +51,12 @@ export class MomentumService {
     prices: number[],
     shortPeriod = 12,
     longPeriod = 26,
-    signalPeriod = 9
+    signalPeriod = 9,
   ): MACDResult {
     const getEMA = (data: number[], period: number): number[] => {
       const k = 2 / (period + 1);
       const ema: number[] = [data[0]];
-      
+
       for (let i = 1; i < data.length; i++) {
         ema.push(data[i] * k + ema[i - 1] * (1 - k));
       }
@@ -78,25 +80,29 @@ export class MomentumService {
 
     return { macd, signal, histogram };
   }
-  
+
   calculateStochastic(
     high: number[],
     low: number[],
     close: number[],
-    period: number = 14
+    period: number = 14,
   ): StochasticResult {
-    if (high.length !== low.length || low.length !== close.length || close.length < period) {
+    if (
+      high.length !== low.length ||
+      low.length !== close.length ||
+      close.length < period
+    ) {
       return { k: [], d: [] };
     }
 
     const k: number[] = [];
-    
+
     // Calculate %K
     for (let i = period - 1; i < close.length; i++) {
       const currentClose = close[i];
       const lowestLow = Math.min(...low.slice(i - period + 1, i + 1));
       const highestHigh = Math.max(...high.slice(i - period + 1, i + 1));
-      
+
       k.push(((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100);
     }
 
