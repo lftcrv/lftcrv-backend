@@ -36,7 +36,7 @@ export class CreateAgentTokenService implements ICreateAgentToken {
 
     const args = {
       _protocol_wallet: this.configService.get('PROTOCOL_WALLET'),
-      _owner: this.configService.get('OWNER_WALLET'),
+      _creator: this.configService.get('OWNER_WALLET'),
       _name: name,
       _symbol: symbol,
       price_x1e18: this.configService.get('PRICE'),
