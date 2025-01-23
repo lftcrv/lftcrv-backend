@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { IStarknetWallet } from '../interfaces';
 import {
   Account,
@@ -6,16 +6,26 @@ import {
   Contract,
   ec,
   hash,
-  RpcProvider,
   stark,
   uint256,
 } from 'starknet';
 import { ConfigService } from '@nestjs/config';
 import { OZWallet } from '../entities/wallet.entity';
+import {
+  BlockchainTokens,
+  IAccountService,
+  IProviderService,
+} from '../../../../shared/blockchain/interfaces';
 
 @Injectable()
 export class WalletService implements IStarknetWallet {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(BlockchainTokens.Provider)
+    private readonly providerService: IProviderService,
+    @Inject(BlockchainTokens.Account)
+    private readonly accountService: IAccountService,
+  ) {}
   createWallet(): OZWallet {
     const privateKey = stark.randomAddress();
 
@@ -44,19 +54,12 @@ export class WalletService implements IStarknetWallet {
 
   async transferFunds(ozWallet: OZWallet): Promise<OZWallet> {
     const AMOUNT = 100000000000000n; // 0.0001 ETH in wei
-    const nodeUrl = this.configService.get<string>('NODE_URL');
 
     // Initialize the provider
-    const provider = new RpcProvider({
-      nodeUrl,
-    });
+    const provider = this.providerService.getProvider();
 
     // Initialize the admin account
-    const adminAccount = new Account(
-      provider,
-      this.configService.get<string>('ADMIN_WALLET_ADDRESS'),
-      this.configService.get<string>('ADMIN_WALLET_PK'),
-    );
+    const adminAccount = this.accountService.getAdminAccount();
 
     const ethTokenAddress = this.configService.get<string>('ETH_TOKEN_ADDRESS');
 
@@ -93,9 +96,7 @@ export class WalletService implements IStarknetWallet {
   }
 
   async deployWallet(ozWallet: OZWallet): Promise<OZWallet> {
-    const provider = new RpcProvider({
-      nodeUrl: `${this.configService.get('NODE_URL')}`,
-    });
+    const provider = this.providerService.getProvider();
 
     const OZaccount = new Account(
       provider,
