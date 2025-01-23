@@ -41,6 +41,7 @@ export class CreateAgentTokenService implements ICreateAgentToken {
       _symbol: symbol,
       price_x1e18: this.configService.get('PRICE'),
       exponent_x1e18: this.configService.get('EXPONENT'),
+      _step: this.configService.get('STEP'),
       buy_tax_percentage_x100: this.configService.get('BUY_TAX_PERCENTAGE'),
       sell_tax_percentage_x100: this.configService.get('SELL_TAX_PERCENTAGE'),
     };
