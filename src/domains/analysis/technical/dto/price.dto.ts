@@ -1,8 +1,12 @@
-export interface PriceDTO {
+export interface BasePriceDTO {
     timestamp: number;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume: number;
+    price: number;
+}
+
+export interface PriceDTO extends BasePriceDTO {
+    open?: number;
+    high?: number;
+    low?: number;
+    close?: number;
+    volume?: number;
 }
