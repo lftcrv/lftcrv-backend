@@ -6,6 +6,7 @@ export class ElizaAgent {
   id: string;
   name: string;
   curveSide: CurveSide;
+  creatorWallet: string;
   status: AgentStatus;
   containerId?: string;
   runtimeAgentId?: string;

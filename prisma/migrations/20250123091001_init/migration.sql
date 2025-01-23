@@ -33,6 +33,7 @@ CREATE TABLE "eliza_agents" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "curveSide" "CurveSide" NOT NULL,
+    "creatorWallet" TEXT NOT NULL,
     "status" "AgentStatus" NOT NULL DEFAULT 'STARTING',
     "containerId" TEXT,
     "runtimeAgentId" TEXT,

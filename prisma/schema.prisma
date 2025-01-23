@@ -43,6 +43,7 @@ model ElizaAgent {
   id             String      @id @default(uuid())
   name           String
   curveSide      CurveSide
+  creatorWallet  String
   status         AgentStatus @default(STARTING)
   containerId    String?
   runtimeAgentId String?

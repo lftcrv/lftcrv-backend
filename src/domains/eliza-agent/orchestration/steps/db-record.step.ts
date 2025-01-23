@@ -26,6 +26,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
           curveSide: dto.curveSide,
           status: AgentStatus.STARTING,
           characterConfig: dto.characterConfig,
+          creatorWallet: dto.creatorWallet,
           degenScore: 0,
           winScore: 0,
           LatestMarketData: {
