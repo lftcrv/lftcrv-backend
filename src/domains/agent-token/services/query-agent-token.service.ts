@@ -28,13 +28,18 @@ export class QueryAgentTokenService implements IQueryAgentToken {
       throw new NotFoundException(`Agent ${agentId} or its token not found`);
     }
 
-    const contract = new Contract(
-      await this.abiService.getAbi(agent.Token.contratAddress),
+    const abi = await this.abiService.getAbi(agent.Token.contratAddress);
+    if (!abi) {
+      throw new Error(
+        `ABI not found for contract at address ${agent.Token.contratAddress}`,
+      );
+    }
+
+    return new Contract(
+      abi,
       agent.Token.contratAddress,
       this.providerService.getProvider(),
     );
-
-    return contract;
   }
 
   private async executeContractCall(
@@ -42,27 +47,35 @@ export class QueryAgentTokenService implements IQueryAgentToken {
     method: string,
     tokenAmount: bigint,
   ): Promise<bigint> {
-    const contract = await this.getContract(agentId);
-    return contract.execute(method, [tokenAmount]);
+    try {
+      const contract = await this.getContract(agentId);
+      const result = await contract.call(method, [tokenAmount]);
+      return BigInt(result[0]);
+    } catch (error) {
+      console.error(`Error executing ${method} on contract:`, error);
+      throw new Error(`Contract call failed: ${error.message}`);
+    }
   }
 
   async simulateBuy(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    const totalEth = await this.executeContractCall(
-      agentId,
-      'buy',
-      tokenAmount,
-    );
-
-    return totalEth;
+    return this.executeContractCall(agentId, 'simulate_buy', tokenAmount);
   }
 
   async simulateSell(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    const totalSold = await this.executeContractCall(
-      agentId,
-      'sell',
-      tokenAmount,
-    );
+    return this.executeContractCall(agentId, 'simulate_sell', tokenAmount);
+  }
 
-    return totalSold;
+  async bondingCurvePercentage(agentId: string): Promise<number> {
+    try {
+      const contract = await this.getContract(agentId);
+      const result = await contract.call(
+        'supply_advancement_percentage_x100',
+        [],
+      );
+      return Number(result[0]);
+    } catch (error) {
+      console.error('Error getting bonding curve percentage:', error);
+      throw new Error(`Bonding curve percentage call failed: ${error.message}`);
+    }
   }
 }
