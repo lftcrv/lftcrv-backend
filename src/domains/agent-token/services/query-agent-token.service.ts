@@ -1,24 +1,21 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Contract } from 'starknet';
-import { IManageAgentToken } from '../interfaces/manage-agent-token.interface';
+import { IQueryAgentToken } from '../interfaces/query-agent-token.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import {
   BlockchainTokens,
   IAbiService,
-  IAccountService,
   IProviderService,
 } from '../../../shared/blockchain/interfaces';
 
 @Injectable()
-export class AgentTokenService implements IManageAgentToken {
+export class QueryAgentTokenService implements IQueryAgentToken {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(BlockchainTokens.Provider)
     private readonly providerService: IProviderService,
     @Inject(BlockchainTokens.Abi)
     private readonly abiService: IAbiService,
-    @Inject(BlockchainTokens.Account)
-    private readonly accountService: IAccountService,
   ) {}
 
   private async getContract(agentId: string): Promise<Contract> {
@@ -46,24 +43,26 @@ export class AgentTokenService implements IManageAgentToken {
     tokenAmount: bigint,
   ): Promise<bigint> {
     const contract = await this.getContract(agentId);
-    contract.connect(this.accountService.getAdminAccount());
-    const result = await contract[method](tokenAmount);
-    return BigInt(result.toString());
-  }
-
-  async buy(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    return this.executeContractCall(agentId, 'buy', tokenAmount);
-  }
-
-  async sell(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    return this.executeContractCall(agentId, 'sell', tokenAmount);
+    return contract.execute(method, [tokenAmount]);
   }
 
   async simulateBuy(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    return this.executeContractCall(agentId, 'simulate_buy', tokenAmount);
+    const totalEth = await this.executeContractCall(
+      agentId,
+      'buy',
+      tokenAmount,
+    );
+
+    return totalEth;
   }
 
   async simulateSell(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    return this.executeContractCall(agentId, 'simulate_sell', tokenAmount);
+    const totalSold = await this.executeContractCall(
+      agentId,
+      'sell',
+      tokenAmount,
+    );
+
+    return totalSold;
   }
 }

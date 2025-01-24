@@ -1,9 +1,11 @@
 import { ICreateAgentToken } from './create-agent-token.interface';
-import { IManageAgentToken } from './manage-agent-token.interface';
+import { IQueryAgentToken } from './query-agent-token.interface';
+import { IBondingCurveService } from './bonding-curve.interface';
 
-export { ICreateAgentToken, IManageAgentToken };
+export { ICreateAgentToken, IQueryAgentToken, IBondingCurveService };
 
 export const AgentTokenTokens = {
   CreateAgentToken: Symbol('ICreateAgentToken'),
-  ManageAgentToken: Symbol('IManageAgentToken'),
+  QueryAgentToken: Symbol('IQueryAgentToken'),
+  BondingCurve: Symbol('IBondingCurveService'),
 } as const;
