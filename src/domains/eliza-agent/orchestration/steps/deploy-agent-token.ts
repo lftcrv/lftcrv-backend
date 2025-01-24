@@ -9,6 +9,7 @@ import {
 } from '../../../../domains/orchestration/interfaces';
 import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CreateWalletStep extends BaseStepExecutor {
@@ -16,6 +17,7 @@ export class CreateWalletStep extends BaseStepExecutor {
     @Inject(AgentTokenTokens.CreateAgentToken)
     private readonly createAgentTokenService: ICreateAgentToken,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {
     super({
       stepId: 'deploy-agent-token',
@@ -38,6 +40,8 @@ export class CreateWalletStep extends BaseStepExecutor {
         data: {
           token,
           symbol,
+          sellTax: this.configService.get('SELL_TAX_PERCENTAGE'),
+          buyTax: this.configService.get('BUY_TAX_PERCENTAGE'),
           contratAddress: agentTokenContract.contract.address,
           elizaAgentId: agentId,
         },

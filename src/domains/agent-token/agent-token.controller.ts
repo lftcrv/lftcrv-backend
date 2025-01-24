@@ -1,107 +1,54 @@
 import {
-  Body,
   Controller,
+  Get,
   Inject,
-  InternalServerErrorException,
-  Post,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
-import { AgentTokenTokens, IManageAgentToken } from './interfaces';
+import { AgentTokenTokens, IQueryAgentToken } from './interfaces';
+import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
 import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
-import { TokenOperationDto } from './dto/agent-token-management.dto';
+import { AgentTokenSimulationDto } from './dto/agent-token-simulation.dto';
 
 @ApiTags('Agent Token Operations')
 @Controller('api/agent-token')
 @UseInterceptors(LoggingInterceptor)
 export class AgentTokenController {
   constructor(
-    @Inject(AgentTokenTokens.ManageAgentToken)
-    private readonly tokenService: IManageAgentToken,
+    @Inject(AgentTokenTokens.QueryAgentToken)
+    private readonly tokenService: IQueryAgentToken,
   ) {}
 
-  @Post('buy')
+  @Get('simulate-buy')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Buy tokens for an agent' })
-  @ApiResponse({ status: 200, description: 'Tokens bought successfully' })
-  async buyTokens(@Body() dto: TokenOperationDto) {
-    try {
-      const result = await this.tokenService.buy(
-        dto.agentId,
-        BigInt(dto.tokenAmount),
-      );
-      return {
-        status: 'success',
-        data: { amount: result.toString() },
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Failed to buy tokens: ${error.message}`,
-      );
-    }
+  @ApiOperation({ summary: 'Get buy simulation for tokens' })
+  @ApiResponse({ status: 200, description: 'Buy simulation results' })
+  async simulateBuy(@Query() query: AgentTokenSimulationDto) {
+    const result = await this.tokenService.simulateBuy(
+      query.agentId,
+      BigInt(query.tokenAmount),
+    );
+
+    return {
+      status: 'success',
+      data: { amount: result.toString() },
+    };
   }
 
-  @Post('sell')
+  @Get('simulate-sell')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Sell tokens for an agent' })
-  @ApiResponse({ status: 200, description: 'Tokens sold successfully' })
-  async sellTokens(@Body() dto: TokenOperationDto) {
-    try {
-      const result = await this.tokenService.sell(
-        dto.agentId,
-        BigInt(dto.tokenAmount),
-      );
-      return {
-        status: 'success',
-        data: { amount: result.toString() },
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Failed to sell tokens: ${error.message}`,
-      );
-    }
-  }
+  @ApiOperation({ summary: 'Get sell simulation for tokens' })
+  @ApiResponse({ status: 200, description: 'Sell simulation results' })
+  async simulateSell(@Query() query: AgentTokenSimulationDto) {
+    const result = await this.tokenService.simulateSell(
+      query.agentId,
+      BigInt(query.tokenAmount),
+    );
 
-  @Post('simulate/buy')
-  @RequireApiKey()
-  @ApiOperation({ summary: 'Simulate buying tokens for an agent' })
-  @ApiResponse({ status: 200, description: 'Buy simulation completed' })
-  async simulateBuy(@Body() dto: TokenOperationDto) {
-    try {
-      const result = await this.tokenService.simulateBuy(
-        dto.agentId,
-        BigInt(dto.tokenAmount),
-      );
-      return {
-        status: 'success',
-        data: { estimatedAmount: result.toString() },
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Failed to simulate buy: ${error.message}`,
-      );
-    }
-  }
-
-  @Post('simulate/sell')
-  @RequireApiKey()
-  @ApiOperation({ summary: 'Simulate selling tokens for an agent' })
-  @ApiResponse({ status: 200, description: 'Sell simulation completed' })
-  async simulateSell(@Body() dto: TokenOperationDto) {
-    try {
-      const result = await this.tokenService.simulateSell(
-        dto.agentId,
-        BigInt(dto.tokenAmount),
-      );
-      return {
-        status: 'success',
-        data: { estimatedAmount: result.toString() },
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Failed to simulate sell: ${error.message}`,
-      );
-    }
+    return {
+      status: 'success',
+      data: { amount: result.toString() },
+    };
   }
 }
