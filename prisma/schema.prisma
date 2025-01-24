@@ -158,6 +158,6 @@ model Transaction {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  @@index([createdAt])
+  @@index([createdAt, userAddress])
   @@map("transactions")
 }
