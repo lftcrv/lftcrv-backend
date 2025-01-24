@@ -153,6 +153,7 @@ model Transaction {
   sellAmount    BigInt
   hash          String
   tokenId       String
+  userAddress   String
   AgentToken    AgentToken @relation(fields: [tokenId], references: [id])
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
