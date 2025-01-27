@@ -32,7 +32,6 @@ export interface CreateElizaContainerConfig {
 export interface ElizaContainerResult {
   containerId: string;
   port: number;
-  runtimeAgentId?: string;
 }
 
 export interface IElizaConfigService {

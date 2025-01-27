@@ -134,9 +134,8 @@ export class DockerService implements IDockerService, OnModuleInit {
     });
 
     const containerId = container.id;
-    const runtimeAgentId = await this.getRuntimeAgentId(containerId);
 
-    return { containerId, port, runtimeAgentId };
+    return { containerId, port };
   }
 
   private async waitForLog(
@@ -146,35 +145,38 @@ export class DockerService implements IDockerService, OnModuleInit {
   ): Promise<string | null> {
     const startTime = Date.now();
     const container = this.docker.getContainer(containerId);
-
+  
     while (Date.now() - startTime < timeoutMs) {
       try {
-        // Get logs since container start
+        const info = await container.inspect();
+        if (info.State.Status !== 'running') {
+          await new Promise((resolve) => setTimeout(resolve, intervalMs));
+          continue;
+        }
+  
         const logs = await container.logs({
           stdout: true,
           stderr: true,
           timestamps: true,
           since: Math.floor(startTime / 1000),
         });
-
+  
         const logsStr = logs.toString('utf8');
         const match = logsStr.match(/Agent ID[^\n]*\n[^\n]*([a-f0-9-]{36})/);
-
+  
         if (match && match[1]) {
           return match[1];
         }
-
-        // Wait before next attempt
+  
         await new Promise((resolve) => setTimeout(resolve, intervalMs));
       } catch (error) {
-        console.error('Error reading container logs:', error);
         await new Promise((resolve) => setTimeout(resolve, intervalMs));
       }
     }
-
+  
     console.warn(
-      `Timeout reached while waiting for Agent ID in container ${containerId}`,
-    );
+`Timeout reached while waiting for Agent ID in container ${containerId}`,
+);
     return null;
   }
 
