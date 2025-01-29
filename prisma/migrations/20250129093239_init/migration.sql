@@ -109,10 +109,28 @@ CREATE TABLE "agent_token" (
     "id" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "symbol" TEXT NOT NULL,
-    "contratAddress" TEXT NOT NULL,
+    "contractAddress" TEXT NOT NULL,
+    "buyTax" INTEGER NOT NULL,
+    "sellTax" INTEGER NOT NULL,
     "elizaAgentId" TEXT NOT NULL,
 
     CONSTRAINT "agent_token_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "transactions" (
+    "id" TEXT NOT NULL,
+    "buyToken" TEXT NOT NULL,
+    "sellToken" TEXT NOT NULL,
+    "buyAmount" BIGINT NOT NULL,
+    "sellAmount" BIGINT NOT NULL,
+    "hash" TEXT NOT NULL,
+    "tokenId" TEXT NOT NULL,
+    "userAddress" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "transactions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -157,6 +175,9 @@ CREATE UNIQUE INDEX "agent_wallet_elizaAgentId_key" ON "agent_wallet"("elizaAgen
 -- CreateIndex
 CREATE UNIQUE INDEX "agent_token_elizaAgentId_key" ON "agent_token"("elizaAgentId");
 
+-- CreateIndex
+CREATE INDEX "transactions_createdAt_userAddress_idx" ON "transactions"("createdAt", "userAddress");
+
 -- AddForeignKey
 ALTER TABLE "trading_information" ADD CONSTRAINT "trading_information_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -168,3 +189,6 @@ ALTER TABLE "agent_wallet" ADD CONSTRAINT "agent_wallet_elizaAgentId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "agent_token" ADD CONSTRAINT "agent_token_elizaAgentId_fkey" FOREIGN KEY ("elizaAgentId") REFERENCES "eliza_agents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_tokenId_fkey" FOREIGN KEY ("tokenId") REFERENCES "agent_token"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

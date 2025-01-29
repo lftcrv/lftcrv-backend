@@ -1,0 +1,41 @@
+{
+  "bio": [
+    "h"
+  ],
+  "lore": [],
+  "name": "hhh",
+  "style": {
+    "all": [],
+    "chat": [],
+    "post": []
+  },
+  "topics": [],
+  "clients": [],
+  "plugins": [],
+  "settings": {
+    "voice": {
+      "model": "en_US-male-medium"
+    },
+    "secrets": {}
+  },
+  "knowledge": [],
+  "adjectives": [],
+  "postExamples": [],
+  "modelProvider": "openai",
+  "messageExamples": [
+    [
+      {
+        "user": "user1",
+        "content": {
+          "text": "h"
+        }
+      },
+      {
+        "user": "",
+        "content": {
+          "text": "h"
+        }
+      }
+    ]
+  ]
+}

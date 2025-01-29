@@ -1,0 +1,41 @@
+{
+  "bio": [
+    "ddd"
+  ],
+  "lore": [],
+  "name": "dddd",
+  "style": {
+    "all": [],
+    "chat": [],
+    "post": []
+  },
+  "topics": [],
+  "clients": [],
+  "plugins": [],
+  "settings": {
+    "voice": {
+      "model": "en_US-male-medium"
+    },
+    "secrets": {}
+  },
+  "knowledge": [],
+  "adjectives": [],
+  "postExamples": [],
+  "modelProvider": "openai",
+  "messageExamples": [
+    [
+      {
+        "user": "user1",
+        "content": {
+          "text": "dd"
+        }
+      },
+      {
+        "user": "",
+        "content": {
+          "text": "dd"
+        }
+      }
+    ]
+  ]
+}

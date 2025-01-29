@@ -1,0 +1,41 @@
+{
+  "bio": [
+    "zerzr"
+  ],
+  "lore": [],
+  "name": "hihihi",
+  "style": {
+    "all": [],
+    "chat": [],
+    "post": []
+  },
+  "topics": [],
+  "clients": [],
+  "plugins": [],
+  "settings": {
+    "voice": {
+      "model": "en_US-male-medium"
+    },
+    "secrets": {}
+  },
+  "knowledge": [],
+  "adjectives": [],
+  "postExamples": [],
+  "modelProvider": "openai",
+  "messageExamples": [
+    [
+      {
+        "user": "user1",
+        "content": {
+          "text": "zer"
+        }
+      },
+      {
+        "user": "",
+        "content": {
+          "text": "zerezr"
+        }
+      }
+    ]
+  ]
+}

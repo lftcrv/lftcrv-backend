@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import {
   AgentTokenTokens,
   ICreateAgentToken,
@@ -9,15 +9,13 @@ import {
 } from '../../../../domains/orchestration/interfaces';
 import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class CreateWalletStep extends BaseStepExecutor {
+export class DeployAgentTokenStep extends BaseStepExecutor {
   constructor(
     @Inject(AgentTokenTokens.CreateAgentToken)
     private readonly createAgentTokenService: ICreateAgentToken,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
   ) {
     super({
       stepId: 'deploy-agent-token',
@@ -28,28 +26,46 @@ export class CreateWalletStep extends BaseStepExecutor {
 
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
-      const { symbol, agentId, token } = context.metadata;
-      const agentTokenContract =
-        await this.createAgentTokenService.createAgentToken({
-          name: token,
-          symbol,
-        });
+      const { agentId, wallet } = context.metadata;
+      const dto = context.data;
 
-      // Create agent token record in database
+      console.log('Deploy token step metadata:', context.metadata);
+      console.log('Deploy token step wallet:', wallet);
+
+      console.log(
+        `Deploying token for agent ${agentId} using wallet ${wallet?.deployedAddress}`,
+      );
+
+      const symbol = `ELIZA${agentId.substring(0, 4)}`;
+      const tokenName = `${dto.name.toUpperCase()}_TOKEN`;
+
+      const agentTokenContract = await this.createAgentTokenService.createAgentToken({
+        name: tokenName,
+        symbol,
+      });
+
+      console.log(
+        `Token deployed at address: ${agentTokenContract.contract.address}`,
+      );
+
       const agentToken = await this.prisma.agentToken.create({
         data: {
-          token,
+          token: tokenName,
           symbol,
-          sellTax: this.configService.get('SELL_TAX_PERCENTAGE'),
-          buyTax: this.configService.get('BUY_TAX_PERCENTAGE'),
-          contratAddress: agentTokenContract.contract.address,
+          contractAddress: agentTokenContract.contract.address,
           elizaAgentId: agentId,
+          buyTax: 0,
+          sellTax: 0,
         },
       });
 
-      return this.success(agentToken, { agentTokenContract });
+      return this.success(agentToken, {
+        tokenAddress: agentTokenContract.contract.address,
+        tokenSymbol: symbol,
+      });
     } catch (error) {
-      return this.failure(`Failed to deploy wallet: ${error.message}`);
+      console.error(`Token deployment failed: ${error.message}`);
+      return this.failure(`Failed to deploy token: ${error.message}`);
     }
   }
 }

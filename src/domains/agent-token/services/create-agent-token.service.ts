@@ -31,8 +31,9 @@ export class CreateAgentTokenService implements ICreateAgentToken {
     symbol,
   }: CreateAgentTokenProps): Promise<CreateAgentTokenContract> {
     const provider = this.providerService.getProvider();
-
     const account = this.accountService.getAdminAccount();
+
+    console.log('Creating token with account:', account.address);
 
     const args = {
       _protocol_wallet: this.configService.get('PROTOCOL_WALLET'),
@@ -42,9 +43,11 @@ export class CreateAgentTokenService implements ICreateAgentToken {
       price_x1e18: this.configService.get('PRICE'),
       exponent_x1e18: this.configService.get('EXPONENT'),
       _step: this.configService.get('STEP'),
-      buy_tax_percentage_x100: this.configService.get('BUY_TAX_PERCENTAGE'),
-      sell_tax_percentage_x100: this.configService.get('SELL_TAX_PERCENTAGE'),
+      _buy_tax_percentage_x100: this.configService.get('BUY_TAX_PERCENTAGE'),
+      _sell_tax_percentage_x100: this.configService.get('SELL_TAX_PERCENTAGE'),
     };
+
+    console.log('Token deployment args:', args);
 
     const contractCallData = new CallData(contractJson.abi);
     const constructorCalldata = contractCallData.compile('constructor', args);

@@ -135,7 +135,7 @@ model AgentToken {
   id                   String     @id @default(uuid())
   token                String
   symbol               String
-  contratAddress       String
+  contractAddress      String
   buyTax               Int
   sellTax              Int
   elizaAgentId   String      @unique

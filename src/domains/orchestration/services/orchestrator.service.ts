@@ -112,28 +112,34 @@ export class OrchestratorService implements IOrchestrator {
       throw new Error(`No definition found for type: ${orchestration.type}`);
     }
 
+    const startTime = Date.now();
+    console.log(`
+      Starting orchestration ${orchestrationId} of type ${orchestration.type}
+      `);
+    console.log(`Total steps to execute: ${definition.steps.length}`);
+
     await this.updateOrchestrationStatus(orchestrationId, {
       status: OrchestrationStatus.IN_PROGRESS,
     });
 
     try {
       for (const step of definition.steps) {
-        if (orchestration.status === OrchestrationStatus.FAILED) {
-          break;
-        }
+        if (orchestration.status === OrchestrationStatus.FAILED) break;
+
+        const stepStartTime = Date.now();
+        console.log(`
+          [${step.order}/${definition.steps.length}] Executing: ${step.name} (${step.id})`);
 
         const executor = this.executorRegistry.getExecutor(
           step.id,
           orchestration.type,
         );
         if (!executor) {
-          throw new Error(
-            `No executor found for step: ${step.id} of type: ${orchestration.type}`,
-          );
+          throw new Error(`
+            No executor found for step: ${step.id} of type: ${orchestration.type}`);
         }
 
         const progress = (step.order / definition.steps.length) * 100;
-
         await this.updateOrchestrationStatus(orchestrationId, {
           currentStepId: step.id,
           progress,
@@ -147,6 +153,7 @@ export class OrchestratorService implements IOrchestrator {
         });
 
         if (!result.success) {
+          console.error(`Step ${step.name} failed: ${result.error}`);
           await this.updateOrchestrationStatus(orchestrationId, {
             status: OrchestrationStatus.FAILED,
             error: result.error,
@@ -154,18 +161,34 @@ export class OrchestratorService implements IOrchestrator {
           return;
         }
 
-        // Update metadata for next steps
+        const stepDuration = ((Date.now() - stepStartTime) / 1000).toFixed(1);
+        console.log(`
+          [${step.order}/${definition.steps.length}] Completed: ${step.name} (${stepDuration}s)`);
+
         orchestration.metadata = {
           ...orchestration.metadata,
           ...result.metadata,
         };
       }
 
+      const totalDuration = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log('====================================');
+      console.log(`Orchestration ${orchestrationId} completed successfully`);
+      console.log(`Total duration: ${totalDuration}s`);
+      console.log('====================================');
+
       await this.updateOrchestrationStatus(orchestrationId, {
         status: OrchestrationStatus.COMPLETED,
         progress: 100,
       });
     } catch (error) {
+      const totalDuration = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.error('====================================');
+      console.error(`
+        Orchestration ${orchestrationId} failed: ${error.message}`);
+      console.error(`Failed after: ${totalDuration}s`);
+      console.error('====================================');
+
       await this.updateOrchestrationStatus(orchestrationId, {
         status: OrchestrationStatus.FAILED,
         error: error.message,

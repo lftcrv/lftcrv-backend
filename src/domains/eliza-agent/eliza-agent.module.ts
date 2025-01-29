@@ -12,6 +12,7 @@ import { FundWalletStep } from './orchestration/steps/fund-wallet.step';
 import { DeployWalletStep } from './orchestration/steps/deploy-wallet.step';
 import { CreateContainerStep } from './orchestration/steps/create-container.step';
 import { StartContainerStep } from './orchestration/steps/start-container.step';
+import { DeployAgentTokenStep } from './orchestration/steps/deploy-agent-token';
 import {
   IOrchestrationDefinitionRegistry,
   IStepExecutorRegistry,
@@ -21,9 +22,10 @@ import { AGENT_CREATION_DEFINITION } from './orchestration/agent-creation.defini
 import { OrchestrationModule } from '../orchestration/orchestration.module';
 import { StarknetModule } from '../blockchain/starknet/starknet.module';
 import { ElizaConfigService } from './services/eliza-config.service';
+import { AgentTokenModule } from '../agent-token/agent-token.module';
 
 @Module({
-  imports: [OrchestrationModule, StarknetModule],
+  imports: [OrchestrationModule, StarknetModule, AgentTokenModule],
   controllers: [ElizaAgentController],
   providers: [
     CreateDbRecordStep,
@@ -32,6 +34,7 @@ import { ElizaConfigService } from './services/eliza-config.service';
     DeployWalletStep,
     CreateContainerStep,
     StartContainerStep,
+    DeployAgentTokenStep,
     {
       provide: ServiceTokens.ElizaAgentQuery,
       useClass: ElizaAgentQueryService,
@@ -63,6 +66,7 @@ export class ElizaAgentModule implements OnModuleInit {
     private readonly deployWalletStep: DeployWalletStep,
     private readonly createContainerStep: CreateContainerStep,
     private readonly startContainerStep: StartContainerStep,
+    private readonly deployAgentTokenStep: DeployAgentTokenStep,
   ) {}
 
   onModuleInit() {
@@ -76,5 +80,6 @@ export class ElizaAgentModule implements OnModuleInit {
     this.executorRegistry.register(this.deployWalletStep);
     this.executorRegistry.register(this.createContainerStep);
     this.executorRegistry.register(this.startContainerStep);
+    this.executorRegistry.register(this.deployAgentTokenStep);
   }
 }

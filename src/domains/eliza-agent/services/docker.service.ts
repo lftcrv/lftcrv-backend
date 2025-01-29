@@ -138,46 +138,44 @@ export class DockerService implements IDockerService, OnModuleInit {
     return { containerId, port };
   }
 
-  private async waitForLog(
-    containerId: string,
-    timeoutMs = 300000,
-    intervalMs = 5000,
-  ): Promise<string | null> {
-    const startTime = Date.now();
+  private async waitForLog(containerId: string): Promise<string | null> {
     const container = this.docker.getContainer(containerId);
-  
-    while (Date.now() - startTime < timeoutMs) {
-      try {
-        const info = await container.inspect();
-        if (info.State.Status !== 'running') {
-          await new Promise((resolve) => setTimeout(resolve, intervalMs));
-          continue;
-        }
-  
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    try {
+      const info = await container.inspect();
+      if (info.State.Status === 'running') {
         const logs = await container.logs({
           stdout: true,
           stderr: true,
-          timestamps: true,
-          since: Math.floor(startTime / 1000),
+          tail: 50,
         });
-  
         const logsStr = logs.toString('utf8');
-        const match = logsStr.match(/Agent ID[^\n]*\n[^\n]*([a-f0-9-]{36})/);
-  
-        if (match && match[1]) {
-          return match[1];
+        if (logsStr.includes('REST API bound to 0.0.0.0:3000')) {
+          const shortId = containerId.substring(0, 8);
+          console.log(`✅ Container ${shortId} started and API is ready`);
+          return shortId;
         }
-  
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
-      } catch (error) {
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+
+        console.log('⏳ Container running but waiting for API...');
+        return containerId.substring(0, 8);
       }
+
+      const logs = await container.logs({
+        stdout: true,
+        stderr: true,
+        tail: 50,
+      });
+      const status = info.State.Status;
+      const logStr = logs.toString('utf8');
+      console.error(
+        `Container failed to start. Status: ${status}\nLogs:\n${logStr}`,
+      );
+      return null;
+    } catch (error) {
+      console.error(`❌ Error checking container: ${error.message}`);
+      return null;
     }
-  
-    console.warn(
-`Timeout reached while waiting for Agent ID in container ${containerId}`,
-);
-    return null;
   }
 
   async getRuntimeAgentId(containerId: string): Promise<string | null> {

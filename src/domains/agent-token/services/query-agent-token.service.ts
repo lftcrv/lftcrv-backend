@@ -28,16 +28,16 @@ export class QueryAgentTokenService implements IQueryAgentToken {
       throw new NotFoundException(`Agent ${agentId} or its token not found`);
     }
 
-    const abi = await this.abiService.getAbi(agent.Token.contratAddress);
+    const abi = await this.abiService.getAbi(agent.Token.contractAddress);
     if (!abi) {
       throw new Error(
-        `ABI not found for contract at address ${agent.Token.contratAddress}`,
+        `ABI not found for contract at address ${agent.Token.contractAddress}`,
       );
     }
 
     return new Contract(
       abi,
-      agent.Token.contratAddress,
+      agent.Token.contractAddress,
       this.providerService.getProvider(),
     );
   }
@@ -50,7 +50,7 @@ export class QueryAgentTokenService implements IQueryAgentToken {
     try {
       const contract = await this.getContract(agentId);
       const result = await contract.call(method, [tokenAmount]);
-      return BigInt(result[0]);
+      return BigInt(result.toString());
     } catch (error) {
       console.error(`Error executing ${method} on contract:`, error);
       throw new Error(`Contract call failed: ${error.message}`);
