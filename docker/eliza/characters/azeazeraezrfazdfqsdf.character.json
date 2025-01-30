@@ -1,7 +1,9 @@
 {
-  "bio": ["l"],
+  "bio": [
+    "aze"
+  ],
   "lore": [],
-  "name": "louis",
+  "name": "azeazeraezrfazdfqsdf",
   "style": {
     "all": [],
     "chat": [],
@@ -25,13 +27,13 @@
       {
         "user": "user1",
         "content": {
-          "text": "l"
+          "text": "azer"
         }
       },
       {
         "user": "",
         "content": {
-          "text": "l"
+          "text": "azer"
         }
       }
     ]
