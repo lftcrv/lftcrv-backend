@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PriceDTO } from '../dto/price.dto';
 import axios from 'axios';
-
-// Available timeframes for candle data
-export type TimeFrame = '1m' | '3m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d';
+import { TimeFrame } from '../types';
 
 // Configuration options for price retrieval
 export interface PriceOptions {
@@ -12,8 +10,6 @@ export interface PriceOptions {
   endTime?: number;   // End timestamp (default: current time)
   
   priceKind?: 'mark' | 'index' | 'last';    // Type of price to use
-
-  useMockOnError?: boolean;     // If true, returns mock data on API error
 }
 
 // Market information structure
@@ -28,16 +24,25 @@ export interface MarketInfo {
 export class PriceService {
   private readonly baseUrl = 'https://api.testnet.paradex.trade/v1';
 
+  private readonly supportedTimeframes = ['1', '3', '5', '15', '30', '60'];
+
   // Mapping of timeframes to their duration in minutes
-  private readonly timeframeToMinutes: Record<TimeFrame, number> = {
+    private readonly timeframeToMinutes: Record<TimeFrame, number> = {
     '1m': 1,
     '3m': 3,
     '5m': 5,
     '15m': 15,
     '30m': 30,
     '1h': 60,
-    '4h': 240,
-    '1d': 1440
+  };
+
+  private readonly minutesToTimeframe: Record<string, TimeFrame> = {
+    '1': '1m',
+    '3': '3m',
+    '5': '5m',
+    '15': '15m',
+    '30': '30m',
+    '60': '1h',
   };
 
   /**
@@ -53,6 +58,22 @@ export class PriceService {
       quoteAsset: 'USD',
       contractType: 'PERP'
     };
+  }
+
+  /**
+   * Convertit notre timeframe en format API
+   * @param timeframe Notre format de timeframe (e.g., '1h')
+   * @returns Format API (e.g., '60')
+   */
+  private convertTimeframeToApiFormat(timeframe: TimeFrame): string {
+    const minutes = this.timeframeToMinutes[timeframe];
+    if (!minutes) {
+      throw new Error(`Unsupported timeframe: ${timeframe}`);
+    }
+    if (!this.supportedTimeframes.includes(minutes.toString())) {
+      throw new Error(`Timeframe ${timeframe} (${minutes} minutes) is not supported by the API. Supported timeframes: ${this.supportedTimeframes.map(t => this.minutesToTimeframe[t]).join(', ')}`);
+    }
+    return minutes.toString();
   }
 
   /**
@@ -72,64 +93,48 @@ export class PriceService {
       endTime = Date.now(),
       startTime,
       priceKind,
-      useMockOnError = true
     } = options;
 
-    try {
-      const market = this.getMarketSymbol(token);
-      const minutesInTimeframe = this.timeframeToMinutes[timeframe];
-      
-      // Calculate start time if not provided
-      const calculatedStartTime = startTime || 
-        endTime - (minutesInTimeframe * 60 * 1000 * limit);
+    const apiTimeframe = this.convertTimeframeToApiFormat(timeframe);
+    const market = this.getMarketSymbol(token);
+    
+    // Calculate start time if not given
+    const minutesInTimeframe = this.timeframeToMinutes[timeframe];
+    const calculatedStartTime = startTime || 
+      endTime - (minutesInTimeframe * 60 * 1000 * limit);
 
-      // Build query parameters
-      const params: Record<string, any> = {
-        symbol: market.symbol,
-        resolution: minutesInTimeframe.toString(),
-        start_at: calculatedStartTime,
-        end_at: endTime
-      };
+    const params: Record<string, any> = {
+      symbol: market.symbol,
+      resolution: apiTimeframe,
+      start_at: calculatedStartTime,
+      end_at: endTime
+    };
 
-      if (priceKind) {
-        params.price_kind = priceKind;
-      }
-
-      // Fetch data from Paradex API
-      const response = await axios.get(`${this.baseUrl}/markets/klines`, { params });
-
-      // Validate API response
-      if (!response.data || !Array.isArray(response.data.results)) {
-        throw new Error('Invalid response format from API');
-      }
-
-      // Transform candle data to PriceDTO format
-      const prices = response.data.results.map((candle: any) => ({
-        timestamp: candle[0],
-        open: parseFloat(candle[1]),
-        high: parseFloat(candle[2]),
-        low: parseFloat(candle[3]),
-        close: parseFloat(candle[4]),
-        volume: parseFloat(candle[5]),
-        price: parseFloat(candle[4])  // Use close as current price
-      }));
-
-      // Limit number of candles if needed
-      if (prices.length > limit) {
-        return prices.slice(-limit);
-      }
-
-      return prices;
-
-    } catch (error) {
-      console.error('Error fetching historical prices:', error);
-      
-      if (!useMockOnError) {
-        throw error;
-      }
-
-      return this.getMockData(limit, timeframe, endTime);
+    if (priceKind) {
+      params.price_kind = priceKind;
     }
+
+    const response = await axios.get(`${this.baseUrl}/markets/klines`, { params });
+
+    if (!response.data || !Array.isArray(response.data.results)) {
+      throw new Error('Invalid response format from API');
+    }
+
+    const prices = response.data.results.map((candle: any) => ({
+      timestamp: candle[0],
+      open: parseFloat(candle[1]),
+      high: parseFloat(candle[2]),
+      low: parseFloat(candle[3]),
+      close: parseFloat(candle[4]),
+      volume: parseFloat(candle[5]),
+      price: parseFloat(candle[4])
+    }));
+
+    if (prices.length > limit) {
+      return prices.slice(-limit);
+    }
+
+    return prices;
   }
 
   /**
@@ -162,44 +167,8 @@ export class PriceService {
           return parseFloat(result.mark_price);
       }
     } catch (error) {
-      console.error('Error fetching current price:', error);
       throw error;
     }
-  }
-
-  /**
-   * Generates mock price data for testing or fallback
-   * @param limit Number of candles to generate
-   * @param timeframe Candle timeframe
-   * @param endTime End timestamp
-   * @returns Array of mock price data
-   */
-  private getMockData(
-    limit: number,
-    timeframe: TimeFrame,
-    endTime: number
-  ): PriceDTO[] {
-    const mockData: PriceDTO[] = [];
-    const minutesInTimeframe = this.timeframeToMinutes[timeframe];
-    const timeframeMs = minutesInTimeframe * 60 * 1000;
-    
-    for (let i = 0; i < limit; i++) {
-      const basePrice = 30000;
-      const variance = Math.random() * 1000 - 500;
-      const price = basePrice + variance;
-      
-      mockData.push({
-        timestamp: endTime - (i * timeframeMs),
-        price: price,
-        open: price - Math.random() * 100,
-        high: price + Math.random() * 100,
-        low: price - Math.random() * 100,
-        close: price,
-        volume: Math.random() * 1000
-      });
-    }
-
-    return mockData.reverse();
   }
 
   /**
