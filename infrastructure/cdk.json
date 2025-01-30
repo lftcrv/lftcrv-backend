@@ -1,9 +1,7 @@
 {
   "app": "pnpm ts-node --prefer-ts-exts bin/infrastructure.ts",
   "watch": {
-    "include": [
-      "**"
-    ],
+    "include": ["**"],
     "exclude": [
       "README.md",
       "cdk*.json",

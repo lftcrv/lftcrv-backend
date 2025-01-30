@@ -39,10 +39,11 @@ export class DeployAgentTokenStep extends BaseStepExecutor {
       const symbol = `ELIZA${agentId.substring(0, 4)}`;
       const tokenName = `${dto.name.toUpperCase()}_TOKEN`;
 
-      const agentTokenContract = await this.createAgentTokenService.createAgentToken({
-        name: tokenName,
-        symbol,
-      });
+      const agentTokenContract =
+        await this.createAgentTokenService.createAgentToken({
+          name: tokenName,
+          symbol,
+        });
 
       console.log(
         `Token deployed at address: ${agentTokenContract.contract.address}`,
