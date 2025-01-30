@@ -60,6 +60,11 @@ export class QueryAgentTokenService implements IQueryAgentToken {
   async simulateBuy(agentId: string, tokenAmount: bigint): Promise<bigint> {
     return this.executeContractCall(agentId, 'simulate_buy', tokenAmount);
   }
+  async getCurrentPrice(agentId: string): Promise<bigint> {
+    const contract = await this.getContract(agentId);
+    const result = await contract.call('get_current_price', []);
+    return BigInt(result.toString());
+  }
 
   async simulateSell(agentId: string, tokenAmount: bigint): Promise<bigint> {
     return this.executeContractCall(agentId, 'simulate_sell', tokenAmount);

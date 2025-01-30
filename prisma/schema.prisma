@@ -115,6 +115,15 @@ model Orchestration {
   @@map("orchestrations")
 }
 
+model PriceForToken {
+  id            String              @id @default(uuid())
+  price          String             
+  timestamp      DateTime
+  tokenId       String
+AgentToken    AgentToken @relation(fields: [tokenId], references: [id])
+  @@map("price_for_token")
+}
+
 model AgentWallet {
   id                    String     @id @default(uuid())
   privateKey            String
@@ -141,6 +150,7 @@ model AgentToken {
   elizaAgentId   String      @unique
   elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
   Transaction          Transaction[]
+  Prices              PriceForToken[]
 
   @@map("agent_token")
 }

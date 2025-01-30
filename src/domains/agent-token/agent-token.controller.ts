@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Inject,
   Param,
   Query,
@@ -10,6 +11,8 @@ import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { AgentTokenTokens, IQueryAgentToken } from './interfaces';
 import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
 import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
+import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { timestamp } from 'rxjs';
 
 @ApiTags('Agent Token Operations')
 @Controller('api/agent-token/:agentId')
@@ -18,6 +21,7 @@ export class AgentTokenController {
   constructor(
     @Inject(AgentTokenTokens.QueryAgentToken)
     private readonly tokenService: IQueryAgentToken,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('bonding-curve-percentage')
@@ -55,6 +59,38 @@ export class AgentTokenController {
     return {
       status: 'success',
       data: { amount: result.toString() },
+    };
+  }
+  @Post('push_current_price')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Calcultate and push the price of a token' })
+  @ApiResponse({ status: 200, description: 'Currentprice' })
+  @ApiQuery({
+    name: 'amountEth',
+    description: 'Amount of tokens to simulate',
+  })
+  @ApiQuery({
+    name: 'amountToken',
+    description: 'Amount of tokens to simulate',
+  })
+  async pushCurrentPrice(
+    @Param('agentId') agentId: string,
+    @Param('amountEth') amountEth: number,
+    @Param('amountToken') amountToken: number,
+  ) {
+    const price = await this.tokenService.getCurrentPrice(agentId);
+    await this.prisma.priceForToken.create({
+      data: {
+        tokenId: agentId,
+        price: (amountToken / amountEth).toString(),
+        timestamp: new Date(),
+      },
+    });
+    // inject on db the current price
+
+    return {
+      status: 'success',
+      data: { amount: price.toString() },
     };
   }
 
