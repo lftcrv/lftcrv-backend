@@ -75,8 +75,8 @@ export class AgentTokenController {
   })
   async pushCurrentPrice(
     @Param('agentId') agentId: string,
-    @Query('amountEth') amountEth: number,
-    @Query('amountToken') amountToken: number,
+    @Param('amountEth') amountEth: number,
+    @Param('amountToken') amountToken: number,
   ) {
     const price = await this.tokenService.getCurrentPrice(agentId);
     await this.prisma.priceForToken.create({
