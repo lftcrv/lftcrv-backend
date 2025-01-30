@@ -1,52 +1,54 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CrossoverResult,
-  IMovingAverageService,
-} from '../interfaces/moving-average.interface';
+import { PriceDTO } from '../dto/price.dto';
+import { CrossoverResult, IMovingAverageService } from '../types';
 
 @Injectable()
 export class MovingAverageService implements IMovingAverageService {
-  calculateSMA(prices: number[], period: number): number[] {
+  calculateSMA(prices: PriceDTO[], period: number): number[] {
+    const closePrices = prices.map((p) => p.close!);
+
     if (
-      !prices ||
-      prices.length === 0 ||
-      prices.some((p) => typeof p !== 'number')
+      !closePrices ||
+      closePrices.length === 0 ||
+      closePrices.some((p) => typeof p !== 'number')
     ) {
       throw new Error('Invalid prices array');
     }
-    if (period <= 0 || period > prices.length) {
+    if (period <= 0 || period > closePrices.length) {
       throw new Error('Invalid period');
     }
 
     const sma: number[] = [];
-    let sum = prices.slice(0, period).reduce((a, b) => a + b, 0);
+    let sum = closePrices.slice(0, period).reduce((a, b) => a + b, 0);
     sma.push(sum / period);
 
-    for (let i = period; i < prices.length; i++) {
-      sum = sum - prices[i - period] + prices[i];
+    for (let i = period; i < closePrices.length; i++) {
+      sum = sum - closePrices[i - period] + closePrices[i];
       sma.push(sum / period);
     }
 
     return sma;
   }
 
-  calculateEMA(prices: number[], period: number): number[] {
+  calculateEMA(prices: PriceDTO[], period: number): number[] {
+    const closePrices = prices.map((p) => p.close!);
+
     if (
-      !prices ||
-      prices.length === 0 ||
-      prices.some((p) => typeof p !== 'number')
+      !closePrices ||
+      closePrices.length === 0 ||
+      closePrices.some((p) => typeof p !== 'number')
     ) {
       throw new Error('Invalid prices array');
     }
-    if (period <= 0 || period > prices.length) {
+    if (period <= 0 || period > closePrices.length) {
       throw new Error('Invalid period');
     }
 
     const multiplier = 2 / (period + 1);
-    const ema: number[] = [prices[0]]; // First EMA is same as first price
+    const ema: number[] = [closePrices[0]]; // First EMA is same as first price
 
-    for (let i = 1; i < prices.length; i++) {
-      const value = (prices[i] - ema[i - 1]) * multiplier + ema[i - 1];
+    for (let i = 1; i < closePrices.length; i++) {
+      const value = (closePrices[i] - ema[i - 1]) * multiplier + ema[i - 1];
       ema.push(value);
     }
 
