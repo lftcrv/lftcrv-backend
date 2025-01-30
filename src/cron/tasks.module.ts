@@ -4,7 +4,7 @@ import { TasksService } from './tasks.service';
 import { MessageModule } from '../message/message.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), MessageModule],
-  providers: [TasksService],
+    imports: [ScheduleModule.forRoot(), MessageModule],
+    providers: [TasksService],
 })
-export class TasksModule {}
+export class TasksModule { }

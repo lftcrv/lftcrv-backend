@@ -72,6 +72,8 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 Nest is [MIT licensed](LICENSE).
 
+
+
 =====
 
 # Eliza Agent Service
@@ -87,15 +89,14 @@ Service to manage Eliza agents in Docker containers, providing API endpoints to 
 ## Setup
 
 1. Pull Eliza image:
-
 ```bash
 docker pull julienbrs/eliza:latest
 if on mac m1/m2/m3:
 docker pull --platform linux/amd64 julienbrs/eliza:latest
 ```
 
-2. Setup environment file in `docker/eliza/.env` with required configurations. If using Twitter client, include Twitter credentials:
 
+2. Setup environment file in `docker/eliza/.env` with required configurations. If using Twitter client, include Twitter credentials:
 ```env
 # Twitter Configuration
 TWITTER_DRY_RUN=false
@@ -108,7 +109,6 @@ TWITTER_EMAIL=
 ## Usage
 
 The service expects a JSON payload in this format:
-
 ```json
 {
     "name": "my-bot",
@@ -117,7 +117,6 @@ The service expects a JSON payload in this format:
 ```
 
 Example of a JSON to create an agent:
-
 ```
 {
     "name": "marx",
@@ -226,8 +225,8 @@ Example of a JSON to create an agent:
 - When using specific clients (e.g., Twitter), make sure to add corresponding credentials in the `.env` file
 - Each agent runs in its own Docker container but shares the environment configuration
 
-# To test a new eliza agent image
 
+# To test a new eliza agent image
 Build the agent's Docker image: ./scripts/docker.sh build in the agent's repository.
 Wait 20 minutes since Docker is slow. In the end, a newly created image named eliza will appear in Docker Desktop.
 Tag the image:

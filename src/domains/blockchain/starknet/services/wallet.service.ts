@@ -53,63 +53,46 @@ export class WalletService implements IStarknetWallet {
   }
 
   async transferFunds(ozWallet: OZWallet): Promise<OZWallet> {
-    console.log('Starting transferFunds with wallet:', ozWallet);
     const AMOUNT = 100000000000000n; // 0.0001 ETH in wei
 
     // Initialize the provider
     const provider = this.providerService.getProvider();
-    console.log('Provider initialized:', provider);
 
     // Initialize the admin account
     const adminAccount = this.accountService.getAdminAccount();
-    console.log('Admin account:', adminAccount);
 
     const ethTokenAddress = this.configService.get<string>('ETH_TOKEN_ADDRESS');
-    console.log('ETH token address:', ethTokenAddress);
 
-    try {
-      // Fetch the ABI of the ETH token contract
-      console.log('Fetching ETH token contract class...');
-      const classResponse = await provider.getClassAt(ethTokenAddress);
-      console.log('ETH token contract class response:', classResponse);
-
-      if (!classResponse?.abi) {
-        throw new Error('No ABI found in ETH token contract class response');
-      }
-      const ethTokenAbi = classResponse.abi;
-
-      // Create a contract instance for the ETH token
-      console.log('Creating ETH contract instance...');
-      const ethContract = new Contract(ethTokenAbi, ethTokenAddress, provider);
-      ethContract.connect(adminAccount);
-
-      // Prepare the transfer call
-      console.log('Preparing transfer call...');
-      const transferCalldata = ethContract.populate('transfer', {
-        recipient: ozWallet.ozContractAddress,
-        amount: uint256.bnToUint256(AMOUNT),
-      });
-      console.log('Transfer calldata:', transferCalldata);
-
-      // Execute the transfer
-      console.log('Executing transfer...');
-      const { transaction_hash } = await adminAccount.execute(transferCalldata);
-      console.log('Transfer executed, hash:', transaction_hash);
-
-      // Wait for the transaction to be accepted
-      console.log('Waiting for transaction confirmation...');
-      await provider.waitForTransaction(transaction_hash);
-      console.log('Transaction confirmed');
-
-      return {
-        ...ozWallet,
-        fundTransactionHash: transaction_hash,
-      };
-    } catch (error) {
-      console.error('Transfer funds error:', error);
-      console.error('Error stack:', error.stack);
-      throw error;
+    // Fetch the ABI of the ETH token contract
+    const { abi: ethTokenAbi } = await provider.getClassAt(ethTokenAddress);
+    if (!ethTokenAbi) {
+      throw new Error('Failed to retrieve ETH token contract ABI.');
     }
+
+    // Create a contract instance for the ETH token
+    const ethContract = new Contract(ethTokenAbi, ethTokenAddress, provider);
+    ethContract.connect(adminAccount);
+
+    // Prepare the transfer call
+    const transferCalldata = ethContract.populate('transfer', {
+      recipient: ozWallet.ozContractAddress,
+      amount: uint256.bnToUint256(AMOUNT),
+    });
+
+    // Execute the transfer
+    const { transaction_hash } = await adminAccount.execute(transferCalldata);
+
+    // Wait for the transaction to be accepted
+    await provider.waitForTransaction(transaction_hash);
+
+    console.log(
+      `Transferred ${AMOUNT} wei to ${ozWallet.ozContractAddress}. Transaction hash: ${transaction_hash}`,
+    );
+
+    return {
+      ...ozWallet,
+      fundTransactionHash: transaction_hash,
+    };
   }
 
   async deployWallet(ozWallet: OZWallet): Promise<OZWallet> {

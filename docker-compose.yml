@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   api:
-    build:
+    build: 
       context: .
       dockerfile: Dockerfile
     ports:
-      - '8080:8080'
+      - "8080:8080"
     environment:
       - NODE_ENV=development
       - DATABASE_HOST=postgres
@@ -28,7 +28,7 @@ services:
       POSTGRES_PASSWORD: lftcrv
       POSTGRES_DB: lftcrv
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

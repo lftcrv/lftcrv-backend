@@ -5,7 +5,7 @@ export class TradingInformationDto {
   @ApiProperty({ description: 'Runtime Agent ID' })
   @IsString()
   @IsNotEmpty()
-  runtimeAgentId: string; // Just temporary, todo, should be id of db
+  runtimeAgentId: string;  // Just temporary, todo, should be id of db
 
   @ApiProperty({ description: 'Trading information data' })
   @IsObject()
