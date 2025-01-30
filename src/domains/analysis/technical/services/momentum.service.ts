@@ -5,6 +5,11 @@ interface MACDResult {
   macd: number[];
   signal: number[];
   histogram: number[];
+  normalized: {
+    macd: number[];
+    signal: number[];
+    histogram: number[];
+  };
 }
 
 interface StochasticResult {
@@ -20,7 +25,7 @@ export class MomentumService {
     }
 
     // Extract closing prices
-    const closingPrices = prices.map(p => p.close!);
+    const closingPrices = prices.map((p) => p.close!);
     const gains: number[] = [];
     const losses: number[] = [];
 
@@ -32,8 +37,10 @@ export class MomentumService {
     }
 
     const rsi: number[] = [];
-    let avgGain = gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period;
-    let avgLoss = losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period;
+    let avgGain =
+      gains.slice(0, period).reduce((sum, gain) => sum + gain, 0) / period;
+    let avgLoss =
+      losses.slice(0, period).reduce((sum, loss) => sum + loss, 0) / period;
 
     // Calculate initial RSI
     rsi.push(100 - 100 / (1 + avgGain / avgLoss));
@@ -54,8 +61,8 @@ export class MomentumService {
     longPeriod = 26,
     signalPeriod = 9,
   ): MACDResult {
-    const closingPrices = prices.map(p => p.close!);
-    
+    const closingPrices = prices.map((p) => p.close!);
+
     const getEMA = (data: number[], period: number): number[] => {
       const k = 2 / (period + 1);
       const ema: number[] = [data[0]];
@@ -80,7 +87,14 @@ export class MomentumService {
     // Calculate histogram
     const histogram = macd.map((value, i) => value - signal[i]);
 
-    return { macd, signal, histogram };
+    // Calculate normalized values (as percentage of price)
+    const normalized = {
+      macd: macd.map((value, i) => (value / closingPrices[i]) * 100),
+      signal: signal.map((value, i) => (value / closingPrices[i]) * 100),
+      histogram: histogram.map((value, i) => (value / closingPrices[i]) * 100),
+    };
+
+    return { macd, signal, histogram, normalized };
   }
 
   calculateStochastic(
@@ -96,8 +110,8 @@ export class MomentumService {
     for (let i = period - 1; i < prices.length; i++) {
       const currentClose = prices[i].close!;
       const periodPrices = prices.slice(i - period + 1, i + 1);
-      const lowestLow = Math.min(...periodPrices.map(p => p.low!));
-      const highestHigh = Math.max(...periodPrices.map(p => p.high!));
+      const lowestLow = Math.min(...periodPrices.map((p) => p.low!));
+      const highestHigh = Math.max(...periodPrices.map((p) => p.high!));
       k.push(((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100);
     }
 
@@ -109,5 +123,19 @@ export class MomentumService {
     }
 
     return { k, d };
+  }
+
+  // Helper methods for interpreting results
+  getMACDSignal(histogram: number, price: number): 'buy' | 'sell' | 'neutral' {
+    const normalizedHistogram = (histogram / price) * 100;
+
+    if (normalizedHistogram > 0.2) return 'buy';
+    if (normalizedHistogram < -0.2) return 'sell';
+    return 'neutral';
+  }
+
+  getMACDStrength(histogram: number, price: number): number {
+    const normalizedHistogram = Math.abs((histogram / price) * 100);
+    return Math.min(normalizedHistogram / 0.4, 1); // Force maximale à 0.4% du prix
   }
 }

@@ -1,15 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PriceDTO } from '../dto/price.dto';
-
-// Enum for candlestick pattern types
-export enum CandlePatternType {
-  DOJI = 'DOJI',
-  HAMMER = 'HAMMER',
-  ENGULFING_BULLISH = 'ENGULFING_BULLISH',
-  ENGULFING_BEARISH = 'ENGULFING_BEARISH',
-  MORNING_STAR = 'MORNING_STAR',
-  THREE_WHITE_SOLDIERS = 'THREE_WHITE_SOLDIERS',
-}
+import { CandlePatternType } from '../types';
 
 // Interface defining a detected pattern
 interface CandlePattern {
