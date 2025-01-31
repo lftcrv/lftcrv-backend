@@ -76,9 +76,9 @@ export class TechnicalService {
   }
 
   private calculateChanges(shortTermPrices: PriceDTO[], mediumTermPrices: PriceDTO[], longTermPrices: PriceDTO[]): AssetAnalysis['changes'] {
-    const thirtyMinChange = this.calculatePriceChange(shortTermPrices, 6);  // 6 périodes de 5m
-    const oneHourChange = this.calculatePriceChange(mediumTermPrices, 1);   // 1 période de 1h
-    const fourHourChange = this.calculatePriceChange(longTermPrices, 1);    // 1 période de 4h
+    const thirtyMinChange = this.calculatePriceChange(shortTermPrices, 6);  // 6 periods of 5 min
+    const oneHourChange = this.calculatePriceChange(mediumTermPrices, 1);   // 1 period of 1h
+    const fourHourChange = this.calculatePriceChange(longTermPrices, 1);    // 1 period of 4h
 
     return {
       '30min': this.formatPriceChange(thirtyMinChange),
@@ -95,7 +95,7 @@ export class TechnicalService {
 
   private async analyzeShortTerm(prices: PriceDTO[]): Promise<ShortTermAnalysis> {
     const patterns = this.candlestickService.analyzeCandlestick(prices)
-      .slice(0, 2)  // Garder seulement les 2 patterns les plus récents
+      .slice(0, 2)
       .map(pattern => ({
         type: pattern.type,
         strength: pattern.strength
@@ -103,10 +103,16 @@ export class TechnicalService {
 
     const rsi = this.momentumService.calculateRSI(prices);
     const macd = this.momentumService.calculateMACD(prices);
+    const stoch = this.momentumService.calculateStochastic(prices);
+    
     const lastRSI = rsi[rsi.length - 1];
     const lastIndex = macd.histogram.length - 1;
     const currentPrice = prices[lastIndex].close!;
     
+    // Get last stochastic values
+    const lastK = stoch.k[stoch.k.length - 1];
+    const lastD = stoch.d[stoch.d.length - 1];
+
     return {
       timeframe: "5m",
       patterns: {
@@ -115,7 +121,7 @@ export class TechnicalService {
       momentum: {
         rsi: {
           value: lastRSI,
-          condition: this.getRSICondition(lastRSI)
+          condition: this.momentumService.getRSICondition(lastRSI)
         },
         macd: {
           signal: this.momentumService.getMACDSignal(
@@ -126,6 +132,11 @@ export class TechnicalService {
             macd.histogram[lastIndex],
             currentPrice
           )
+        },
+        stochastic: {
+          k: lastK,
+          d: lastD,
+          condition: this.momentumService.getStochasticCondition(lastK, lastD)
         }
       }
     };
@@ -146,12 +157,6 @@ export class TechnicalService {
         strength: this.calculateTrendStrength(prices)
       }
     };
-  }
-
-  private getRSICondition(rsi: number): 'oversold' | 'overbought' | 'neutral' {
-    if (rsi >= 70) return 'overbought';
-    if (rsi <= 30) return 'oversold';
-    return 'neutral';
   }
 
   private getTrendDirection(

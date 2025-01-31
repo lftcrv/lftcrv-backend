@@ -41,15 +41,6 @@ describe('IchimokuService', () => {
         }
 
         const result = service.calculateSimplified(prices);
-        console.log('Debug - Result:', {
-          price: prices[prices.length - 1].close,
-          conversion: result.lines.conversion,
-          base: result.lines.base,
-          signal: result.signal,
-          cloudState: result.cloudState,
-          priceDistance: result.lines.priceDistance,
-        });
-
         expect(result.signal).toBe('strong_buy');
         expect(result.cloudState).toBe('above');
         expect(result.lines.priceDistance).toBeGreaterThan(0);
