@@ -55,6 +55,12 @@ export class MomentumService {
     return rsi;
   }
 
+  getRSICondition(rsi: number): 'oversold' | 'overbought' | 'neutral' {
+    if (rsi >= 70) return 'overbought';
+    if (rsi <= 30) return 'oversold';
+    return 'neutral';
+  }
+
   calculateMACD(
     prices: PriceDTO[],
     shortPeriod = 12,
@@ -99,14 +105,15 @@ export class MomentumService {
 
   calculateStochastic(
     prices: PriceDTO[],
-    period: number = 14,
+    period: number = 14, // %K Length
+    dPeriod: number = 3, // %D Smoothing
   ): StochasticResult {
     if (prices.length < period) {
       return { k: [], d: [] };
     }
 
     const k: number[] = [];
-    // Calculate %K
+    // Calculate raw %K
     for (let i = period - 1; i < prices.length; i++) {
       const currentClose = prices[i].close!;
       const periodPrices = prices.slice(i - period + 1, i + 1);
@@ -115,13 +122,12 @@ export class MomentumService {
       k.push(((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100);
     }
 
-    // Calculate %D (3-day SMA of %K)
+    // Calculate %D (3-period SMA of %K)
     const d: number[] = [];
-    for (let i = 2; i < k.length; i++) {
-      const threeDay = k.slice(i - 2, i + 1);
-      d.push(threeDay.reduce((sum, val) => sum + val, 0) / 3);
+    for (let i = dPeriod - 1; i < k.length; i++) {
+      const dValues = k.slice(i - dPeriod + 1, i + 1);
+      d.push(dValues.reduce((sum, val) => sum + val, 0) / dPeriod);
     }
-
     return { k, d };
   }
 
@@ -136,6 +142,83 @@ export class MomentumService {
 
   getMACDStrength(histogram: number, price: number): number {
     const normalizedHistogram = Math.abs((histogram / price) * 100);
-    return Math.min(normalizedHistogram / 0.4, 1); // Force maximale à 0.4% du prix
+    return Math.min(normalizedHistogram / 0.4, 1); // Maximal strength at 0.4% of price
+  }
+
+  getStochasticCondition(
+    k: number,
+    d: number,
+  ): 'oversold' | 'overbought' | 'neutral' {
+    // Standard condition
+    if (k > 80 && d > 80) return 'overbought';
+    if (k < 20 && d < 20) return 'oversold';
+    return 'neutral';
+  }
+
+  calculateROC(
+    prices: PriceDTO[],
+    period: number = 14,
+  ): {
+    values: number[];
+    normalized: number[];
+  } {
+    if (prices.length < period + 1) {
+      return { values: [], normalized: [] };
+    }
+
+    const closePrices = prices.map((p) => p.close!);
+    const roc: number[] = [];
+    const normalized: number[] = [];
+
+    // Calculate ROC starting from the period index
+    for (let i = period; i < closePrices.length; i++) {
+      const currentPrice = closePrices[i];
+      const oldPrice = closePrices[i - period];
+      const rocValue = ((currentPrice - oldPrice) / oldPrice) * 100;
+      roc.push(rocValue);
+
+      // Normalize to [-1, 1] range, assuming ±10% as max typical range
+      normalized.push(Math.max(Math.min(rocValue / 10, 1), -1));
+    }
+
+    return { values: roc, normalized };
+  }
+
+  getROCSignal(
+    roc: number,
+    overboughtThreshold: number = 10,
+    oversoldThreshold: number = -10,
+  ): {
+    condition: 'overbought' | 'oversold' | 'neutral';
+    strength: number;
+  } {
+    const absRoc = Math.abs(roc);
+    const strength = Math.min(absRoc / 10, 1); // Normalize to [0, 1]
+
+    if (roc > overboughtThreshold) {
+      return { condition: 'overbought', strength };
+    }
+    if (roc < oversoldThreshold) {
+      return { condition: 'oversold', strength };
+    }
+    return { condition: 'neutral', strength };
+  }
+
+  calculateSustainedPeriods(
+    values: number[],
+    threshold: number,
+    direction: 'up' | 'down',
+  ): number {
+    let periods = 0;
+    for (let i = values.length - 1; i >= 0; i--) {
+      if (direction === 'up' && values[i] > threshold) {
+        periods++;
+      } else if (direction === 'down' && values[i] < threshold) {
+        periods++;
+      } else {
+        break;
+      }
+    }
+    return periods;
   }
 }

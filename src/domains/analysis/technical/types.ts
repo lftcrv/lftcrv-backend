@@ -131,6 +131,14 @@ export enum CandlePatternType {
   THREE_WHITE_SOLDIERS = 'THREE_WHITE_SOLDIERS',
 }
 
+export interface BollingerBandsResult {
+  upper: number[];
+  middle: number[];
+  lower: number[];
+  width: number[];
+  standardDeviation: number;
+}
+
 export interface MarketAnalysis {
   timestamp: number;
   analyses: Record<string, AssetAnalysis>;
@@ -170,15 +178,89 @@ export interface ShortTermAnalysis {
       signal: 'buy' | 'sell' | 'neutral';
       strength: number;
     };
+    stochastic: {
+      k: number; // %K slow line
+      d: number; // %D fast line
+      condition: 'oversold' | 'overbought' | 'neutral';
+    };
   };
 }
 
 export interface MediumTermAnalysis {
-  timeframe: '1h';
+  timeframe: string;
   trend: {
-    direction: 'bullish' | 'bearish' | 'neutral';
-    crossover: string | null;
-    strength: number;
+    primary: {
+      direction: 'bullish' | 'bearish' | 'neutral';
+      strength: number; // ADX-based (0-1)
+      momentum: {
+        value: number; // -1 to 1
+        period: number; // e.g., 14
+        sustainedPeriods: number; // How many periods momentum maintained
+      };
+    };
+    price: {
+      action: {
+        direction: 'uptrend' | 'downtrend' | 'sideways';
+        strength: number; // 0-1
+        testedLevels: {
+          recent: number; // Most recently tested price level
+          count: number; // Number of tests in last period
+        };
+      };
+      volatility: {
+        bbWidth: number; // 0-1 normalized
+        state: 'expanding' | 'contracting' | 'stable';
+      };
+    };
+  };
+  technicals: {
+    momentum: {
+      roc: {
+        value: number; // -1 to 1 normalized
+        state: 'oversold' | 'overbought' | 'neutral';
+        period: number; // e.g., 14
+      };
+      adx: {
+        value: number; // 0-1 normalized
+        trending: boolean; // true if ADX > 25
+        sustainedPeriods: number; // How long trend maintained
+      };
+    };
+    ichimoku: {
+      signal: 'strong_buy' | 'buy' | 'neutral' | 'sell' | 'strong_sell';
+      cloudState: 'above' | 'below' | 'inside';
+      lines: {
+        conversion: number;
+        base: number;
+        priceDistance: number; // Distance from price to cloud (%)
+      };
+    };
+    levels: {
+      volumeBased: {
+        resistance: number;
+        support: number;
+        highestVolume: {
+          price: number;
+          recentTests: number; // Number of recent tests
+        };
+      };
+      pivots: {
+        pivot: number;
+        r1: number;
+        s1: number;
+        breakout: 'above_r1' | 'below_s1' | 'between';
+        r1Distance: number; // % to R1
+      };
+    };
+    volume: {
+      trend: 'increasing' | 'decreasing' | 'stable';
+      significance: number; // 0-1
+      profile: {
+        distribution: 'high' | 'low' | 'neutral';
+        activity: number; // 0-1
+        sustainedPeriods: number; // How long current trend maintained
+      };
+    };
   };
 }
 
