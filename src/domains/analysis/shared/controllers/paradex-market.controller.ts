@@ -6,6 +6,7 @@ import {
   ParadexSymbolsResponseDto,
   RefreshMarketsResponseDto,
 } from '../dto/paradex-market.dto';
+import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
 
 @ApiTags('Paradex Markets')
 @Controller('markets/paradex')
@@ -13,6 +14,7 @@ export class ParadexMarketsController {
   constructor(private readonly paradexMarketsService: ParadexMarketsService) {}
 
   @Post('refresh')
+  @RequireApiKey()
   @ApiOperation({ summary: 'Fetch and update markets from Paradex' })
   @ApiResponse({
     status: 200,
@@ -25,6 +27,7 @@ export class ParadexMarketsController {
   }
 
   @Get()
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get all active Paradex markets' })
   @ApiResponse({
     status: 200,
@@ -40,6 +43,7 @@ export class ParadexMarketsController {
   }
 
   @Get('symbols')
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get all active Paradex market symbols' })
   @ApiResponse({
     status: 200,
