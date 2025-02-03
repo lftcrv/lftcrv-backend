@@ -48,3 +48,5 @@ coverage
 .cache
 
 # Eliza
+docker/eliza/agent/
+docker/eliza/characters/
