@@ -1,4 +1,3 @@
-// analysis.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { TechnicalService } from './technical/technical.service';
