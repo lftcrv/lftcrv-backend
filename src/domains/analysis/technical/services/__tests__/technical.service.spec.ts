@@ -4,7 +4,11 @@ import { PriceService } from '../price.service';
 import { MovingAverageService } from '../moving-average.service';
 import { CandlestickService } from '../candlestick.service';
 import { MomentumService } from '../momentum.service';
-import { PriceDTO } from '../../dto/price.dto';
+import { ADXService } from '../adx.service';
+import { IchimokuService } from '../ichimoku.service';
+import { VolumeService } from '../volume.service';
+import { PivotService } from '../pivot.service';
+
 describe('TechnicalService', () => {
   let service: TechnicalService;
   let priceService: PriceService;
@@ -17,6 +21,10 @@ describe('TechnicalService', () => {
         MovingAverageService,
         CandlestickService,
         MomentumService,
+        ADXService,
+        IchimokuService,
+        VolumeService,
+        PivotService,
       ],
     }).compile();
 
@@ -25,19 +33,16 @@ describe('TechnicalService', () => {
   });
 
   describe('Short Term Analysis', () => {
-    it.only('should provide complete short-term analysis with real price data', async () => {
+    it('should provide complete short-term analysis with real price data', async () => {
       // Get real price data
       const prices = await priceService.getHistoricalPrices('BTC', '5m', {
         limit: 100,
         priceKind: 'mark',
       });
-
       expect(prices.length).toBeGreaterThan(0);
 
       // Test analyzeShortTerm
       const analysis = await (service as any).analyzeShortTerm(prices);
-
-      // Vérification de la structure
       expect(analysis).toMatchObject({
         timeframe: '5m',
         patterns: {
@@ -60,11 +65,6 @@ describe('TechnicalService', () => {
       expect(analysis.momentum.rsi.value).toBeLessThanOrEqual(100);
       expect(analysis.momentum.macd.strength).toBeGreaterThanOrEqual(0);
       expect(analysis.momentum.macd.strength).toBeLessThanOrEqual(1);
-
-      // Get raw MACD values for comparison
-
-      // Log des résultats pour inspection
-      console.log('analysis:', analysis);
     });
   });
 
@@ -72,55 +72,154 @@ describe('TechnicalService', () => {
     it('should provide complete medium-term analysis with real price data', async () => {
       // Get real price data
       const prices = await priceService.getHistoricalPrices('BTC', '1h', {
-        limit: 48,
+        limit: 100,
         priceKind: 'mark',
       });
-
       expect(prices.length).toBeGreaterThan(0);
 
       // Test analyzeMediumTerm
-      const analysis = await (service as any).analyzeMediumTerm(prices);
+      let analysis;
+      try {
+        analysis = await (service as any).analyzeMediumTerm(prices);
+      } catch (error) {
+        console.error('Error in analyzeMediumTerm:', error);
+        console.error('Error stack:', error.stack);
+        throw error;
+      }
 
-      // Vérification de la structure
+      // Verify structure and types
       expect(analysis).toMatchObject({
         timeframe: '1h',
         trend: {
-          direction: expect.stringMatching(/^(bullish|bearish|neutral)$/),
-          crossover: expect.any(String) || null,
-          strength: expect.any(Number),
+          primary: {
+            direction: expect.stringMatching(/^(bullish|bearish|neutral)$/),
+            strength: expect.any(Number),
+            momentum: {
+              value: expect.any(Number),
+              period: expect.any(Number),
+              sustainedPeriods: expect.any(Number),
+            },
+          },
+          price: {
+            action: {
+              direction: expect.stringMatching(
+                /^(uptrend|downtrend|sideways)$/,
+              ),
+              strength: expect.any(Number),
+              testedLevels: {
+                recent: expect.any(Number),
+                count: expect.any(Number),
+              },
+            },
+            volatility: {
+              bbWidth: expect.any(Number),
+              state: expect.stringMatching(/^(expanding|contracting|stable)$/),
+            },
+          },
+        },
+        technicals: {
+          momentum: {
+            roc: {
+              value: expect.any(Number),
+              state: expect.stringMatching(/^(oversold|overbought|neutral)$/),
+              period: expect.any(Number),
+            },
+            adx: {
+              value: expect.any(Number),
+              trending: expect.any(Boolean),
+              sustainedPeriods: expect.any(Number),
+            },
+          },
+          ichimoku: {
+            signal: expect.stringMatching(
+              /^(strong_buy|buy|neutral|sell|strong_sell)$/,
+            ),
+            cloudState: expect.stringMatching(/^(above|below|inside)$/),
+            lines: {
+              conversion: expect.any(Number),
+              base: expect.any(Number),
+              priceDistance: expect.any(Number),
+            },
+          },
+          levels: {
+            // volumeBased: {
+            //   resistance: expect.any(Number),
+            //   support: expect.any(Number),
+            //   highestVolume: {
+            //     price: expect.any(Number),
+            //     recentTests: expect.any(Number),
+            //   },
+            // },
+            pivots: {
+              pivot: expect.any(Number),
+              r1: expect.any(Number),
+              s1: expect.any(Number),
+              breakout: expect.stringMatching(/^(above_r1|below_s1|between)$/),
+              r1Distance: expect.any(Number),
+            },
+          },
+          volume: {
+            trend: expect.stringMatching(/^(increasing|decreasing|stable)$/),
+            significance: expect.any(Number),
+            profile: {
+              distribution: expect.stringMatching(/^(high|low|neutral)$/),
+              activity: expect.any(Number),
+              sustainedPeriods: expect.any(Number),
+            },
+          },
         },
       });
 
-      // Vérifications spécifiques
-      expect(analysis.trend.strength).toBeGreaterThanOrEqual(0);
-      expect(analysis.trend.strength).toBeLessThanOrEqual(1);
-
-      // Log des résultats pour inspection
-      console.log('Medium Term Analysis Results:', {
-        direction: analysis.trend.direction,
-        crossover: analysis.trend.crossover,
-        strength: analysis.trend.strength,
-      });
+      // Value range checks
+      expect(analysis.trend.primary.strength).toBeGreaterThanOrEqual(0);
+      expect(analysis.trend.primary.strength).toBeLessThanOrEqual(1);
+      expect(analysis.trend.primary.momentum.value).toBeGreaterThanOrEqual(-1);
+      expect(analysis.trend.primary.momentum.value).toBeLessThanOrEqual(1);
+      expect(analysis.trend.price.action.strength).toBeGreaterThanOrEqual(0);
+      expect(analysis.trend.price.action.strength).toBeLessThanOrEqual(1);
+      expect(analysis.technicals.momentum.adx.value).toBeGreaterThanOrEqual(0);
+      expect(analysis.technicals.momentum.adx.value).toBeLessThanOrEqual(1);
+      expect(analysis.technicals.volume.significance).toBeGreaterThanOrEqual(0);
+      expect(analysis.technicals.volume.significance).toBeLessThanOrEqual(1);
+      expect(
+        analysis.technicals.volume.profile.activity,
+      ).toBeGreaterThanOrEqual(0);
+      expect(analysis.technicals.volume.profile.activity).toBeLessThanOrEqual(
+        1,
+      );
     });
   });
 
   describe('Error Handling', () => {
     it('should handle insufficient data for short-term analysis', async () => {
       const prices = await priceService.getHistoricalPrices('BTC', '5m', {
-        limit: 2, // Insuffisant pour l'analyse
+        limit: 2, // Insufficient for analysis
       });
-
       const analysis = await (service as any).analyzeShortTerm(prices);
+
+      // Verify default values
+      expect(analysis.timeframe).toBe('5m');
       expect(analysis.patterns.recent).toHaveLength(0);
+      expect(analysis.momentum.rsi.value).toBe(50);
+      expect(analysis.momentum.rsi.condition).toBe('neutral');
+      expect(analysis.momentum.macd.signal).toBe('neutral');
+      expect(analysis.momentum.macd.strength).toBe(0);
+      expect(analysis.momentum.stochastic.k).toBe(50);
+      expect(analysis.momentum.stochastic.d).toBe(50);
+      expect(analysis.momentum.stochastic.condition).toBe('neutral');
     });
 
     it('should handle insufficient data for medium-term analysis', async () => {
       const prices = await priceService.getHistoricalPrices('BTC', '1h', {
-        limit: 2, // Insuffisant pour l'analyse
+        limit: 2, // Insufficient for analysis
       });
-
       const analysis = await (service as any).analyzeMediumTerm(prices);
-      expect(analysis.trend.direction).toBe('neutral');
+
+      // Verify default/fallback values for insufficient data
+      expect(analysis.trend.primary.direction).toBe('neutral');
+      expect(analysis.trend.primary.strength).toBe(0);
+      expect(analysis.technicals.momentum.adx.trending).toBe(false);
+      expect(analysis.technicals.volume.trend).toBe('stable');
     });
   });
 });

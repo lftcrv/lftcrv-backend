@@ -236,14 +236,14 @@ export interface MediumTermAnalysis {
       };
     };
     levels: {
-      volumeBased: {
-        resistance: number;
-        support: number;
-        highestVolume: {
-          price: number;
-          recentTests: number; // Number of recent tests
-        };
-      };
+      // volumeBased: {
+      //   resistance: number;
+      //   support: number;
+      //   highestVolume: {
+      //     price: number;
+      //     recentTests: number; // Number of recent tests
+      //   };
+      // };
       pivots: {
         pivot: number;
         r1: number;
