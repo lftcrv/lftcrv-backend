@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { TechnicalService } from './technical.service';
 import { MarketAnalysis } from './types';
 import { MarketAnalysisResponseDTO } from './dto/technical-analysis.dto';
+import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
 
 @ApiTags('Technical Analysis')
 @Controller('analysis/technical')
@@ -10,6 +11,7 @@ export class TechnicalController {
   constructor(private readonly technicalService: TechnicalService) {}
 
   @Get()
+  @RequireApiKey()
   @ApiOperation({
     summary: 'Get latest technical analysis for specified assets',
     description: 'Analyze one or more cryptocurrencies',

@@ -21,6 +21,7 @@ import { BlockchainModule } from './shared/blockchain/blockchain.module';
 import { TransactionModule } from './domains/transaction/transaction.module';
 import { TechnicalModule } from './domains/analysis/technical/technical.module';
 import { AnalysisModule } from './domains/analysis/analysis.module';
+import { AnalysisSharedModule } from './domains/analysis/shared/shared.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AnalysisModule } from './domains/analysis/analysis.module';
     StarknetModule,
     AgentTokenModule,
     TransactionModule,
+    AnalysisSharedModule,
     TechnicalModule,
     AnalysisModule,
   ],

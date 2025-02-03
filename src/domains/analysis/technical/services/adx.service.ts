@@ -13,12 +13,14 @@ export class ADXService {
       const high = prices[i].high!;
       const low = prices[i].low!;
       const prevClose = prices[i - 1].close!;
-      
-      tr.push(Math.max(
-        high - low,
-        Math.abs(high - prevClose),
-        Math.abs(low - prevClose)
-      ));
+
+      tr.push(
+        Math.max(
+          high - low,
+          Math.abs(high - prevClose),
+          Math.abs(low - prevClose),
+        ),
+      );
 
       // Directional Movement
       const upMove = high - prices[i - 1].high!;
@@ -35,7 +37,9 @@ export class ADXService {
 
     // Calculate DI
     const plusDI = smoothedPlusDM.map((pdm, i) => (pdm / smoothedTR[i]) * 100);
-    const minusDI = smoothedMinusDM.map((mdm, i) => (mdm / smoothedTR[i]) * 100);
+    const minusDI = smoothedMinusDM.map(
+      (mdm, i) => (mdm / smoothedTR[i]) * 100,
+    );
 
     return { plusDI, minusDI };
   }
@@ -56,7 +60,7 @@ export class ADXService {
       plusDI: plusDI[plusDI.length - 1],
       minusDI: minusDI[minusDI.length - 1],
       trending: adx[adx.length - 1] > 25,
-      sustainedPeriods: this.calculateSustainedPeriods(adx, 25)
+      sustainedPeriods: this.calculateSustainedPeriods(adx, 25),
     };
   }
 
@@ -72,7 +76,10 @@ export class ADXService {
     return smoothed;
   }
 
-  private calculateSustainedPeriods(values: number[], threshold: number): number {
+  private calculateSustainedPeriods(
+    values: number[],
+    threshold: number,
+  ): number {
     let periods = 0;
     for (let i = values.length - 1; i >= 0; i--) {
       if (values[i] > threshold) periods++;
