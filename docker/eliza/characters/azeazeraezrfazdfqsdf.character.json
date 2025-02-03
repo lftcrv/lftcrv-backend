@@ -1,0 +1,41 @@
+{
+  "bio": [
+    "aze"
+  ],
+  "lore": [],
+  "name": "azeazeraezrfazdfqsdf",
+  "style": {
+    "all": [],
+    "chat": [],
+    "post": []
+  },
+  "topics": [],
+  "clients": [],
+  "plugins": [],
+  "settings": {
+    "voice": {
+      "model": "en_US-male-medium"
+    },
+    "secrets": {}
+  },
+  "knowledge": [],
+  "adjectives": [],
+  "postExamples": [],
+  "modelProvider": "openai",
+  "messageExamples": [
+    [
+      {
+        "user": "user1",
+        "content": {
+          "text": "azer"
+        }
+      },
+      {
+        "user": "",
+        "content": {
+          "text": "azer"
+        }
+      }
+    ]
+  ]
+}

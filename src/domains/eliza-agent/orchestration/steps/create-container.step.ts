@@ -4,9 +4,9 @@ import { ServiceTokens } from '../../interfaces';
 import {
   StepExecutionContext,
   StepExecutionResult,
-} from 'src/domains/orchestration/interfaces';
-import { BaseStepExecutor } from 'src/domains/orchestration/services/base-step-executor';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+} from '../../../../domains/orchestration/interfaces';
+import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
+import { PrismaService } from '../../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class CreateContainerStep extends BaseStepExecutor {
@@ -18,7 +18,7 @@ export class CreateContainerStep extends BaseStepExecutor {
     super({
       stepId: 'create-container',
       stepType: 'agent-creation',
-      priority: 2,
+      priority: 6,
     });
   }
 
@@ -26,11 +26,12 @@ export class CreateContainerStep extends BaseStepExecutor {
     try {
       const dto = context.data;
 
-      const { agentId } = context.metadata;
-
+      const { agentId, wallet } = context.metadata;
       const { containerId, port } = await this.dockerService.createContainer({
         name: dto.name,
         characterConfig: dto.characterConfig,
+        starknetAddress: wallet.ozContractAddress,
+        starknetPrivateKey: wallet.privateKey,
       });
 
       const updatedAgent = await this.prisma.elizaAgent.update({

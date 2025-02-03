@@ -4,11 +4,11 @@ import { IDockerService } from '../../interfaces/docker-service.interface';
 import { ServiceTokens } from '../../interfaces';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
 import { AgentStatus } from '../../entities/eliza-agent.entity';
-import { BaseStepExecutor } from 'src/domains/orchestration/services/base-step-executor';
+import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
 import {
   StepExecutionContext,
   StepExecutionResult,
-} from 'src/domains/orchestration/interfaces';
+} from '../../../../domains/orchestration/interfaces';
 
 @Injectable()
 export class StartContainerStep extends BaseStepExecutor {
@@ -20,7 +20,7 @@ export class StartContainerStep extends BaseStepExecutor {
     super({
       stepId: 'start-container',
       stepType: 'agent-creation',
-      priority: 3,
+      priority: 7,
     });
   }
 

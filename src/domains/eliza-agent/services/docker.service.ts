@@ -1,10 +1,16 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import * as Docker from 'dockerode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { AgentStatus } from '@prisma/client';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
+import {
+  CreateElizaContainerConfig,
+  ElizaContainerResult,
+  IElizaConfigService,
+  ServiceTokens,
+} from '../interfaces';
 
 @Injectable()
 export class DockerService implements IDockerService, OnModuleInit {
@@ -16,7 +22,11 @@ export class DockerService implements IDockerService, OnModuleInit {
   private readonly startPort = 3001;
   private readonly maxPort = 3999;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(ServiceTokens.ElizaConfig)
+    private readonly elizaConfig: IElizaConfigService,
+  ) {
     this.docker = new Docker();
     this.elizaBasePath = path.join(process.cwd(), 'docker', 'eliza');
     this.elizaEnvPath = path.join(this.elizaBasePath, '.env');
@@ -81,8 +91,8 @@ export class DockerService implements IDockerService, OnModuleInit {
    * @returns Container ID, Port used
    */
   async createContainer(
-    config: Record<string, any>,
-  ): Promise<{ containerId: string; port: number }> {
+    config: CreateElizaContainerConfig,
+  ): Promise<ElizaContainerResult> {
     const port = await this.findAvailablePort();
 
     const agentDataPath = path.join(this.dataPath, config.name);
@@ -97,10 +107,13 @@ export class DockerService implements IDockerService, OnModuleInit {
       JSON.stringify(config.characterConfig, null, 2),
     );
 
+    // Generate environment variables for the container
+    const containerEnv = this.elizaConfig.generateContainerEnv(config);
+
     const container = await this.docker.createContainer({
       Image: 'julienbrs/eliza:latest',
       name: `eliza-${config.name}`,
-      Env: ['SERVER_PORT=3000'],
+      Env: containerEnv,
       Cmd: [
         'pnpm',
         'start',
@@ -108,7 +121,6 @@ export class DockerService implements IDockerService, OnModuleInit {
       ],
       HostConfig: {
         Binds: [
-          `${this.elizaEnvPath}:/app/.env:ro`,
           `${characterPath}:/app/characters/${config.name}.character.json`,
           `${agentDataPath}:/app/agent/data`,
         ],
@@ -121,46 +133,49 @@ export class DockerService implements IDockerService, OnModuleInit {
       },
     });
 
-    return { containerId: container.id, port };
+    const containerId = container.id;
+
+    return { containerId, port };
   }
 
-  private async waitForLog(
-    containerId: string,
-    timeoutMs = 300000,
-    intervalMs = 5000,
-  ): Promise<string | null> {
-    const startTime = Date.now();
+  private async waitForLog(containerId: string): Promise<string | null> {
     const container = this.docker.getContainer(containerId);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    while (Date.now() - startTime < timeoutMs) {
-      try {
-        // Get logs since container start
+    try {
+      const info = await container.inspect();
+      if (info.State.Status === 'running') {
         const logs = await container.logs({
           stdout: true,
           stderr: true,
-          timestamps: true,
-          since: Math.floor(startTime / 1000),
+          tail: 50,
         });
-
         const logsStr = logs.toString('utf8');
-        const match = logsStr.match(/Agent ID[^\n]*\n[^\n]*([a-f0-9-]{36})/);
-
-        if (match && match[1]) {
-          return match[1];
+        if (logsStr.includes('REST API bound to 0.0.0.0:3000')) {
+          const shortId = containerId.substring(0, 8);
+          console.log(`✅ Container ${shortId} started and API is ready`);
+          return shortId;
         }
 
-        // Wait before next attempt
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
-      } catch (error) {
-        console.error('Error reading container logs:', error);
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        console.log('⏳ Container running but waiting for API...');
+        return containerId.substring(0, 8);
       }
-    }
 
-    console.warn(
-      `Timeout reached while waiting for Agent ID in container ${containerId}`,
-    );
-    return null;
+      const logs = await container.logs({
+        stdout: true,
+        stderr: true,
+        tail: 50,
+      });
+      const status = info.State.Status;
+      const logStr = logs.toString('utf8');
+      console.error(
+        `Container failed to start. Status: ${status}\nLogs:\n${logStr}`,
+      );
+      return null;
+    } catch (error) {
+      console.error(`❌ Error checking container: ${error.message}`);
+      return null;
+    }
   }
 
   async getRuntimeAgentId(containerId: string): Promise<string | null> {

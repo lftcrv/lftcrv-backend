@@ -45,7 +45,7 @@ export class TradingInformationService implements ITradingInformation {
       data: {
         createdAt: new Date(),
         information: data.information,
-        elizaAgentId: agent.id, // Use DB id
+        elizaAgentId: agent.id,
       },
     });
   }

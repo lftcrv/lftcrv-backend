@@ -50,7 +50,7 @@ export class TradingInformationController {
     return this.tradingInformationService.getAllTradingInformation();
   }
 
-  @Get(':id') // databaseID of the agent
+  @Get(':id')
   @RequireApiKey()
   @ApiOperation({ summary: 'List trading information for a specific agent' })
   @ApiResponse({
@@ -65,7 +65,7 @@ export class TradingInformationController {
     );
   }
 
-  @Get(':id') // databaseID of the agent
+  @Get(':id')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get a specific trading information' })
   @ApiResponse({

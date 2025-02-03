@@ -19,6 +19,13 @@ export class CreateElizaAgentDto {
   @IsEnum(CurveSide)
   curveSide: CurveSide;
 
+  @ApiProperty({
+    description: 'Wallet address of the creator',
+    example: 'Ox1234567890',
+  })
+  @IsString()
+  creatorWallet: string;
+
   @ApiProperty({ description: 'Character configuration for the agent' })
   @IsObject()
   @IsNotEmpty()

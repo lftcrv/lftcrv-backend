@@ -43,6 +43,7 @@ model ElizaAgent {
   id             String      @id @default(uuid())
   name           String
   curveSide      CurveSide
+  creatorWallet  String
   status         AgentStatus @default(STARTING)
   containerId    String?
   runtimeAgentId String?
@@ -54,6 +55,8 @@ model ElizaAgent {
   degenScore     Float? @default(0)
   winScore       Float? @default(0)
   LatestMarketData     LatestMarketData?
+  Wallet           AgentWallet?
+  Token            AgentToken?
 
   @@map("eliza_agents")
 }
@@ -129,4 +132,61 @@ model Orchestration {
   @@index([status])
   @@index([createdAt])
   @@map("orchestrations")
+}
+
+model PriceForToken {
+  id            String              @id @default(uuid())
+  price          String             
+  timestamp      DateTime
+  tokenId       String
+AgentToken    AgentToken @relation(fields: [tokenId], references: [id])
+  @@map("price_for_token")
+}
+
+model AgentWallet {
+  id                    String     @id @default(uuid())
+  privateKey            String
+  publicKey            String
+  contractAddress      String
+  fundTransactionHash  String?
+  deployTransactionHash String?
+  deployedAddress      String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  elizaAgentId   String      @unique
+  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
+
+  @@map("agent_wallet")
+}
+
+model AgentToken {
+  id                   String     @id @default(uuid())
+  token                String
+  symbol               String
+  contractAddress      String
+  buyTax               Int
+  sellTax              Int
+  elizaAgentId   String      @unique
+  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
+  Transaction          Transaction[]
+  Prices              PriceForToken[]
+
+  @@map("agent_token")
+}
+
+model Transaction {
+  id            String     @id @default(uuid())
+  buyToken      String
+  sellToken     String
+  buyAmount     BigInt
+  sellAmount    BigInt
+  hash          String
+  tokenId       String
+  userAddress   String
+  AgentToken    AgentToken @relation(fields: [tokenId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([createdAt, userAddress])
+  @@map("transactions")
 }

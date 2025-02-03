@@ -13,8 +13,12 @@ import { HealthModule } from './shared/health/health.module';
 import { ElizaAgentModule } from './domains/eliza-agent/eliza-agent.module';
 import { TasksModule } from './cron/tasks.module';
 import { MessageModule } from './message/message.module';
-import { TradingInformationModule } from './domains/trading/trading-information.module';
+import { TradingInformationModule } from './domains/trading-information/trading-information.module';
 import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
+import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
+import { AgentTokenModule } from './domains/agent-token/agent-token.module';
+import { BlockchainModule } from './shared/blockchain/blockchain.module';
+import { TransactionModule } from './domains/transaction/transaction.module';
 import { TechnicalModule } from './domains/analysis/technical/technical.module';
 import { AnalysisModule } from './domains/analysis/analysis.module';
 
@@ -47,6 +51,7 @@ import { AnalysisModule } from './domains/analysis/analysis.module';
       global: true,
     },
     PrismaModule,
+    BlockchainModule,
     AccessCodeModule,
     HealthModule,
     ElizaAgentModule,
@@ -54,6 +59,9 @@ import { AnalysisModule } from './domains/analysis/analysis.module';
     TasksModule,
     MessageModule,
     LeaderboardModule,
+    StarknetModule,
+    AgentTokenModule,
+    TransactionModule,
     TechnicalModule,
     AnalysisModule,
   ],

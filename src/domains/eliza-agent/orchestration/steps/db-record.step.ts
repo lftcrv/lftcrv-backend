@@ -3,9 +3,9 @@ import { AgentStatus } from '@prisma/client';
 import {
   StepExecutionContext,
   StepExecutionResult,
-} from 'src/domains/orchestration/interfaces';
-import { BaseStepExecutor } from 'src/domains/orchestration/services/base-step-executor';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+} from '../../../../domains/orchestration/interfaces';
+import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
+import { PrismaService } from '../../../../shared/prisma/prisma.service';
 
 @Injectable()
 export class CreateDbRecordStep extends BaseStepExecutor {
@@ -26,6 +26,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
           curveSide: dto.curveSide,
           status: AgentStatus.STARTING,
           characterConfig: dto.characterConfig,
+          creatorWallet: dto.creatorWallet,
           degenScore: 0,
           winScore: 0,
           LatestMarketData: {
