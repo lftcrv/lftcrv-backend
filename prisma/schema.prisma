@@ -190,3 +190,18 @@ model Transaction {
   @@index([createdAt, userAddress])
   @@map("transactions")
 }
+
+model ParadexMarket {
+  id            String   @id @default(uuid())
+  symbol        String   @unique
+  baseCurrency  String
+  quoteCurrency String
+  assetKind     String
+  isActive      Boolean  @default(true)
+  positionLimit String
+  minNotional   String
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@map("paradex_markets")
+}
