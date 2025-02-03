@@ -61,6 +61,25 @@ model ElizaAgent {
   @@map("eliza_agents")
 }
 
+enum AnalysisType {
+  TECHNICAL
+  SENTIMENT 
+  MARKET
+  OVERALL
+}
+
+model Analysis {
+  id            String          @id @default(uuid())
+  type          AnalysisType   // Using the enum
+  data          Json
+  score         Float?         // Optional overall score
+  timestamp     DateTime       @default(now())
+  metadata      Json?         // Optional metadata
+  
+  @@index([timestamp])
+  @@map("analyses")
+}
+
 model TradingInformation {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())

@@ -19,6 +19,8 @@ import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
 import { AgentTokenModule } from './domains/agent-token/agent-token.module';
 import { BlockchainModule } from './shared/blockchain/blockchain.module';
 import { TransactionModule } from './domains/transaction/transaction.module';
+import { TechnicalModule } from './domains/analysis/technical/technical.module';
+import { AnalysisModule } from './domains/analysis/analysis.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { TransactionModule } from './domains/transaction/transaction.module';
     StarknetModule,
     AgentTokenModule,
     TransactionModule,
+    TechnicalModule,
+    AnalysisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
