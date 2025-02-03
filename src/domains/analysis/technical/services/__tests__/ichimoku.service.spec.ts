@@ -89,20 +89,20 @@ describe('IchimokuService', () => {
             timestamp: i,
             price: 100 + Math.sin(i * 0.2) * 5,
             high: 100 + Math.sin(i * 0.2) * 5 + 2,
-            low:  100 + Math.sin(i * 0.2) * 5 - 2,
+            low: 100 + Math.sin(i * 0.2) * 5 - 2,
             close: 100 + Math.sin(i * 0.2) * 5,
           }));
-      
+
         // Force the last bar to be “somewhere in the middle”
         const lastIndex = prices.length - 1;
         prices[lastIndex] = {
           timestamp: lastIndex,
-          price: 100,    // pick a value that is likely inside or near the cloud
+          price: 100, // pick a value that is likely inside or near the cloud
           high: 102,
-          low:  98,
+          low: 98,
           close: 100,
         };
-      
+
         const result = service.calculateSimplified(prices);
         expect(['neutral', 'buy', 'sell']).toContain(result.signal);
       });
