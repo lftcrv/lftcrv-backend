@@ -65,12 +65,19 @@ export interface IMovingAverageService {
 // Analysis Result Types
 // ===============================
 
+export interface AnalysisError {
+  symbol: string;
+  message: string;
+  code?: string;
+}
+
 /**
  * Top-level market analysis containing results for multiple assets
  */
 export interface MarketAnalysis {
   timestamp: number;
   analyses: Record<string, AssetAnalysis>;
+  failed?: AnalysisError[];
 }
 
 /**

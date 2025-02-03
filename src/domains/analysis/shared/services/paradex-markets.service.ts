@@ -1,23 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ParadexMarket, ParadexMarketsResponse } from '../interfaces/paradex.interface';
 import axios from 'axios';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
+import {
+  ParadexMarket,
+  ParadexMarketsResponse,
+} from '../interfaces/paradex.interface';
+import { getAllMarkets, getAllSymbols, getMarketBySymbol } from '../utils';
 
 @Injectable()
 export class ParadexMarketsService {
   private readonly logger = new Logger(ParadexMarketsService.name);
-  private readonly PARADEX_API_URL = 'https://api.testnet.paradex.trade/v1/markets';
+  private readonly PARADEX_API_URL =
+    'https://api.testnet.paradex.trade/v1/markets';
 
   constructor(private prisma: PrismaService) {}
 
   async fetchAndUpdateMarkets(): Promise<void> {
     try {
       // Fetch markets data from Paradex API
-      const response = await axios.get<ParadexMarketsResponse>(this.PARADEX_API_URL, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
+      const response = await axios.get<ParadexMarketsResponse>(
+        this.PARADEX_API_URL,
+        {
+          headers: {
+            Accept: 'application/json',
+          },
+        },
+      );
 
       const markets = response.data.results;
 
@@ -57,7 +65,9 @@ export class ParadexMarketsService {
         }
       });
 
-      this.logger.log(`Successfully updated ${markets.length} markets in database`);
+      this.logger.log(
+        `Successfully updated ${markets.length} markets in database`,
+      );
     } catch (error) {
       this.logger.error('Error fetching markets from Paradex:', error);
       throw error;
@@ -65,37 +75,14 @@ export class ParadexMarketsService {
   }
 
   async getAllMarkets() {
-    return this.prisma.paradexMarket.findMany({
-      where: {
-        isActive: true,
-      },
-      orderBy: {
-        symbol: 'asc',
-      },
-    });
+    return getAllMarkets(this.prisma);
   }
 
   async getAllSymbols(): Promise<string[]> {
-    const markets = await this.prisma.paradexMarket.findMany({
-      where: {
-        isActive: true,
-      },
-      select: {
-        symbol: true,
-      },
-      orderBy: {
-        symbol: 'asc',
-      },
-    });
-    
-    return markets.map(market => market.symbol);
+    return getAllSymbols(this.prisma);
   }
 
   async getMarketBySymbol(symbol: string) {
-    return this.prisma.paradexMarket.findUnique({
-      where: {
-        symbol: symbol.toUpperCase(),
-      },
-    });
+    return getMarketBySymbol(this.prisma, symbol);
   }
 }
