@@ -29,9 +29,6 @@ export class DeployAgentTokenStep extends BaseStepExecutor {
       const { agentId, wallet } = context.metadata;
       const dto = context.data;
 
-      console.log('Deploy token step metadata:', context.metadata);
-      console.log('Deploy token step wallet:', wallet);
-
       console.log(
         `Deploying token for agent ${agentId} using wallet ${wallet?.deployedAddress}`,
       );
