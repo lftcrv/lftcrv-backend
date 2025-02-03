@@ -16,6 +16,7 @@ import { MessageModule } from './message/message.module';
 import { TradingInformationModule } from './domains/trading/trading-information.module';
 import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
 import { TechnicalModule } from './domains/analysis/technical/technical.module';
+import { AnalysisModule } from './domains/analysis/analysis.module';
 
 @Module({
   imports: [
@@ -53,7 +54,8 @@ import { TechnicalModule } from './domains/analysis/technical/technical.module';
     TasksModule,
     MessageModule,
     LeaderboardModule,
-    TechnicalModule
+    TechnicalModule,
+    AnalysisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

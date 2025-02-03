@@ -10,12 +10,14 @@ import { TechnicalController } from './technical.controller';
 import { PivotService } from './services/pivot.service';
 import { ADXService } from './services/adx.service';
 import { IchimokuService } from './services/ichimoku.service';
+import { PrismaService } from 'src/shared/prisma/prisma.service';
 
 @Module({
   imports: [],
   controllers: [TechnicalController],
   providers: [
     TechnicalService,
+    PrismaService,
     PriceService,
     MovingAverageService,
     CandlestickService,

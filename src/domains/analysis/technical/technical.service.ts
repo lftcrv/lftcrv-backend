@@ -4,7 +4,12 @@ import { MovingAverageService } from './services/moving-average.service';
 import { CandlestickService } from './services/candlestick.service';
 import { MomentumService } from './services/momentum.service';
 import { PriceDTO } from './dto/price.dto';
-import { MarketAnalysis, AssetAnalysis, ShortTermAnalysis, MediumTermAnalysis } from './types';
+import {
+  MarketAnalysis,
+  AssetAnalysis,
+  ShortTermAnalysis,
+  MediumTermAnalysis,
+} from './types';
 import { ADXService } from './services/adx.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PivotService } from './services/pivot.service';
@@ -43,26 +48,31 @@ export class TechnicalService {
 
   private async analyzeAsset(asset: string): Promise<AssetAnalysis> {
     // Get data for different timeframes
-    const [shortTermPrices, mediumTermPrices, longTermPrices] = await Promise.all([
-      this.priceService.getHistoricalPrices(asset, '5m', {
-        limit: 100,
-        priceKind: 'mark',
-      }),
-      this.priceService.getHistoricalPrices(asset, '1h', {
-        limit: 48,
-        priceKind: 'mark',
-      }),
-      this.priceService.getHistoricalPrices(asset, '1h', {
-        limit: 30,
-        priceKind: 'mark',
-      }),
-    ]);
+    const [shortTermPrices, mediumTermPrices, longTermPrices] =
+      await Promise.all([
+        this.priceService.getHistoricalPrices(asset, '5m', {
+          limit: 100,
+          priceKind: 'mark',
+        }),
+        this.priceService.getHistoricalPrices(asset, '1h', {
+          limit: 52,
+          priceKind: 'mark',
+        }),
+        this.priceService.getHistoricalPrices(asset, '1h', {
+          limit: 30,
+          priceKind: 'mark',
+        }),
+      ]);
 
     const lastPrice = shortTermPrices[shortTermPrices.length - 1].close!;
 
     return {
       lastPrice,
-      changes: this.calculateChanges(shortTermPrices, mediumTermPrices, longTermPrices),
+      changes: this.calculateChanges(
+        shortTermPrices,
+        mediumTermPrices,
+        longTermPrices,
+      ),
       keySignals: {
         shortTerm: await this.analyzeShortTerm(shortTermPrices),
         mediumTerm: await this.analyzeMediumTerm(mediumTermPrices),
@@ -99,11 +109,14 @@ export class TechnicalService {
 
   private calculatePriceChange(prices: PriceDTO[], periods: number): number {
     const currentPrice = prices[prices.length - 1].close!;
-    const previousPrice = prices[prices.length - 1 - periods]?.close ?? prices[0].close!;
+    const previousPrice =
+      prices[prices.length - 1 - periods]?.close ?? prices[0].close!;
     return ((currentPrice - previousPrice) / previousPrice) * 100;
   }
 
-  private async analyzeShortTerm(prices: PriceDTO[]): Promise<ShortTermAnalysis> {
+  private async analyzeShortTerm(
+    prices: PriceDTO[],
+  ): Promise<ShortTermAnalysis> {
     if (prices.length < 26) {
       return this.getDefaultShortTermAnalysis();
     }
@@ -111,7 +124,7 @@ export class TechnicalService {
     const patterns = this.candlestickService
       .analyzeCandlestick(prices)
       .slice(0, 2)
-      .map(pattern => ({
+      .map((pattern) => ({
         type: pattern.type,
         strength: pattern.strength,
       }));
@@ -138,8 +151,14 @@ export class TechnicalService {
           condition: this.momentumService.getRSICondition(lastRSI),
         },
         macd: {
-          signal: this.momentumService.getMACDSignal(macd.histogram[lastIndex], currentPrice),
-          strength: this.momentumService.getMACDStrength(macd.histogram[lastIndex], currentPrice),
+          signal: this.momentumService.getMACDSignal(
+            macd.histogram[lastIndex],
+            currentPrice,
+          ),
+          strength: this.momentumService.getMACDStrength(
+            macd.histogram[lastIndex],
+            currentPrice,
+          ),
         },
         stochastic: {
           k: lastK,
@@ -174,8 +193,13 @@ export class TechnicalService {
     };
   }
 
-  private async analyzeMediumTerm(prices: PriceDTO[]): Promise<MediumTermAnalysis> {
+  private async analyzeMediumTerm(
+    prices: PriceDTO[],
+  ): Promise<MediumTermAnalysis> {
     if (prices.length < 52) {
+      console.log(
+        'Insufficient data for medium-term analysis, returning default values',
+      );
       return this.getDefaultMediumTermAnalysis();
     }
 
@@ -185,8 +209,12 @@ export class TechnicalService {
     const rocSignal = this.momentumService.getROCSignal(lastROC);
     const ichimokuResult = this.ichimokuService.calculateSimplified(prices);
 
-    const volumes = prices.map(p => p.volume || 0);
-    const volumeAnalysis = this.volumeService.analyzeVolume(volumes, prices, '1h');
+    const volumes = prices.map((p) => p.volume || 0);
+    const volumeAnalysis = this.volumeService.analyzeVolume(
+      volumes,
+      prices,
+      '1h',
+    );
 
     const bb = this.maService.calculateBollingerBands(prices);
     const lastBBWidth = bb.width[bb.width.length - 1];
@@ -199,17 +227,29 @@ export class TechnicalService {
     const lastEma12 = ema12[ema12.length - 1];
     const lastEma26 = ema26[ema26.length - 1];
 
-    const trendDirection = lastEma12 > lastEma26 ? 'uptrend' : lastEma12 < lastEma26 ? 'downtrend' : 'sideways';
+    const trendDirection =
+      lastEma12 > lastEma26
+        ? 'uptrend'
+        : lastEma12 < lastEma26
+          ? 'downtrend'
+          : 'sideways';
 
     const recentPrice = prices[prices.length - 1].close!;
     const testedLevel = Math.round(recentPrice * 100) / 100;
-    const levelTests = prices.filter(p => Math.abs(p.close! - testedLevel) / testedLevel < 0.001).length;
+    const levelTests = prices.filter(
+      (p) => Math.abs(p.close! - testedLevel) / testedLevel < 0.001,
+    ).length;
 
     return {
       timeframe: '1h',
       trend: {
         primary: {
-          direction: lastEma12 > lastEma26 ? 'bullish' : lastEma12 < lastEma26 ? 'bearish' : 'neutral',
+          direction:
+            lastEma12 > lastEma26
+              ? 'bullish'
+              : lastEma12 < lastEma26
+                ? 'bearish'
+                : 'neutral',
           strength: adxResult.trending ? adxResult.adx / 100 : 0,
           momentum: {
             value: lastROC,
@@ -232,8 +272,12 @@ export class TechnicalService {
           },
           volatility: {
             bbWidth: lastBBWidth,
-            state: lastBBWidth > prevBBWidth * 1.05 ? 'expanding' : 
-                   lastBBWidth < prevBBWidth * 0.95 ? 'contracting' : 'stable',
+            state:
+              lastBBWidth > prevBBWidth * 1.05
+                ? 'expanding'
+                : lastBBWidth < prevBBWidth * 0.95
+                  ? 'contracting'
+                  : 'stable',
           },
         },
       },
@@ -265,8 +309,12 @@ export class TechnicalService {
           trend: volumeAnalysis.trend.direction,
           significance: volumeAnalysis.significance,
           profile: {
-            distribution: volumeAnalysis.profile.concentration > 0.7 ? 'high' : 
-                         volumeAnalysis.profile.concentration < 0.3 ? 'low' : 'neutral',
+            distribution:
+              volumeAnalysis.profile.concentration > 0.7
+                ? 'high'
+                : volumeAnalysis.profile.concentration < 0.3
+                  ? 'low'
+                  : 'neutral',
             activity: volumeAnalysis.trend.strength,
             sustainedPeriods: this.momentumService.calculateSustainedPeriods(
               volumes,
@@ -355,9 +403,16 @@ export class TechnicalService {
   private calculateVolatility(prices: PriceDTO[], periods: number): number {
     const returns = [];
     for (let i = 1; i < Math.min(periods, prices.length); i++) {
-      returns.push(((prices[i].close! - prices[i - 1].close!) / prices[i - 1].close!) * 100);
+      returns.push(
+        ((prices[i].close! - prices[i - 1].close!) / prices[i - 1].close!) *
+          100,
+      );
     }
-    
-    return parseFloat(Math.sqrt(returns.reduce((acc, ret) => acc + ret * ret, 0) / returns.length).toFixed(2));
+
+    return parseFloat(
+      Math.sqrt(
+        returns.reduce((acc, ret) => acc + ret * ret, 0) / returns.length,
+      ).toFixed(2),
+    );
   }
 }
