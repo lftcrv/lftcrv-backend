@@ -7,7 +7,9 @@ import { ParadexMarket } from '@prisma/client';
  * @param prisma An instance of PrismaService.
  * @returns A promise that resolves to an array of ParadexMarket objects.
  */
-export async function getAllMarkets(prisma: PrismaService): Promise<ParadexMarket[]> {
+export async function getAllMarkets(
+  prisma: PrismaService,
+): Promise<ParadexMarket[]> {
   return prisma.paradexMarket.findMany({
     where: {
       isActive: true,
@@ -36,8 +38,8 @@ export async function getAllSymbols(prisma: PrismaService): Promise<string[]> {
       symbol: 'asc',
     },
   });
-  
-  return markets.map(market => market.symbol);
+
+  return markets.map((market) => market.symbol);
 }
 
 /**
@@ -47,7 +49,10 @@ export async function getAllSymbols(prisma: PrismaService): Promise<string[]> {
  * @param symbol The symbol of the market.
  * @returns A promise that resolves to a ParadexMarket object or null if not found.
  */
-export async function getMarketBySymbol(prisma: PrismaService, symbol: string): Promise<ParadexMarket | null> {
+export async function getMarketBySymbol(
+  prisma: PrismaService,
+  symbol: string,
+): Promise<ParadexMarket | null> {
   return prisma.paradexMarket.findUnique({
     where: {
       symbol: symbol.toUpperCase(),

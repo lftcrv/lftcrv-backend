@@ -1,4 +1,3 @@
-
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ParadexMarketDto {
@@ -39,9 +38,9 @@ export class ParadexSymbolsResponseDto {
   @ApiProperty({ example: 42 })
   count: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: [String],
-    example: ['BTC-USD-PERP', 'ETH-USD-PERP']
+    example: ['BTC-USD-PERP', 'ETH-USD-PERP'],
   })
   symbols: string[];
 }
