@@ -47,8 +47,6 @@ export class CreateAgentTokenService implements ICreateAgentToken {
       _sell_tax_percentage_x100: this.configService.get('SELL_TAX_PERCENTAGE'),
     };
 
-    console.log('Token deployment args:', args);
-
     const contractCallData = new CallData(contractJson.abi);
     const constructorCalldata = contractCallData.compile('constructor', args);
 

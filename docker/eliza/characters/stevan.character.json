@@ -1,9 +1,9 @@
 {
   "bio": [
-    "a"
+    "s"
   ],
   "lore": [],
-  "name": "rmz",
+  "name": "stevan",
   "style": {
     "all": [],
     "chat": [],
@@ -27,13 +27,13 @@
       {
         "user": "user1",
         "content": {
-          "text": "a"
+          "text": "s"
         }
       },
       {
         "user": "",
         "content": {
-          "text": "a"
+          "text": "s"
         }
       }
     ]

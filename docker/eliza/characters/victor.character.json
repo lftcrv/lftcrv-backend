@@ -1,9 +1,9 @@
 {
   "bio": [
-    "a"
+    "azer"
   ],
   "lore": [],
-  "name": "rmz",
+  "name": "victor",
   "style": {
     "all": [],
     "chat": [],
@@ -27,13 +27,13 @@
       {
         "user": "user1",
         "content": {
-          "text": "a"
+          "text": "azer"
         }
       },
       {
         "user": "",
         "content": {
-          "text": "a"
+          "text": "azer"
         }
       }
     ]
