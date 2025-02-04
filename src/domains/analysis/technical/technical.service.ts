@@ -252,9 +252,6 @@ export class TechnicalService {
     prices: PriceDTO[],
   ): Promise<MediumTermAnalysis> {
     if (prices.length < 52) {
-      console.log(
-        'Insufficient data for medium-term analysis, returning default values',
-      );
       return this.getDefaultMediumTermAnalysis();
     }
 

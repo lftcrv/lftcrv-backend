@@ -113,10 +113,8 @@ export class OrchestratorService implements IOrchestrator {
     }
 
     const startTime = Date.now();
-    console.log(`
-      Starting orchestration ${orchestrationId} of type ${orchestration.type}
-      `);
-    console.log(`Total steps to execute: ${definition.steps.length}`);
+
+    // console.log(`Total steps to execute: ${definition.steps.length}`);
 
     await this.updateOrchestrationStatus(orchestrationId, {
       status: OrchestrationStatus.IN_PROGRESS,
@@ -161,9 +159,9 @@ export class OrchestratorService implements IOrchestrator {
           return;
         }
 
-        const stepDuration = ((Date.now() - stepStartTime) / 1000).toFixed(1);
-        console.log(`
-          [${step.order}/${definition.steps.length}] Completed: ${step.name} (${stepDuration}s)`);
+        // const stepDuration = ((Date.now() - stepStartTime) / 1000).toFixed(1);
+        // console.log(`
+        //   [${step.order}/${definition.steps.length}] Completed: ${step.name} (${stepDuration}s)`);
 
         orchestration.metadata = {
           ...orchestration.metadata,
