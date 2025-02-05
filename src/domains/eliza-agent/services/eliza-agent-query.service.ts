@@ -8,23 +8,37 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAgent(id: string): Promise<ElizaAgent> {
+    console.log(`Fetching agent with ID: ${id}`);
     const agent = await this.prisma.elizaAgent.findUnique({
       where: { id },
       include: {
         LatestMarketData: true,
         TradingInformation: true,
+        Token: true,
+        Wallet: true,
       },
     });
+    
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
-    return agent;
+
+    console.log('Agent token data:', agent.Token);
+    console.log('Agent wallet data:', agent.Wallet);
+    
+    // Transform Prisma model to our entity
+    const elizaAgent = new ElizaAgent();
+    Object.assign(elizaAgent, agent);
+    
+    return elizaAgent;
   }
 
   async listAgents(): Promise<ElizaAgent[]> {
     return this.prisma.elizaAgent.findMany({
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
     });
   }
@@ -34,6 +48,8 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       where: { status: AgentStatus.RUNNING },
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
     });
   }
@@ -43,6 +59,8 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       orderBy: { createdAt: 'desc' },
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
     });
   }
@@ -69,6 +87,8 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       },
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
       orderBy: {
         createdAt: 'desc',

@@ -25,7 +25,6 @@ export class FundWalletStep extends BaseStepExecutor {
   }
 
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
-    console.log('Fund wallet step metadata:', context.metadata);
     try {
       console.log('trying to fund wallet');
       const { wallet } = context.metadata;
