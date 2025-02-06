@@ -13,18 +13,28 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       include: {
         LatestMarketData: true,
         TradingInformation: true,
+        Token: true,
+        Wallet: true,
       },
     });
+
     if (!agent) {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
-    return agent;
+
+    // Transform Prisma model to our entity
+    const elizaAgent = new ElizaAgent();
+    Object.assign(elizaAgent, agent);
+
+    return elizaAgent;
   }
 
   async listAgents(): Promise<ElizaAgent[]> {
     return this.prisma.elizaAgent.findMany({
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
     });
   }
@@ -34,6 +44,8 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       where: { status: AgentStatus.RUNNING },
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
     });
   }
@@ -43,6 +55,8 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       orderBy: { createdAt: 'desc' },
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
     });
   }
@@ -69,6 +83,8 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       },
       include: {
         LatestMarketData: true,
+        Token: true,
+        Wallet: true,
       },
       orderBy: {
         createdAt: 'desc',
