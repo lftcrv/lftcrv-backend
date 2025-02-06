@@ -26,12 +26,10 @@ export class FundWalletStep extends BaseStepExecutor {
 
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
-      console.log('trying to fund wallet');
       const { wallet } = context.metadata;
       const fundedWallet = await this.walletService.transferFunds(wallet);
 
       // Update wallet record with transaction hash
-      console.log('updating wallet');
       const updatedWallet = await this.prisma.agentWallet.update({
         where: { elizaAgentId: context.metadata.agentId },
         data: {

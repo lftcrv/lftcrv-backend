@@ -33,8 +33,6 @@ export class CreateAgentTokenService implements ICreateAgentToken {
     const provider = this.providerService.getProvider();
     const account = this.accountService.getAdminAccount();
 
-    console.log('Creating token with account:', account.address);
-
     const args = {
       _protocol_wallet: this.configService.get('PROTOCOL_WALLET'),
       _creator: this.configService.get('OWNER_WALLET'),

@@ -11,7 +11,7 @@ describe('PivotService', () => {
   describe('Pivot Level Calculation', () => {
     it('should calculate correct pivot levels', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 100, high: 110, low: 90, close: 100 }
+        { timestamp: 1, price: 100, high: 110, low: 90, close: 100 },
       ];
       const result = service.calculateLevels(prices);
 
@@ -25,7 +25,7 @@ describe('PivotService', () => {
 
     it('should detect breakout above R1', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 125, high: 130, low: 110, close: 125 }
+        { timestamp: 1, price: 125, high: 130, low: 110, close: 125 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (130 + 110 + 125) / 3 = 121.67
@@ -36,7 +36,7 @@ describe('PivotService', () => {
 
     it('should detect actual breakout above R1', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 140, high: 140, low: 110, close: 140 }
+        { timestamp: 1, price: 140, high: 140, low: 110, close: 140 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (140 + 110 + 140) / 3 = 130
@@ -47,7 +47,7 @@ describe('PivotService', () => {
 
     it('should detect breakout below S1', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 75, high: 90, low: 70, close: 75 }
+        { timestamp: 1, price: 75, high: 90, low: 70, close: 75 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (90 + 70 + 75) / 3 = 78.33
@@ -58,7 +58,7 @@ describe('PivotService', () => {
 
     it('should detect price between R1 and S1', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 100, high: 110, low: 90, close: 100 }
+        { timestamp: 1, price: 100, high: 110, low: 90, close: 100 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (110 + 90 + 100) / 3 = 100
@@ -70,7 +70,7 @@ describe('PivotService', () => {
 
     it('should calculate R1 distance correctly', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 100, high: 110, low: 90, close: 100 }
+        { timestamp: 1, price: 100, high: 110, low: 90, close: 100 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (110 + 90 + 100) / 3 = 100
@@ -81,7 +81,7 @@ describe('PivotService', () => {
 
     it('should handle edge case at exact R1', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 110, high: 120, low: 100, close: 110 }
+        { timestamp: 1, price: 110, high: 120, low: 100, close: 110 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (120 + 100 + 110) / 3 = 110
@@ -92,7 +92,7 @@ describe('PivotService', () => {
 
     it('should handle edge case at exact S1', () => {
       const prices: PriceDTO[] = [
-        { timestamp: 1, price: 90, high: 110, low: 90, close: 90 }
+        { timestamp: 1, price: 90, high: 110, low: 90, close: 90 },
       ];
       const result = service.calculateLevels(prices);
       // PP = (110 + 90 + 90) / 3 = 96.67
@@ -102,12 +102,18 @@ describe('PivotService', () => {
     });
 
     it('should throw error when prices array is empty', () => {
-      expect(() => service.calculateLevels([])).toThrow('Price data is required');
+      expect(() => service.calculateLevels([])).toThrow(
+        'Price data is required',
+      );
     });
 
     it('should throw error when price data is missing required values', () => {
-      const prices: PriceDTO[] = [{ timestamp: 1, price: 100, high: undefined, low: 90, close: 100 }];
-      expect(() => service.calculateLevels(prices)).toThrow('Invalid price data: high, low, and close values are required');
+      const prices: PriceDTO[] = [
+        { timestamp: 1, price: 100, high: undefined, low: 90, close: 100 },
+      ];
+      expect(() => service.calculateLevels(prices)).toThrow(
+        'Invalid price data: high, low, and close values are required',
+      );
     });
   });
 

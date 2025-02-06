@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PriceService } from './services/price.service';
 import { MovingAverageService } from './services/moving-average.service';
 import { CandlestickService } from './services/candlestick.service';
@@ -9,15 +9,19 @@ import {
   AssetAnalysis,
   ShortTermAnalysis,
   MediumTermAnalysis,
+  AnalysisError,
 } from './types';
 import { ADXService } from './services/adx.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PivotService } from './services/pivot.service';
 import { VolumeService } from './services/volume.service';
+import { getAllSymbols } from '../shared/utils';
+import { PrismaService } from 'src/shared/prisma/prisma.service';
 
 @Injectable()
 export class TechnicalService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly priceService: PriceService,
     private readonly maService: MovingAverageService,
     private readonly candlestickService: CandlestickService,
@@ -28,22 +32,73 @@ export class TechnicalService {
     private readonly pivotService: PivotService,
   ) {}
 
-  async analyzeMarkets(assets: string[]): Promise<MarketAnalysis> {
-    const timestamp = Date.now();
-    const analyses: Record<string, AssetAnalysis> = {};
+  private formatSymbol(asset: string): string {
+    return asset.includes('-') ? asset : `${asset.toUpperCase()}-USD-PERP`;
+  }
 
-    for (const asset of assets) {
-      try {
-        analyses[asset] = await this.analyzeAsset(asset);
-      } catch (error) {
-        console.error(`Error analyzing ${asset}:`, error);
-      }
+  async analyzeMarkets(assets: string[]): Promise<MarketAnalysis> {
+    if (!assets || assets.length === 0) {
+      throw new BadRequestException('No assets provided for analysis');
     }
 
-    return {
-      timestamp,
-      analyses,
-    };
+    const timestamp = Date.now();
+    const analyses: Record<string, AssetAnalysis> = {};
+    const failed: AnalysisError[] = [];
+
+    try {
+      // Get all available Paradex symbols
+      const availableSymbols = await getAllSymbols(this.prisma);
+      const symbolsSet = new Set(availableSymbols);
+
+      for (const asset of assets) {
+        try {
+          const formattedSymbol = this.formatSymbol(asset);
+
+          // Check if the symbol exists in Paradex
+          if (!symbolsSet.has(formattedSymbol)) {
+            failed.push({
+              symbol: formattedSymbol,
+              message: 'Asset not available on Paradex',
+              code: 'SYMBOL_NOT_FOUND',
+            });
+            continue;
+          }
+
+          analyses[asset] = await this.analyzeAsset(asset);
+        } catch (error) {
+          failed.push({
+            symbol: asset,
+            message: error instanceof Error ? error.message : 'Unknown error',
+            code: 'ANALYSIS_FAILED',
+          });
+        }
+      }
+
+      // Si aucune analyse n'a réussi, on lance une erreur
+      if (Object.keys(analyses).length === 0) {
+        throw new BadRequestException({
+          message: 'No assets could be analyzed',
+          errors: failed,
+        });
+      }
+
+      return {
+        timestamp,
+        analyses,
+        ...(failed.length > 0 && { failed }), // n'inclut failed que s'il y a des erreurs
+      };
+    } catch (error) {
+      // Si c'est une erreur déjà formatée (BadRequestException), on la relance
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      // Sinon on formate l'erreur
+      throw new BadRequestException({
+        message: 'Failed to analyze markets',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   private async analyzeAsset(asset: string): Promise<AssetAnalysis> {
@@ -197,9 +252,6 @@ export class TechnicalService {
     prices: PriceDTO[],
   ): Promise<MediumTermAnalysis> {
     if (prices.length < 52) {
-      console.log(
-        'Insufficient data for medium-term analysis, returning default values',
-      );
       return this.getDefaultMediumTermAnalysis();
     }
 
