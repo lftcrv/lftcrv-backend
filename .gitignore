@@ -49,3 +49,4 @@ coverage
 
 # Eliza
 agent/data
+docker/eliza/characters/

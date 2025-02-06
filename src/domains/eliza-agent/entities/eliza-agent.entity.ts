@@ -1,5 +1,6 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { AgentStatus, CurveSide } from '@prisma/client';
+import { AgentWallet } from './agent-wallet.entity';
 
 export { AgentStatus, CurveSide };
 
@@ -10,19 +11,6 @@ export class AgentToken {
   contractAddress: string;
   buyTax: number;
   sellTax: number;
-  elizaAgentId: string;
-}
-
-export class AgentWallet {
-  id: string;
-  privateKey: string;
-  publicKey: string;
-  contractAddress: string;
-  fundTransactionHash?: string;
-  deployTransactionHash?: string;
-  deployedAddress?: string;
-  createdAt: Date;
-  updatedAt: Date;
   elizaAgentId: string;
 }
 
