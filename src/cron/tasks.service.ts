@@ -8,7 +8,7 @@ export class TasksService {
 
   constructor(private readonly messageService: MessageService) {}
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleCron() {
     this.logger.log('🚀 Start sending messages to active agents');
     await this.messageService.sendMessagesToRunningAgents();
