@@ -45,12 +45,12 @@ export class QueryAgentTokenService implements IQueryAgentToken {
   private async executeContractCall(
     agentId: string,
     method: string,
-    tokenAmount: bigint,
-  ): Promise<bigint> {
+    args?: any[],
+  ) {
     try {
       const contract = await this.getContract(agentId);
-      const result = await contract.call(method, [tokenAmount]);
-      return BigInt(result.toString());
+      const result = await contract.call(method, args || []);
+      return result;
     } catch (error) {
       console.error(`Error executing ${method} on contract:`, error);
       throw new Error(`Contract call failed: ${error.message}`);
@@ -58,29 +58,61 @@ export class QueryAgentTokenService implements IQueryAgentToken {
   }
 
   async simulateBuy(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    return this.executeContractCall(agentId, 'simulate_buy', tokenAmount);
+    const result = await this.executeContractCall(agentId, 'simulate_buy', [
+      tokenAmount.toString(),
+    ]);
+    return result
+      ? Array.isArray(result)
+        ? BigInt(result[0].toString())
+        : BigInt(result.toString())
+      : BigInt(0);
   }
+
   async getCurrentPrice(agentId: string): Promise<bigint> {
-    const contract = await this.getContract(agentId);
-    const result = await contract.call('get_current_price', []);
-    return BigInt(result.toString());
+    const result = await this.executeContractCall(
+      agentId,
+      'get_current_price',
+      [],
+    );
+    return result
+      ? Array.isArray(result)
+        ? BigInt(result[0].toString())
+        : BigInt(result.toString())
+      : BigInt(0);
   }
 
   async simulateSell(agentId: string, tokenAmount: bigint): Promise<bigint> {
-    return this.executeContractCall(agentId, 'simulate_sell', tokenAmount);
+    const result = await this.executeContractCall(agentId, 'simulate_sell', [
+      tokenAmount.toString(),
+    ]);
+    return result
+      ? Array.isArray(result)
+        ? BigInt(result[0].toString())
+        : BigInt(result.toString())
+      : BigInt(0);
   }
 
   async bondingCurvePercentage(agentId: string): Promise<number> {
-    try {
-      const contract = await this.getContract(agentId);
-      const result = await contract.call(
-        'supply_advancement_percentage_x100',
-        [],
-      );
-      return Number(result[0]);
-    } catch (error) {
-      console.error('Error getting bonding curve percentage:', error);
-      throw new Error(`Bonding curve percentage call failed: ${error.message}`);
-    }
+    const result = await this.executeContractCall(
+      agentId,
+      'supply_advancement_percentage_x100',
+      [],
+    );
+    return result
+      ? Number(
+          Array.isArray(result)
+            ? BigInt(result[0].toString())
+            : BigInt(result.toString()),
+        )
+      : 0;
+  }
+
+  async getMarketCap(agentId: string): Promise<bigint> {
+    const result = await this.executeContractCall(agentId, 'market_cap', []);
+    return result
+      ? Array.isArray(result)
+        ? BigInt(result[0].toString())
+        : BigInt(result.toString())
+      : BigInt(0);
   }
 }

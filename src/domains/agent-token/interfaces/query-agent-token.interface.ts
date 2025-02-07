@@ -3,4 +3,5 @@ export interface IQueryAgentToken {
   getCurrentPrice(agentId: string): Promise<bigint>;
   simulateSell(agentId: string, tokenAmount: bigint): Promise<bigint>;
   bondingCurvePercentage(agentId: string): Promise<number>;
+  getMarketCap(agentId: string): Promise<bigint>;
 }

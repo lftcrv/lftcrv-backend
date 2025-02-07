@@ -19,6 +19,7 @@ infrastructure/cdk.context.json
 # Prisma
 prisma/*.db
 prisma/client
+prisma/migrations/
 
 # Logs
 logs
@@ -48,6 +49,9 @@ coverage
 .cache
 
 # Eliza
-
-docker/eliza/agent/
+agent/data
 docker/eliza/characters/
+
+# Local development files
+*.local
+*.dev

@@ -51,6 +51,29 @@ model OTP {
   @@index([code])
 }
 
+enum BondingStatus {
+  BONDING
+  LIVE
+}
+
+model LatestMarketData {
+  id             String        @id @default(uuid())
+  elizaAgentId   String        @unique
+  elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
+  price          Float         @default(0)
+  priceChange24h Float         @default(0)
+  holders        Int           @default(0)
+  marketCap      Float         @default(0)
+  bondingStatus  BondingStatus @default(BONDING)
+  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime      @default(now())
+
+  @@index([price])
+  @@index([priceChange24h])
+  @@index([marketCap])
+  @@map("latest_market_data")
+}
+
 model FailedAttempt {
   id        String   @id @default(uuid())
   codeHash  String
