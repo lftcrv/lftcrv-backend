@@ -61,11 +61,9 @@ export class QueryAgentTokenService implements IQueryAgentToken {
     const result = await this.executeContractCall(agentId, 'simulate_buy', [
       tokenAmount.toString(),
     ]);
-    return result
-      ? Array.isArray(result)
-        ? BigInt(result[0].toString())
-        : BigInt(result.toString())
-      : BigInt(0);
+
+    // Handle object with numeric keys - take the first value ('0')
+    return result && result['0'] ? BigInt(result['0'].toString()) : BigInt(0);
   }
 
   async getCurrentPrice(agentId: string): Promise<bigint> {
@@ -85,11 +83,9 @@ export class QueryAgentTokenService implements IQueryAgentToken {
     const result = await this.executeContractCall(agentId, 'simulate_sell', [
       tokenAmount.toString(),
     ]);
-    return result
-      ? Array.isArray(result)
-        ? BigInt(result[0].toString())
-        : BigInt(result.toString())
-      : BigInt(0);
+
+    // Handle object with numeric keys - take the first value ('0')
+    return result && result['0'] ? BigInt(result['0'].toString()) : BigInt(0);
   }
 
   async bondingCurvePercentage(agentId: string): Promise<number> {
