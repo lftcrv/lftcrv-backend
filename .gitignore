@@ -50,8 +50,7 @@ coverage
 
 # Eliza
 agent/data
-docker/eliza/characters/*.json
-docker/eliza/characters/*.character.json
+docker/eliza/characters/
 
 # Local development files
 *.local
