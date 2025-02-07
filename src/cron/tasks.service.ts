@@ -84,7 +84,7 @@ export class TasksService {
             SET 
               "price" = ${Number(currentPrice)},
               "priceChange24h" = ${priceChange24h},
-              "marketCap" = ${Number(marketCap) / 1e18},
+              "marketCap" = ${Number(marketCap) / 1e6},
               "bondingStatus" = ${bondingPercentage >= 100 ? 'LIVE' : 'BONDING'}::"BondingStatus",
               "updatedAt" = ${new Date()}
             WHERE "elizaAgentId" = ${token.elizaAgentId}
