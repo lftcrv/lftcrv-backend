@@ -18,7 +18,7 @@ export class TasksService {
     private readonly tokenService: IQueryAgentToken,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleCron() {
     const startTime = Date.now();
     this.logger.log('🚀 Start sending messages to active agents');

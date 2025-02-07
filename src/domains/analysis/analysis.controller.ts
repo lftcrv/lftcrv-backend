@@ -8,6 +8,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AnalysisService } from './analysis.service';
 import { CombinedAssetAnalysis, BatchAnalysisResult } from './analysis.types';
+import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
 
 @ApiTags('Market Analysis')
 @Controller('analysis')
@@ -15,6 +16,7 @@ export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
 
   @Post('generate')
+  @RequireApiKey()
   @ApiOperation({
     summary: 'Generate and store analysis for multiple assets',
     description:
@@ -38,6 +40,7 @@ export class AnalysisController {
   }
 
   @Get('latest')
+  @RequireApiKey()
   @ApiOperation({
     summary: 'Get latest analysis for multiple assets',
     description: 'Retrieves the most recent analysis for specified assets',
@@ -61,6 +64,7 @@ export class AnalysisController {
   }
 
   @Get('latest/:assetId')
+  @RequireApiKey()
   @ApiOperation({
     summary: 'Get latest analysis for a single asset',
     description: 'Retrieves the most recent analysis for a specific asset',

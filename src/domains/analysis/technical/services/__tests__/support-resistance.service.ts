@@ -42,7 +42,7 @@
 //        * We need at least one repeated pivot (peak or valley) 3 times
 //        * so findKeyLevels can cluster them into a "significant" level.
 //        *
-//        * Below, we create 16 bars. We'll force 3 local maxima at ~105 
+//        * Below, we create 16 bars. We'll force 3 local maxima at ~105
 //        * so that the pivot logic sees them as peaks.
 //        *
 //        * The simple pivot detection (findPivots) uses:
@@ -111,12 +111,12 @@
 //     it('should find some trendlines for synthetic pivot data', () => {
 //         /**
 //          * Window = 5. We want at least 2 pivot highs and
-//          * one additional bar touching that line. 
-//          * 
-//          * We'll create 22 bars. 
+//          * one additional bar touching that line.
+//          *
+//          * We'll create 22 bars.
 //          *  - i=5 => pivot low
 //          *  - i=10 => pivot high (105)
-//          *  - i=12 => near the line between i=10 & i=15 
+//          *  - i=12 => near the line between i=10 & i=15
 //          *  - i=15 => pivot high (106)
 //          */
 //         const prices: PriceDTO[] = [
@@ -126,54 +126,54 @@
 //           { timestamp: 3,  price: 102, close: 102, high: 102,   low: 99,   volume: 1000 },
 //           { timestamp: 4,  price: 98,  close: 98,  high: 98,    low: 95,   volume: 900  },
 //           { timestamp: 5,  price: 97,  close: 97,  high: 97,    low: 94,   volume: 1000 },
-      
+
 //           // i=5 => pivot LOW: 90 (lowest vs i=0..4 & i=6..10)
 //           { timestamp: 6,  price: 90,  close: 90,  high: 90,    low: 89,   volume: 950  },
-      
+
 //           // i=6..9 => all above 90 but below 105
 //           { timestamp: 7,  price: 94,  close: 94,  high: 94,    low: 93,   volume: 1000 },
 //           { timestamp: 8,  price: 96,  close: 96,  high: 96,    low: 94,   volume: 1000 },
 //           { timestamp: 9,  price: 92,  close: 92,  high: 92,    low: 90,   volume: 1000 },
 //           { timestamp: 10, price: 93,  close: 93,  high: 93,    low: 90,   volume: 1000 },
-      
+
 //           // i=10 => pivot HIGH: 105 (bigger than i=5..9 & i=11..14)
 //           { timestamp: 11, price: 105, close: 105, high: 105,   low: 103,  volume: 1200 },
-      
+
 //           // i=11
 //           { timestamp: 12, price: 104, close: 104, high: 104,   low: 102,  volume: 1000 },
-      
+
 //           // i=12 => extra "touch": near line from i=10->105 slope to i=15->106
 //           // Slope = (106 - 105) / (15 - 10) = 1/5 = 0.2
 //           // For i=12, xDelta= (12-10)=2 => expected line price=105 +0.2*2=105.4
 //           // We'll set high=105.35 => within ~0.2% tolerance of 105
 //           { timestamp: 13, price: 105.3, close: 105.3, high: 105.35, low: 104, volume: 1000 },
-      
+
 //           // i=13,14 => all <= 105
 //           { timestamp: 14, price: 104, close: 104, high: 104,   low: 102,  volume: 1000 },
 //           { timestamp: 15, price: 103, close: 103, high: 103,   low: 101,  volume: 1000 },
-      
+
 //           // i=15 => pivot HIGH: 106 (bigger than i=10..14 & i=16..20)
 //           { timestamp: 16, price: 106, close: 106, high: 106,   low: 105,  volume: 1500 },
-      
+
 //           // i=16..19 => all <= 106
 //           { timestamp: 17, price: 104, close: 104, high: 104,   low: 102,  volume: 1000 },
 //           { timestamp: 18, price: 103, close: 103, high: 103,   low: 101,  volume: 900  },
 //           { timestamp: 19, price: 100, close: 100, high: 100,   low: 98,   volume: 1100 },
 //           { timestamp: 20, price: 99,  close: 99,  high: 99,    low: 97,   volume: 900  },
-      
+
 //           // i=20 => pivot LOW candidate if needed
 //           { timestamp: 21, price: 95,  close: 95,  high: 95,    low: 93,   volume: 1000 },
 //           // i=21
 //           { timestamp: 22, price: 96,  close: 96,  high: 96,    low: 94,   volume: 1000 },
 //         ];
-      
+
 //         const trendlines = service.identifyTrendlines(prices);
-      
+
 //         // We expect at least 1 or 2 lines:
 //         //   - A 'resistance' line from i=10->105 to i=15->106 with i=12 touching.
 //         expect(trendlines.length).toBeLessThanOrEqual(5);
 //         expect(trendlines.length).toBeGreaterThan(0);
-      
+
 //         // Quick structural checks
 //         trendlines.forEach((t) => {
 //           expect(t.start).toHaveProperty('price');
@@ -185,7 +185,7 @@
 //           expect(['support', 'resistance']).toContain(t.type);
 //         });
 //       });
-      
+
 //   });
 
 //   describe('validateLevel', () => {

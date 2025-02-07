@@ -83,12 +83,10 @@ export class WalletService implements IStarknetWallet {
       });
 
       // Execute the transfer
-      console.log('Executing transfer...');
       const { transaction_hash } = await adminAccount.execute(transferCalldata);
 
       // Wait for the transaction to be accepted
       await provider.waitForTransaction(transaction_hash);
-      console.log('Transaction confirmed');
 
       return {
         ...ozWallet,

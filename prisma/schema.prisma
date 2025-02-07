@@ -7,25 +7,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model OTP {
-  id        String    @id @default(uuid())
-  code      String    @unique
-  used      Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  usedAt    DateTime?
-  
-  @@index([code])
-}
-
-model FailedAttempt {
-  id        String   @id @default(uuid())
-  codeHash  String
-  ipHash    String?
-  createdAt DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([codeHash])
-}
+///
+/// Enums
+///
 
 enum AgentStatus {
   STARTING
@@ -39,55 +23,32 @@ enum CurveSide {
   RIGHT
 }
 
-model ElizaAgent {
-  id             String      @id @default(uuid())
-  name           String
-  curveSide      CurveSide
-  creatorWallet  String
-  status         AgentStatus @default(STARTING)
-  containerId    String?
-  runtimeAgentId String?
-  port           Int?
-  characterConfig Json
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  TradingInformation TradingInformation[]
-  degenScore     Float? @default(0)
-  winScore       Float? @default(0)
-  LatestMarketData     LatestMarketData?
-  Wallet           AgentWallet?
-  Token            AgentToken?
-
-  @@map("eliza_agents")
-}
-
 enum AnalysisType {
   TECHNICAL
-  SENTIMENT 
+  SENTIMENT
   MARKET
   OVERALL
 }
 
-model Analysis {
-  id            String          @id @default(uuid())
-  type          AnalysisType   // Using the enum
-  data          Json
-  score         Float?         // Optional overall score
-  timestamp     DateTime       @default(now())
-  metadata      Json?         // Optional metadata
-  
-  @@index([timestamp])
-  @@map("analyses")
+enum OrchestrationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
 }
 
-model TradingInformation {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  elizaAgentId   String
-  elizaAgent     ElizaAgent @relation(fields: [elizaAgentId], references: [id])
-  information Json
+///
+/// Models
+///
 
-  @@map("trading_information")
+model OTP {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  used      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+
+  @@index([code])
 }
 
 enum BondingStatus {
@@ -113,23 +74,41 @@ model LatestMarketData {
   @@map("latest_market_data")
 }
 
-enum OrchestrationStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  FAILED
+model FailedAttempt {
+  id        String   @id @default(uuid())
+  codeHash  String
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([codeHash])
+}
+
+model ParadexMarket {
+  id            String   @id @default(uuid())
+  symbol        String   @unique
+  baseCurrency  String
+  quoteCurrency String
+  assetKind     String
+  isActive      Boolean  @default(true)
+  positionLimit String
+  minNotional   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("paradex_markets")
 }
 
 model Orchestration {
   id            String              @id @default(uuid())
-  type          String              // Type of orchestration (e.g., "agent-creation")
+  type          String // Type of orchestration (e.g., "agent-creation")
   status        OrchestrationStatus
   currentStepId String
-  result        Json?               // Store result data
-  error         String?             // Error message if failed
+  data          Json // Store orchestration input data
+  result        Json? // Store result data
+  error         String? // Error message if failed
   progress      Float               @default(0)
-  metadata      Json?               // Store metadata
-  data          Json                // Store orchestration input data
+  metadata      Json? // Store metadata
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -139,59 +118,123 @@ model Orchestration {
   @@map("orchestrations")
 }
 
-model PriceForToken {
-  id            String              @id @default(uuid())
-  price          String             
-  timestamp      DateTime
-  tokenId       String
-AgentToken    AgentToken @relation(fields: [tokenId], references: [id])
-  @@map("price_for_token")
+model Analysis {
+  id        String       @id @default(uuid())
+  type      AnalysisType // Using the enum
+  data      Json
+  score     Float? // Optional overall score
+  timestamp DateTime     @default(now())
+  metadata  Json? // Optional metadata
+
+  @@index([timestamp])
+  @@map("analyses")
+}
+
+model ElizaAgent {
+  id              String      @id @default(uuid())
+  name            String
+  curveSide       CurveSide
+  creatorWallet   String
+  status          AgentStatus @default(STARTING)
+  containerId     String?
+  runtimeAgentId  String?
+  port            Int?
+  characterConfig Json
+  degenScore      Float?      @default(0)
+  winScore        Float?      @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  TradingInformation TradingInformation[]
+  LatestMarketData   LatestMarketData?
+  Wallet             AgentWallet?
+  Token              AgentToken?
+
+  @@map("eliza_agents")
+}
+
+model TradingInformation {
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now())
+  information  Json
+  elizaAgentId String
+  elizaAgent   ElizaAgent @relation(fields: [elizaAgentId], references: [id])
+
+  @@map("trading_information")
+}
+
+model LatestMarketData {
+  id             String     @id @default(uuid())
+  price          Float      @default(0)
+  priceChange24h Float      @default(0)
+  holders        Int        @default(0)
+  marketCap      Float      @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  elizaAgentId   String     @unique
+  elizaAgent     ElizaAgent @relation(fields: [elizaAgentId], references: [id])
+
+  @@index([price])
+  @@index([priceChange24h])
+  @@index([holders])
+  @@index([marketCap])
+  @@map("latest_market_data")
 }
 
 model AgentWallet {
   id                    String     @id @default(uuid())
   privateKey            String
-  publicKey            String
-  contractAddress      String
-  fundTransactionHash  String?
+  publicKey             String
+  contractAddress       String
+  fundTransactionHash   String?
   deployTransactionHash String?
-  deployedAddress      String?
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
-  elizaAgentId   String      @unique
-  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
+  deployedAddress       String?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+  elizaAgentId          String     @unique
+  elizaAgent            ElizaAgent @relation(fields: [elizaAgentId], references: [id])
 
   @@map("agent_wallet")
 }
 
 model AgentToken {
-  id                   String     @id @default(uuid())
-  token                String
-  symbol               String
-  contractAddress      String
-  buyTax               Int
-  sellTax              Int
-  elizaAgentId   String      @unique
-  elizaAgent     ElizaAgent  @relation(fields: [elizaAgentId], references: [id])
-  Transaction          Transaction[]
-  Prices              PriceForToken[]
+  id              String          @id @default(uuid())
+  token           String
+  symbol          String
+  contractAddress String
+  buyTax          Int
+  sellTax         Int
+  elizaAgentId    String          @unique
+  elizaAgent      ElizaAgent      @relation(fields: [elizaAgentId], references: [id])
+  Transaction     Transaction[]
+  Prices          PriceForToken[]
 
   @@map("agent_token")
 }
 
 model Transaction {
-  id            String     @id @default(uuid())
-  buyToken      String
-  sellToken     String
-  buyAmount     BigInt
-  sellAmount    BigInt
-  hash          String
-  tokenId       String
-  userAddress   String
-  AgentToken    AgentToken @relation(fields: [tokenId], references: [id])
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id          String     @id @default(uuid())
+  buyToken    String
+  sellToken   String
+  buyAmount   BigInt
+  sellAmount  BigInt
+  hash        String
+  userAddress String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  tokenId     String
+  AgentToken  AgentToken @relation(fields: [tokenId], references: [id])
 
   @@index([createdAt, userAddress])
   @@map("transactions")
+}
+
+model PriceForToken {
+  id         String     @id @default(uuid())
+  price      String
+  timestamp  DateTime
+  tokenId    String
+  AgentToken AgentToken @relation(fields: [tokenId], references: [id])
+
+  @@map("price_for_token")
 }

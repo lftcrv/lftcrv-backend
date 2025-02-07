@@ -28,7 +28,6 @@ export class TradingInformationService implements ITradingInformation {
   async createTradingInformation(
     data: TradingInformationDto,
   ): Promise<TradingInformation> {
-    // find agent with runtimeAgentID, TODO normally no need to do that, we should use directly id
     const agent = await this.prisma.elizaAgent.findFirst({
       where: {
         runtimeAgentId: data.runtimeAgentId,
@@ -37,7 +36,7 @@ export class TradingInformationService implements ITradingInformation {
 
     if (!agent) {
       throw new NotFoundException(
-        `Agent with runtime ID ${data.runtimeAgentId} not found`,
+        `Agent with runtimeAgentId ${data.runtimeAgentId} not found`,
       );
     }
 

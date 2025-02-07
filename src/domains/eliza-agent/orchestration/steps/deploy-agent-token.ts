@@ -29,10 +29,6 @@ export class DeployAgentTokenStep extends BaseStepExecutor {
       const { agentId, wallet } = context.metadata;
       const dto = context.data;
 
-      console.log(
-        `Deploying token for agent ${agentId} using wallet ${wallet?.deployedAddress}`,
-      );
-
       const symbol = `ELIZA${agentId.substring(0, 4)}`;
       const tokenName = `${dto.name.toUpperCase()}_TOKEN`;
 
@@ -41,10 +37,6 @@ export class DeployAgentTokenStep extends BaseStepExecutor {
           name: tokenName,
           symbol,
         });
-
-      console.log(
-        `Token deployed at address: ${agentTokenContract.contract.address}`,
-      );
 
       const agentToken = await this.prisma.agentToken.create({
         data: {

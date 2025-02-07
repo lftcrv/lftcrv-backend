@@ -5,19 +5,19 @@ import { TimeFrame } from '../types';
 
 // Configuration options for price retrieval
 export interface PriceOptions {
-  limit?: number;     // Number of candles to retrieve (default: 100)
+  limit?: number; // Number of candles to retrieve (default: 100)
   startTime?: number; // Specific start timestamp (if not provided, calculated from limit)
-  endTime?: number;   // End timestamp (default: current time)
-  
-  priceKind?: 'mark' | 'index' | 'last';    // Type of price to use
+  endTime?: number; // End timestamp (default: current time)
+
+  priceKind?: 'mark' | 'index' | 'last'; // Type of price to use
 }
 
 // Market information structure
 export interface MarketInfo {
-  symbol: string;        // Full market symbol (e.g., BTC-USD-PERP)
-  baseAsset: string;     // Base currency (e.g., BTC)
-  quoteAsset: string;    // Quote currency (e.g., USD)
-  contractType: string;  // Contract type (e.g., PERP for perpetual)
+  symbol: string; // Full market symbol (e.g., BTC-USD-PERP)
+  baseAsset: string; // Base currency (e.g., BTC)
+  quoteAsset: string; // Quote currency (e.g., USD)
+  contractType: string; // Contract type (e.g., PERP for perpetual)
 }
 
 @Injectable()
@@ -27,7 +27,7 @@ export class PriceService {
   private readonly supportedTimeframes = ['1', '3', '5', '15', '30', '60'];
 
   // Mapping of timeframes to their duration in minutes
-    private readonly timeframeToMinutes: Record<TimeFrame, number> = {
+  private readonly timeframeToMinutes: Record<TimeFrame, number> = {
     '1m': 1,
     '3m': 3,
     '5m': 5,
@@ -56,7 +56,7 @@ export class PriceService {
       symbol: `${baseAsset}-USD-PERP`,
       baseAsset,
       quoteAsset: 'USD',
-      contractType: 'PERP'
+      contractType: 'PERP',
     };
   }
 
@@ -71,7 +71,9 @@ export class PriceService {
       throw new Error(`Unsupported timeframe: ${timeframe}`);
     }
     if (!this.supportedTimeframes.includes(minutes.toString())) {
-      throw new Error(`Timeframe ${timeframe} (${minutes} minutes) is not supported by the API. Supported timeframes: ${this.supportedTimeframes.map(t => this.minutesToTimeframe[t]).join(', ')}`);
+      throw new Error(
+        `Timeframe ${timeframe} (${minutes} minutes) is not supported by the API. Supported timeframes: ${this.supportedTimeframes.map((t) => this.minutesToTimeframe[t]).join(', ')}`,
+      );
     }
     return minutes.toString();
   }
@@ -86,35 +88,32 @@ export class PriceService {
   async getHistoricalPrices(
     token: string,
     timeframe: TimeFrame,
-    options: PriceOptions = {}
+    options: PriceOptions = {},
   ): Promise<PriceDTO[]> {
-    const {
-      limit = 100,
-      endTime = Date.now(),
-      startTime,
-      priceKind,
-    } = options;
+    const { limit = 100, endTime = Date.now(), startTime, priceKind } = options;
 
     const apiTimeframe = this.convertTimeframeToApiFormat(timeframe);
     const market = this.getMarketSymbol(token);
-    
+
     // Calculate start time if not given
     const minutesInTimeframe = this.timeframeToMinutes[timeframe];
-    const calculatedStartTime = startTime || 
-      endTime - (minutesInTimeframe * 60 * 1000 * limit);
+    const calculatedStartTime =
+      startTime || endTime - minutesInTimeframe * 60 * 1000 * limit;
 
     const params: Record<string, any> = {
       symbol: market.symbol,
       resolution: apiTimeframe,
       start_at: calculatedStartTime,
-      end_at: endTime
+      end_at: endTime,
     };
 
     if (priceKind) {
       params.price_kind = priceKind;
     }
 
-    const response = await axios.get(`${this.baseUrl}/markets/klines`, { params });
+    const response = await axios.get(`${this.baseUrl}/markets/klines`, {
+      params,
+    });
 
     if (!response.data || !Array.isArray(response.data.results)) {
       throw new Error('Invalid response format from API');
@@ -127,7 +126,7 @@ export class PriceService {
       low: parseFloat(candle[3]),
       close: parseFloat(candle[4]),
       volume: parseFloat(candle[5]),
-      price: parseFloat(candle[4])
+      price: parseFloat(candle[4]),
     }));
 
     if (prices.length > limit) {
@@ -144,17 +143,17 @@ export class PriceService {
    * @returns Current price
    */
   async getCurrentPrice(
-    token: string, 
-    options: { priceKind?: 'mark' | 'index' | 'last' } = {}
+    token: string,
+    options: { priceKind?: 'mark' | 'index' | 'last' } = {},
   ): Promise<number> {
     try {
       const market = this.getMarketSymbol(token);
       const response = await axios.get(`${this.baseUrl}/markets/summary`, {
-        params: { market: market.symbol }
+        params: { market: market.symbol },
       });
 
       const result = response.data.results[0];
-      
+
       // Return requested price type
       switch (options.priceKind) {
         case 'mark':
@@ -180,7 +179,7 @@ export class PriceService {
   async getLastCandles(
     token: string,
     number: number,
-    timeframe: TimeFrame
+    timeframe: TimeFrame,
   ): Promise<PriceDTO[]> {
     return this.getHistoricalPrices(token, timeframe, { limit: number });
   }
@@ -196,7 +195,7 @@ export class PriceService {
     token: string,
     timeframe: TimeFrame,
     startTime: number,
-    endTime: number
+    endTime: number,
   ): Promise<PriceDTO[]> {
     return this.getHistoricalPrices(token, timeframe, { startTime, endTime });
   }
@@ -210,7 +209,7 @@ export class PriceService {
   async getPricesFromDate(
     token: string,
     timeframe: TimeFrame,
-    startTime: number
+    startTime: number,
   ): Promise<PriceDTO[]> {
     return this.getHistoricalPrices(token, timeframe, { startTime });
   }
