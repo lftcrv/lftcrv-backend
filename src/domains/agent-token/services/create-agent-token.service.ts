@@ -43,6 +43,7 @@ export class CreateAgentTokenService implements ICreateAgentToken {
       _step: this.configService.get('STEP'),
       _buy_tax_percentage_x100: this.configService.get('BUY_TAX_PERCENTAGE'),
       _sell_tax_percentage_x100: this.configService.get('SELL_TAX_PERCENTAGE'),
+      _locker: this.configService.get('LOCKER'),
     };
 
     const contractCallData = new CallData(contractJson.abi);
