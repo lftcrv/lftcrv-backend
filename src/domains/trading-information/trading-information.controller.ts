@@ -4,6 +4,7 @@ import {
   Get,
   Inject,
   Post,
+  Param,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -46,11 +47,28 @@ export class TradingInformationController {
     status: 200,
     description: 'List of trading information retrieved successfully',
   })
-  async getAllTradingInformation(): Promise<TradingInformation[]> {
-    return this.tradingInformationService.getAllTradingInformation();
+  async getAllTradingInformation(): Promise<{
+    status: string;
+    data: { trades: TradingInformation[] };
+  }> {
+    const trades =
+      await this.tradingInformationService.getAllTradingInformation();
+
+    const formattedTrades = trades.map((trade) => ({
+      ...trade,
+      createdAt:
+        trade.createdAt instanceof Date
+          ? trade.createdAt.toISOString()
+          : trade.createdAt,
+    }));
+
+    return {
+      status: 'success',
+      data: { trades: formattedTrades },
+    };
   }
 
-  @Get(':id')
+  @Get('agent/:agentId')
   @RequireApiKey()
   @ApiOperation({ summary: 'List trading information for a specific agent' })
   @ApiResponse({
@@ -58,22 +76,58 @@ export class TradingInformationController {
     description: 'List of trading information retrieved successfully',
   })
   async getTradingInformationPerAgent(
-    databaseId: string,
-  ): Promise<TradingInformation[]> {
-    return this.tradingInformationService.getTradingInformationPerAgent(
-      databaseId,
-    );
+    @Param('agentId') agentId: string,
+  ): Promise<{
+    status: string;
+    data: { trades: TradingInformation[] };
+  }> {
+    const trades =
+      await this.tradingInformationService.getTradingInformationPerAgent(
+        agentId,
+      );
+
+    const formattedTrades = trades.map((trade) => ({
+      ...trade,
+      createdAt:
+        trade.createdAt instanceof Date
+          ? trade.createdAt.toISOString()
+          : trade.createdAt,
+    }));
+
+    return {
+      status: 'success',
+      data: { trades: formattedTrades },
+    };
   }
 
   @Get(':id')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Get a specific trading information' })
+  @ApiOperation({ summary: 'Get a specific trading information by ID' })
   @ApiResponse({
     status: 200,
     description: 'Trading information retrieved successfully',
   })
   @ApiResponse({ status: 404, description: 'Trading information not found' })
-  async getTradingInformation(id: string): Promise<TradingInformation> {
-    return this.tradingInformationService.getTradingInformation(id);
+  async getTradingInformation(@Param('id') id: string): Promise<{
+    status: string;
+    data: { trade: TradingInformation };
+  }> {
+    const trade =
+      await this.tradingInformationService.getTradingInformation(id);
+
+    const formattedTrade = trade
+      ? {
+          ...trade,
+          createdAt:
+            trade.createdAt instanceof Date
+              ? trade.createdAt.toISOString()
+              : trade.createdAt,
+        }
+      : null;
+
+    return {
+      status: 'success',
+      data: { trade: formattedTrade },
+    };
   }
 }
