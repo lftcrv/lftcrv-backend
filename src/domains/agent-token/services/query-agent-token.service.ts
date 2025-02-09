@@ -72,6 +72,9 @@ export class QueryAgentTokenService implements IQueryAgentToken {
       'get_current_price',
       [],
     );
+    if (Array.isArray(result)) {
+      console.log('[getCurrentPrice] Is array with value:', result[0]);
+    }
     return result
       ? Array.isArray(result)
         ? BigInt(result[0].toString())
@@ -105,10 +108,16 @@ export class QueryAgentTokenService implements IQueryAgentToken {
 
   async getMarketCap(agentId: string): Promise<bigint> {
     const result = await this.executeContractCall(agentId, 'market_cap', []);
-    return result
+
+    if (Array.isArray(result)) {
+      console.log('[getMarketCap] Is array with value:', result[0]);
+    }
+    const marketCap = result
       ? Array.isArray(result)
         ? BigInt(result[0].toString())
         : BigInt(result.toString())
       : BigInt(0);
+
+    return marketCap;
   }
 }
