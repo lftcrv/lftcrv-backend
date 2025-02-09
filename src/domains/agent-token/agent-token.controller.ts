@@ -12,7 +12,6 @@ import { AgentTokenTokens, IQueryAgentToken } from './interfaces';
 import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
 import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
-import { timestamp } from 'rxjs';
 
 @ApiTags('Agent Token Operations')
 @Controller('api/agent-token/:agentId')
@@ -23,6 +22,22 @@ export class AgentTokenController {
     private readonly tokenService: IQueryAgentToken,
     private readonly prisma: PrismaService,
   ) {}
+
+  @Get('current-price')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get current price of the token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current price retrieved successfully',
+  })
+  async getCurrentPrice(@Param('agentId') agentId: string) {
+    const price = await this.tokenService.getCurrentPrice(agentId);
+
+    return {
+      status: 'success',
+      data: { price: price.toString() },
+    };
+  }
 
   @Get('bonding-curve-percentage')
   @RequireApiKey()
@@ -114,6 +129,25 @@ export class AgentTokenController {
     return {
       status: 'success',
       data: { amount: result.toString() },
+    };
+  }
+
+  @Get('market-cap')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get market cap of the token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Market cap retrieved successfully',
+  })
+  async getMarketCap(@Param('agentId') agentId: string) {
+    const marketCap = await this.tokenService.getMarketCap(agentId);
+    console.log(
+      `[getMarketCap] Market cap for agent ${agentId}:`,
+      marketCap.toString(),
+    );
+    return {
+      status: 'success',
+      data: { marketCap: marketCap.toString() },
     };
   }
 }
