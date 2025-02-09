@@ -7,18 +7,33 @@ import { PrismaService } from '../../../shared/prisma/prisma.service';
 @Injectable()
 export class TradingInformationService implements ITradingInformation {
   constructor(private readonly prisma: PrismaService) {}
+  
   getAllTradingInformation(): Promise<TradingInformation[]> {
     return this.prisma.tradingInformation.findMany();
   }
 
-  getTradingInformationPerAgent(
+  async getTradingInformationPerAgent(
     databaseId: string,
   ): Promise<TradingInformation[]> {
-    return this.prisma.tradingInformation.findMany({
+    // First verify the agent exists
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id: databaseId },
+    });
+    
+    if (!agent) {
+      throw new NotFoundException(`Agent not found with ID: ${databaseId}`);
+    }
+    
+    const trades = await this.prisma.tradingInformation.findMany({
       where: {
         elizaAgentId: databaseId,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
+    
+    return trades;
   }
 
   getTradingInformation(id: string): Promise<TradingInformation> {
