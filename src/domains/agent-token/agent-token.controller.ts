@@ -164,7 +164,9 @@ export class AgentTokenController {
 
   @Get('price-history')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Get price history for the token' })
+  @ApiOperation({
+    summary: 'Get price history for the token (limited to last 5000 prices)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Price history retrieved successfully',
@@ -179,10 +181,11 @@ export class AgentTokenController {
       throw new NotFoundException(`Token not found for agent ${agentId}`);
     }
 
-    // Get price history
+    // Get price history with limit
     const priceHistory = await this.prisma.priceForToken.findMany({
       where: { tokenId: agentToken.id },
       orderBy: { timestamp: 'desc' },
+      take: 5000,
       select: {
         id: true,
         price: true,
