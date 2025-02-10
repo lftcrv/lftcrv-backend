@@ -131,4 +131,4 @@ describe('AgentTokenController', () => {
       });
     });
   });
-}); 
+});
