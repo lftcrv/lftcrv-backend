@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { AgentTokenTokens, IQueryAgentToken } from './interfaces';
-import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
-import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
-import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
+import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
+import { PrismaService } from '../../shared/prisma/prisma.service';
 
 @ApiTags('Agent Token Operations')
 @Controller('api/agent-token/:agentId')
@@ -185,7 +185,7 @@ export class AgentTokenController {
     const priceHistory = await this.prisma.priceForToken.findMany({
       where: { tokenId: agentToken.id },
       orderBy: { timestamp: 'desc' },
-      take: 5000,
+      take: 5000, // Prisma limit
       select: {
         id: true,
         price: true,
@@ -193,8 +193,8 @@ export class AgentTokenController {
       },
     });
 
-    // Format the response
-    const formattedPrices = priceHistory.map((entry) => ({
+    // Format the response and ensure we only take 5000 prices
+    const formattedPrices = priceHistory.slice(0, 5000).map((entry) => ({
       ...entry,
       timestamp: entry.timestamp.toISOString(),
       price: entry.price,
