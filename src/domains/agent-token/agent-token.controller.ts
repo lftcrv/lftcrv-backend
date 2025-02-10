@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   UseInterceptors,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { AgentTokenTokens, IQueryAgentToken } from './interfaces';
@@ -78,34 +79,48 @@ export class AgentTokenController {
   }
   @Post('push_current_price')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Calcultate and push the price of a token' })
-  @ApiResponse({ status: 200, description: 'Currentprice' })
+  @ApiOperation({ summary: 'Calculate and push the price of a token' })
+  @ApiResponse({ status: 200, description: 'Current price' })
   @ApiQuery({
     name: 'amountEth',
-    description: 'Amount of tokens to simulate',
+    description: 'Amount of ETH',
   })
   @ApiQuery({
     name: 'amountToken',
-    description: 'Amount of tokens to simulate',
+    description: 'Amount of tokens',
   })
   async pushCurrentPrice(
     @Param('agentId') agentId: string,
     @Param('amountEth') amountEth: number,
     @Param('amountToken') amountToken: number,
   ) {
+    // First get the agent token
+    const agentToken = await this.prisma.agentToken.findFirst({
+      where: { elizaAgentId: agentId },
+    });
+
+    if (!agentToken) {
+      throw new NotFoundException(`Token not found for agent ${agentId}`);
+    }
+
     const price = await this.tokenService.getCurrentPrice(agentId);
+
+    // Create price entry with correct tokenId
     await this.prisma.priceForToken.create({
       data: {
-        tokenId: agentId,
+        tokenId: agentToken.id, // Use the correct AgentToken ID
         price: (amountToken / amountEth).toString(),
         timestamp: new Date(),
       },
     });
-    // inject on db the current price
 
     return {
       status: 'success',
-      data: { amount: price.toString() },
+      data: {
+        price: price.toString(),
+        tokenId: agentToken.id,
+        tokenSymbol: agentToken.symbol,
+      },
     };
   }
 
@@ -141,13 +156,54 @@ export class AgentTokenController {
   })
   async getMarketCap(@Param('agentId') agentId: string) {
     const marketCap = await this.tokenService.getMarketCap(agentId);
-    console.log(
-      `[getMarketCap] Market cap for agent ${agentId}:`,
-      marketCap.toString(),
-    );
     return {
       status: 'success',
       data: { marketCap: marketCap.toString() },
+    };
+  }
+
+  @Get('price-history')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get price history for the token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Price history retrieved successfully',
+  })
+  async getPriceHistory(@Param('agentId') agentId: string) {
+    // First get the agent token
+    const agentToken = await this.prisma.agentToken.findFirst({
+      where: { elizaAgentId: agentId },
+    });
+
+    if (!agentToken) {
+      throw new NotFoundException(`Token not found for agent ${agentId}`);
+    }
+
+    // Get price history
+    const priceHistory = await this.prisma.priceForToken.findMany({
+      where: { tokenId: agentToken.id },
+      orderBy: { timestamp: 'desc' },
+      select: {
+        id: true,
+        price: true,
+        timestamp: true,
+      },
+    });
+
+    // Format the response
+    const formattedPrices = priceHistory.map((entry) => ({
+      ...entry,
+      timestamp: entry.timestamp.toISOString(),
+      price: entry.price,
+    }));
+
+    return {
+      status: 'success',
+      data: {
+        prices: formattedPrices,
+        tokenSymbol: agentToken.symbol,
+        tokenAddress: agentToken.contractAddress,
+      },
     };
   }
 }
