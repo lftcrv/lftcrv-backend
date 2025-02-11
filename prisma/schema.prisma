@@ -135,6 +135,7 @@ model ElizaAgent {
   name            String
   curveSide       CurveSide
   creatorWallet   String
+  deploymentFeesTxHash String
   status          AgentStatus @default(STARTING)
   containerId     String?
   runtimeAgentId  String?
@@ -161,24 +162,6 @@ model TradingInformation {
   elizaAgent   ElizaAgent @relation(fields: [elizaAgentId], references: [id])
 
   @@map("trading_information")
-}
-
-model LatestMarketData {
-  id             String     @id @default(uuid())
-  price          Float      @default(0)
-  priceChange24h Float      @default(0)
-  holders        Int        @default(0)
-  marketCap      Float      @default(0)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  elizaAgentId   String     @unique
-  elizaAgent     ElizaAgent @relation(fields: [elizaAgentId], references: [id])
-
-  @@index([price])
-  @@index([priceChange24h])
-  @@index([holders])
-  @@index([marketCap])
-  @@map("latest_market_data")
 }
 
 model AgentWallet {
