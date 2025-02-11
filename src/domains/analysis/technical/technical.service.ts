@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PriceService } from './services/price.service';
+import { UnifiedPriceService } from './services/price/unified-price.service';
 import { MovingAverageService } from './services/moving-average.service';
 import { CandlestickService } from './services/candlestick.service';
 import { MomentumService } from './services/momentum.service';
@@ -18,11 +18,19 @@ import { VolumeService } from './services/volume.service';
 import { getAllSymbols } from '../shared/utils';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 
+/**
+ * Configuration for market analysis
+ */
+export interface AnalysisConfig {
+  platform: 'paradex' | 'avnu';
+  identifier: string;
+}
+
 @Injectable()
 export class TechnicalService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly priceService: PriceService,
+    private readonly unifiedPriceService: UnifiedPriceService,
     private readonly maService: MovingAverageService,
     private readonly candlestickService: CandlestickService,
     private readonly momentumService: MomentumService,
@@ -30,13 +38,17 @@ export class TechnicalService {
     private readonly ichimokuService: IchimokuService,
     private readonly volumeService: VolumeService,
     private readonly pivotService: PivotService,
-  ) {}
+  ) { }
 
-  private formatSymbol(asset: string): string {
+  private formatSymbol(asset: string, platform: 'paradex' | 'avnu'): string {
+    if (platform === 'avnu') return asset;
     return asset.includes('-') ? asset : `${asset.toUpperCase()}-USD-PERP`;
   }
 
-  async analyzeMarkets(assets: string[]): Promise<MarketAnalysis> {
+  async analyzeMarkets(
+    assets: string[],
+    platform: 'paradex' | 'avnu' = 'paradex' // Paramètre platform ajouté avec paradex par défaut
+  ): Promise<MarketAnalysis> {
     if (!assets || assets.length === 0) {
       throw new BadRequestException('No assets provided for analysis');
     }
@@ -46,16 +58,19 @@ export class TechnicalService {
     const failed: AnalysisError[] = [];
 
     try {
-      // Get all available Paradex symbols
-      const availableSymbols = await getAllSymbols(this.prisma);
+      // Vérification des symboles disponibles selon la plateforme
+      const availableSymbols = platform === 'paradex' 
+        ? await getAllSymbols(this.prisma)
+        : []; // Pour AVNU, pas de vérification préalable des symboles
+
       const symbolsSet = new Set(availableSymbols);
 
       for (const asset of assets) {
         try {
-          const formattedSymbol = this.formatSymbol(asset);
+          const formattedSymbol = this.formatSymbol(asset, platform);
 
-          // Check if the symbol exists in Paradex
-          if (!symbolsSet.has(formattedSymbol)) {
+          // Vérification spécifique à Paradex
+          if (platform === 'paradex' && !symbolsSet.has(formattedSymbol)) {
             failed.push({
               symbol: formattedSymbol,
               message: 'Asset not available on Paradex',
@@ -64,7 +79,7 @@ export class TechnicalService {
             continue;
           }
 
-          analyses[asset] = await this.analyzeAsset(asset);
+          analyses[asset] = await this.analyzeAsset(asset, platform);
         } catch (error) {
           failed.push({
             symbol: asset,
@@ -101,22 +116,40 @@ export class TechnicalService {
     }
   }
 
-  private async analyzeAsset(asset: string): Promise<AssetAnalysis> {
-    // Get data for different timeframes
+  private async analyzeAsset(
+    asset: string,
+    platform: 'paradex' | 'avnu'
+  ): Promise<AssetAnalysis> {
+    // Récupération des données sur différentes périodes
     const [shortTermPrices, mediumTermPrices, longTermPrices] =
       await Promise.all([
-        this.priceService.getHistoricalPrices(asset, '5m', {
-          limit: 100,
-          priceKind: 'mark',
-        }),
-        this.priceService.getHistoricalPrices(asset, '1h', {
-          limit: 52,
-          priceKind: 'mark',
-        }),
-        this.priceService.getHistoricalPrices(asset, '1h', {
-          limit: 30,
-          priceKind: 'mark',
-        }),
+        this.unifiedPriceService.getHistoricalPrices(
+          platform,
+          asset,
+          '5m',
+          {
+            limit: 100,
+            priceKind: 'mark',
+          }
+        ),
+        this.unifiedPriceService.getHistoricalPrices(
+          platform,
+          asset,
+          '1h',
+          {
+            limit: 52,
+            priceKind: 'mark',
+          }
+        ),
+        this.unifiedPriceService.getHistoricalPrices(
+          platform,
+          asset,
+          '1h',
+          {
+            limit: 30,
+            priceKind: 'mark',
+          }
+        ),
       ]);
 
     const lastPrice = shortTermPrices[shortTermPrices.length - 1].close!;
@@ -457,7 +490,7 @@ export class TechnicalService {
     for (let i = 1; i < Math.min(periods, prices.length); i++) {
       returns.push(
         ((prices[i].close! - prices[i - 1].close!) / prices[i - 1].close!) *
-          100,
+        100,
       );
     }
 

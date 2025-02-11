@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { CandlestickService } from './services/candlestick.service';
 import { MomentumService } from './services/momentum.service';
 import { MovingAverageService } from './services/moving-average.service';
-import { PriceService } from './services/price.service';
-// import { SupportResistanceService } from './services/support-resistance.service';
 import { VolumeService } from './services/volume.service';
 import { TechnicalService } from './technical.service';
 import { TechnicalController } from './technical.controller';
@@ -12,13 +10,22 @@ import { ADXService } from './services/adx.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 
+// Import des nouveaux services de prix
+import { ParadexPriceService } from './services/price/paradex-price.service';
+import { AvnuPriceService } from './services/price/avnu-price.service';
+import { UnifiedPriceService } from './services/price/unified-price.service';
+
 @Module({
   imports: [],
   controllers: [TechnicalController],
   providers: [
     TechnicalService,
     PrismaService,
-    PriceService,
+    // Services de prix
+    ParadexPriceService,
+    AvnuPriceService,
+    UnifiedPriceService,
+    // Autres services
     MovingAverageService,
     CandlestickService,
     MomentumService,
@@ -26,7 +33,6 @@ import { PrismaService } from 'src/shared/prisma/prisma.service';
     IchimokuService,
     VolumeService,
     PivotService,
-    // SupportResistanceService
   ],
   exports: [TechnicalService],
 })

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PriceService } from '../price.service';
+import { PriceService } from '../price/paradex-price.service';
 import axios from 'axios';
 import { TimeFrame } from '../../types';
 
