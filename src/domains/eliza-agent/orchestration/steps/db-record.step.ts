@@ -20,28 +20,45 @@ export class CreateDbRecordStep extends BaseStepExecutor {
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const dto = context.data;
-      const agent = await this.prisma.elizaAgent.create({
-        data: {
-          name: dto.name,
-          curveSide: dto.curveSide,
-          status: AgentStatus.STARTING,
-          characterConfig: dto.characterConfig,
-          creatorWallet: dto.creatorWallet,
-          degenScore: 0,
-          winScore: 0,
-          LatestMarketData: {
-            create: {
-              price: 0,
-              priceChange24h: 0,
-              holders: 0,
-              marketCap: 0,
-            },
+
+
+
+      // Verify transaction hash exists
+      if (!dto.transactionHash) {
+        return this.failure('Missing transaction hash for deployment payment');
+      }
+
+      const createInput = {
+        name: dto.name,
+        curveSide: dto.curveSide,
+        status: AgentStatus.STARTING,
+        characterConfig: dto.characterConfig,
+        creatorWallet: dto.creatorWallet,
+        deploymentFeesTxHash: dto.transactionHash,
+        degenScore: 0,
+        winScore: 0,
+        LatestMarketData: {
+          create: {
+            price: 0,
+            priceChange24h: 0,
+            holders: 0,
+            marketCap: 0,
           },
         },
+      };
+
+      const agent = await this.prisma.elizaAgent.create({
+        data: createInput,
       });
+
+      console.log('🔐 Payment TX:', dto.transactionHash);
 
       return this.success(agent, { agentId: agent.id });
     } catch (error) {
+      console.error('Agent creation failed:', {
+        error: error.message,
+        dto: context.data,
+      });
       return this.failure(`Failed to create agent record: ${error.message}`);
     }
   }
