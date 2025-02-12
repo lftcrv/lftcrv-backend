@@ -60,5 +60,3 @@ docker/eliza/agent/
 # PR files
 pr_body.md
 pr_comment.md
-
-package.json
