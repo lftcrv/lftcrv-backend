@@ -54,6 +54,9 @@ export class UnifiedPriceService {
     timeframe: TimeFrame,
     options: BasePriceOptions = {},
   ): Promise<PriceDTO[]> {
+    if (platform !== 'paradex' && platform !== 'avnu') {
+        throw new Error(`Unsupported platform: ${platform}. Must be either paradex or avnu`);
+    }
     const service = platform === 'paradex' ? this.paradexService : this.avnuService;
     return service.getHistoricalPrices(identifier, timeframe, options);
   }
