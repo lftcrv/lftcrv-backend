@@ -47,7 +47,7 @@ export class TechnicalService {
 
   async analyzeMarkets(
     assets: string[],
-    platform: 'paradex' | 'avnu' = 'paradex' // Paramètre platform ajouté avec paradex par défaut
+    platform: 'paradex' | 'avnu' = 'paradex'
   ): Promise<MarketAnalysis> {
     if (!assets || assets.length === 0) {
       throw new BadRequestException('No assets provided for analysis');
@@ -58,28 +58,32 @@ export class TechnicalService {
     const failed: AnalysisError[] = [];
 
     try {
-      // Vérification des symboles disponibles selon la plateforme
       const availableSymbols = platform === 'paradex' 
         ? await getAllSymbols(this.prisma)
-        : []; // Pour AVNU, pas de vérification préalable des symboles
-
+        : [];
       const symbolsSet = new Set(availableSymbols);
 
       for (const asset of assets) {
         try {
-          const formattedSymbol = this.formatSymbol(asset, platform);
-
-          // Vérification spécifique à Paradex
-          if (platform === 'paradex' && !symbolsSet.has(formattedSymbol)) {
-            failed.push({
-              symbol: formattedSymbol,
-              message: 'Asset not available on Paradex',
-              code: 'SYMBOL_NOT_FOUND',
-            });
-            continue;
+          if (platform === 'avnu') {
+            // Pour AVNU, on récupère l'adresse à partir du nom du token
+            const avnuService = (this.unifiedPriceService as any).avnuService;
+            const tokenAddress = avnuService.getTokenAddress(asset);
+            const analysis = await this.analyzeAsset(tokenAddress, platform);
+            // On utilise le nom du token comme clé dans le résultat
+            analyses[asset.toUpperCase()] = analysis;
+          } else {
+            const formattedSymbol = this.formatSymbol(asset, platform);
+            if (!symbolsSet.has(formattedSymbol)) {
+              failed.push({
+                symbol: formattedSymbol,
+                message: 'Asset not available on Paradex',
+                code: 'SYMBOL_NOT_FOUND',
+              });
+              continue;
+            }
+            analyses[asset.toUpperCase()] = await this.analyzeAsset(formattedSymbol, platform);
           }
-
-          analyses[asset] = await this.analyzeAsset(asset, platform);
         } catch (error) {
           failed.push({
             symbol: asset,
@@ -89,7 +93,6 @@ export class TechnicalService {
         }
       }
 
-      // Si aucune analyse n'a réussi, on lance une erreur
       if (Object.keys(analyses).length === 0) {
         throw new BadRequestException({
           message: 'No assets could be analyzed',
@@ -100,15 +103,12 @@ export class TechnicalService {
       return {
         timestamp,
         analyses,
-        ...(failed.length > 0 && { failed }), // n'inclut failed que s'il y a des erreurs
+        ...(failed.length > 0 && { failed }),
       };
     } catch (error) {
-      // Si c'est une erreur déjà formatée (BadRequestException), on la relance
       if (error instanceof BadRequestException) {
         throw error;
       }
-
-      // Sinon on formate l'erreur
       throw new BadRequestException({
         message: 'Failed to analyze markets',
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -116,40 +116,25 @@ export class TechnicalService {
     }
   }
 
+
   private async analyzeAsset(
-    asset: string,
+    identifier: string,
     platform: 'paradex' | 'avnu'
   ): Promise<AssetAnalysis> {
-    // Récupération des données sur différentes périodes
     const [shortTermPrices, mediumTermPrices, longTermPrices] =
       await Promise.all([
-        this.unifiedPriceService.getHistoricalPrices(
-          platform,
-          asset,
-          '5m',
-          {
-            limit: 100,
-            priceKind: 'mark',
-          }
-        ),
-        this.unifiedPriceService.getHistoricalPrices(
-          platform,
-          asset,
-          '1h',
-          {
-            limit: 52,
-            priceKind: 'mark',
-          }
-        ),
-        this.unifiedPriceService.getHistoricalPrices(
-          platform,
-          asset,
-          '1h',
-          {
-            limit: 30,
-            priceKind: 'mark',
-          }
-        ),
+        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '5m', {
+          limit: 100,
+          priceKind: 'mark',
+        }),
+        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '1h', {
+          limit: 52,
+          priceKind: 'mark',
+        }),
+        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '1h', {
+          limit: 30,
+          priceKind: 'mark',
+        }),
       ]);
 
     const lastPrice = shortTermPrices[shortTermPrices.length - 1].close!;

@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PriceDTO } from '../../dto/price.dto';
 import { TimeFrame } from '../../types';
 import { IPriceService, BasePriceOptions } from '../../interfaces/price.interface';
+import { AvnuToken, AVNU_TOKENS } from '../../config/tokens.config';
 import axios from 'axios';
 
 @Injectable()
 export class AvnuPriceService implements IPriceService {
   private readonly baseUrl = 'https://starknet.impulse.avnu.fi/v1';
+  private readonly tokenMap: Map<string, string> = new Map();
+  private readonly reverseTokenMap: Map<string, string> = new Map();
 
   private readonly timeframeToAvnuFormat: Record<TimeFrame, string> = {
     '1m': '1',
@@ -16,6 +19,15 @@ export class AvnuPriceService implements IPriceService {
     '30m': '15', // AVNU n'a pas 30m, on utilise 15m
     '1h': '1H'
   };
+
+  constructor() {
+    // Initialiser les mappings des tokens
+    AVNU_TOKENS.forEach(token => {
+      this.tokenMap.set(token.name.toUpperCase(), token.address);
+      this.reverseTokenMap.set(token.address, token.name.toUpperCase());
+    });
+  }
+
   /**
    * Converts our timeframe format to AVNU format
    */
@@ -25,6 +37,18 @@ export class AvnuPriceService implements IPriceService {
       throw new Error(`Timeframe not supported by AVNU: ${timeframe}`);
     }
     return avnuTimeframe;
+  }
+
+  getTokenAddress(name: string): string {
+    const address = this.tokenMap.get(name.toUpperCase());
+    if (!address) {
+      throw new Error(`Token ${name} not found on AVNU`);
+    }
+    return address;
+  }
+
+  getTokenName(address: string): string {
+    return this.reverseTokenMap.get(address) || address;
   }
 
   /**
@@ -40,7 +64,7 @@ export class AvnuPriceService implements IPriceService {
     options: BasePriceOptions = {},
   ): Promise<PriceDTO[]> {
     const { limit = 100, endTime = Date.now() } = options;
-  
+
     // Calculer startDate en fonction de la résolution
     const resolutionMap = {
       '1': 60 * 1000,          // 1 minute en ms
@@ -48,11 +72,11 @@ export class AvnuPriceService implements IPriceService {
       '15': 15 * 60 * 1000,    // 15 minutes en ms
       '1H': 60 * 60 * 1000,    // 1 heure en ms
     };
-  
+
     const resolution = this.convertTimeframeToAvnuFormat(timeframe);
     const timeWindow = resolutionMap[resolution] * limit;
     const startDate = new Date(endTime - timeWindow);
-  
+
     try {
       const response = await axios.get(`${this.baseUrl}/tokens/${identifier}/prices/line`, {
         params: {
@@ -62,11 +86,11 @@ export class AvnuPriceService implements IPriceService {
           in: 'usd'
         }
       });
-  
+
       if (!response.data || !Array.isArray(response.data)) {
         throw new Error('Invalid response format from AVNU API');
       }
-  
+
       return response.data.map((item: any) => ({
         timestamp: new Date(item.date).getTime(),
         price: parseFloat(item.value),
