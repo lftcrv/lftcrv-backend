@@ -41,7 +41,7 @@ export interface IPriceService {
   ): Promise<number>;
 
   /**
-   * Helper method to get the last n candles
+   * Helper method to get the last n candles. (and prices for AVNU)
    * @param identifier Token identifier (symbol for Paradex, address for AVNU)
    * @param number Number of candles to retrieve
    * @param timeframe Candle timeframe
