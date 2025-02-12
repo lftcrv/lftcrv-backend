@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { AgentStatus } from '@prisma/client';
 import {
   StepExecutionContext,
@@ -6,10 +6,18 @@ import {
 } from '../../../../domains/orchestration/interfaces';
 import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
+import {
+  BlockchainTokens,
+  IProviderService,
+} from '../../../../shared/blockchain/interfaces';
 
 @Injectable()
 export class CreateDbRecordStep extends BaseStepExecutor {
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(BlockchainTokens.Provider)
+    private readonly providerService: IProviderService,
+  ) {
     super({
       stepId: 'create-db-record',
       stepType: 'agent-creation',
@@ -21,11 +29,27 @@ export class CreateDbRecordStep extends BaseStepExecutor {
     try {
       const dto = context.data;
 
-
-
       // Verify transaction hash exists
       if (!dto.transactionHash) {
         return this.failure('Missing transaction hash for deployment payment');
+      }
+
+      // Check transaction status
+      try {
+        const provider = this.providerService.getProvider();
+        const txStatus = await provider.getTransactionStatus(
+          dto.transactionHash,
+        );
+
+        if (txStatus.finality_status !== 'ACCEPTED_ON_L2') {
+          return this.failure(
+            `Transaction not confirmed on L2. Status: ${txStatus.finality_status}`,
+          );
+        }
+      } catch (error) {
+        return this.failure(
+          `Failed to verify transaction status: ${error.message}`,
+        );
       }
 
       const createInput = {
@@ -51,7 +75,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         data: createInput,
       });
 
-      console.log('🔐 Payment TX:', dto.transactionHash);
+      console.log('🔐 Payment TX status verified:', dto.transactionHash);
 
       return this.success(agent, { agentId: agent.id });
     } catch (error) {
