@@ -15,6 +15,7 @@ enum AgentStatus {
   STARTING
   RUNNING
   STOPPED
+  FAILED
   ERROR
 }
 
@@ -135,7 +136,9 @@ model ElizaAgent {
   name            String
   curveSide       CurveSide
   creatorWallet   String
+  deploymentFeesTxHash String     @map("deployment_fees_tx_hash") // Required, frontend sends confirmed tx hash
   status          AgentStatus @default(STARTING)
+  failureReason   String?     // For storing detailed error info
   containerId     String?
   runtimeAgentId  String?
   port            Int?
@@ -162,8 +165,6 @@ model TradingInformation {
 
   @@map("trading_information")
 }
-
-
 
 model AgentWallet {
   id                    String     @id @default(uuid())

@@ -51,7 +51,12 @@ coverage
 # Eliza
 agent/data
 docker/eliza/characters/
+docker/eliza/agent/
 
 # Local development files
 *.local
 *.dev
+
+# PR files
+pr_body.md
+pr_comment.md
