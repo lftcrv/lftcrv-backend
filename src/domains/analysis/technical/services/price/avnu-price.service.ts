@@ -21,7 +21,6 @@ export class AvnuPriceService implements IPriceService {
   };
 
   constructor() {
-    // Initialiser les mappings des tokens
     AVNU_TOKENS.forEach(token => {
       this.tokenMap.set(token.name.toUpperCase(), token.address);
       this.reverseTokenMap.set(token.address, token.name.toUpperCase());
