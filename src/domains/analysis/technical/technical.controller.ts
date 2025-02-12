@@ -19,7 +19,7 @@ export class TechnicalController {
   @ApiQuery({
     name: 'assets',
     required: true,
-    description: 'Comma-separated list of assets to analyze (e.g., "BTC,ETH" for Paradex or contract addresses for AVNU)',
+    description: 'Comma-separated list of assets to analyze (e.g., "BTC,ETH" for Paradex or "ETH,STRK" for AVNU)',
     type: String,
   })
   @ApiQuery({
