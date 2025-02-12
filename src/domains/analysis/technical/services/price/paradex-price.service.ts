@@ -1,27 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { PriceDTO } from '../dto/price.dto';
+import { PriceDTO } from '../../dto/price.dto';
+import { TimeFrame } from '../../types';
+import { IPriceService, BasePriceOptions } from '../../interfaces/price.interface';
 import axios from 'axios';
-import { TimeFrame } from '../types';
 
-// Configuration options for price retrieval
-export interface PriceOptions {
-  limit?: number; // Number of candles to retrieve (default: 100)
-  startTime?: number; // Specific start timestamp (if not provided, calculated from limit)
-  endTime?: number; // End timestamp (default: current time)
-
-  priceKind?: 'mark' | 'index' | 'last'; // Type of price to use
-}
-
-// Market information structure
+/**
+ * Market information structure
+ */
 export interface MarketInfo {
-  symbol: string; // Full market symbol (e.g., BTC-USD-PERP)
-  baseAsset: string; // Base currency (e.g., BTC)
-  quoteAsset: string; // Quote currency (e.g., USD)
+  symbol: string;      // Full market symbol (e.g., BTC-USD-PERP)
+  baseAsset: string;   // Base currency (e.g., BTC)
+  quoteAsset: string;  // Quote currency (e.g., USD)
   contractType: string; // Contract type (e.g., PERP for perpetual)
 }
 
 @Injectable()
-export class PriceService {
+export class ParadexPriceService implements IPriceService {
   private readonly baseUrl = 'https://api.testnet.paradex.trade/v1';
 
   private readonly supportedTimeframes = ['1', '3', '5', '15', '30', '60'];
@@ -47,11 +41,11 @@ export class PriceService {
 
   /**
    * Constructs market symbol and information from token name
-   * @param token Base token (e.g., "BTC")
+   * @param identifier Base token (e.g., "BTC")
    * @returns Market information object
    */
-  private getMarketSymbol(token: string): MarketInfo {
-    const baseAsset = token.toUpperCase();
+  private getMarketSymbol(identifier: string): MarketInfo {
+    const baseAsset = identifier.toUpperCase();
     return {
       symbol: `${baseAsset}-USD-PERP`,
       baseAsset,
@@ -61,9 +55,9 @@ export class PriceService {
   }
 
   /**
-   * Convertit notre timeframe en format API
-   * @param timeframe Notre format de timeframe (e.g., '1h')
-   * @returns Format API (e.g., '60')
+   * Converts timeframe to API format
+   * @param timeframe Our timeframe format (e.g., '1h')
+   * @returns API format (e.g., '60')
    */
   private convertTimeframeToApiFormat(timeframe: TimeFrame): string {
     const minutes = this.timeframeToMinutes[timeframe];
@@ -79,21 +73,21 @@ export class PriceService {
   }
 
   /**
-   * Fetches historical price data with various options
-   * @param token Base token (e.g., "BTC")
+   * Fetches historical price data
+   * @param identifier Base token (e.g., "BTC")
    * @param timeframe Candle timeframe
    * @param options Configuration options
    * @returns Array of price data
    */
   async getHistoricalPrices(
-    token: string,
+    identifier: string,
     timeframe: TimeFrame,
-    options: PriceOptions = {},
+    options: BasePriceOptions = {},
   ): Promise<PriceDTO[]> {
     const { limit = 100, endTime = Date.now(), startTime, priceKind } = options;
 
     const apiTimeframe = this.convertTimeframeToApiFormat(timeframe);
-    const market = this.getMarketSymbol(token);
+    const market = this.getMarketSymbol(identifier);
 
     // Calculate start time if not given
     const minutesInTimeframe = this.timeframeToMinutes[timeframe];
@@ -138,23 +132,22 @@ export class PriceService {
 
   /**
    * Fetches current price for a token
-   * @param token Base token (e.g., "BTC")
+   * @param identifier Base token (e.g., "BTC")
    * @param options Price type options
    * @returns Current price
    */
   async getCurrentPrice(
-    token: string,
+    identifier: string,
     options: { priceKind?: 'mark' | 'index' | 'last' } = {},
   ): Promise<number> {
     try {
-      const market = this.getMarketSymbol(token);
+      const market = this.getMarketSymbol(identifier);
       const response = await axios.get(`${this.baseUrl}/markets/summary`, {
         params: { market: market.symbol },
       });
 
       const result = response.data.results[0];
 
-      // Return requested price type
       switch (options.priceKind) {
         case 'mark':
           return parseFloat(result.mark_price);
@@ -171,46 +164,32 @@ export class PriceService {
   }
 
   /**
-   * Helper method to get the last n candles up to now
-   * @param token Base token (e.g., "BTC")
+   * Helper method to get the last n candles
+   * @param identifier Base token (e.g., "BTC")
    * @param number Number of candles to retrieve
    * @param timeframe Candle timeframe
    */
   async getLastCandles(
-    token: string,
+    identifier: string,
     number: number,
     timeframe: TimeFrame,
   ): Promise<PriceDTO[]> {
-    return this.getHistoricalPrices(token, timeframe, { limit: number });
+    return this.getHistoricalPrices(identifier, timeframe, { limit: number });
   }
 
   /**
-   * Retrieves candles for a specific time period
-   * @param token Base token (e.g., "BTC")
+   * Retrieves prices for a specific time period
+   * @param identifier Base token (e.g., "BTC")
    * @param timeframe Candle timeframe
    * @param startTime Start timestamp
    * @param endTime End timestamp
    */
   async getPricesInPeriod(
-    token: string,
+    identifier: string,
     timeframe: TimeFrame,
     startTime: number,
     endTime: number,
   ): Promise<PriceDTO[]> {
-    return this.getHistoricalPrices(token, timeframe, { startTime, endTime });
-  }
-
-  /**
-   * Retrieves candles from a specific date until now
-   * @param token Base token (e.g., "BTC")
-   * @param timeframe Candle timeframe
-   * @param startTime Start timestamp
-   */
-  async getPricesFromDate(
-    token: string,
-    timeframe: TimeFrame,
-    startTime: number,
-  ): Promise<PriceDTO[]> {
-    return this.getHistoricalPrices(token, timeframe, { startTime });
+    return this.getHistoricalPrices(identifier, timeframe, { startTime, endTime });
   }
 }

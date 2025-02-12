@@ -208,3 +208,16 @@ export interface LongTermAnalysis {
   support: number;
   resistance: number;
 }
+
+/**
+ * Supported trading platforms
+ */
+export type Platform = 'paradex' | 'avnu';
+
+/**
+ * Platform-specific analysis options
+ */
+export interface PlatformAnalysisOptions {
+  platform: Platform;
+  priceKind?: string;
+}

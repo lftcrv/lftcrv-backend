@@ -48,7 +48,6 @@ export class ApiKeyGuard implements CanActivate {
         AUTH_CONSTANTS.ERROR_MESSAGES.MISSING_HEADER,
       );
     }
-
     if (apiKey !== validApiKey) {
       throw new UnauthorizedException(
         AUTH_CONSTANTS.ERROR_MESSAGES.INVALID_KEY,
