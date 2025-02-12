@@ -28,7 +28,6 @@ export class AnalysisService {
     const startTime = Date.now();
 
     try {
-      // Get technical analysis avec la plateforme spécifiée
       const technicalAnalysis = await this.technicalService.analyzeMarkets(
         [assetId],
         platform
