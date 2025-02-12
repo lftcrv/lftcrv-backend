@@ -1,15 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { StarkscanScraperService } from '../../shared/services/starkscan-scraper.service';
 
 @Injectable()
 export class UpdateHoldersTask {
   private readonly logger = new Logger(UpdateHoldersTask.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly scraperService: StarkscanScraperService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute(): Promise<void> {
     const startTime = Date.now();
@@ -64,22 +60,22 @@ export class UpdateHoldersTask {
       return;
     }
 
-    // Get holders count from Starkscan
-    const holders = await this.scraperService.getTokenHolders(
-      agentToken.contractAddress,
-    );
+    // TODO: Implement a new way to get holders count
+    // For now, we'll maintain the current count
+    const currentData = await this.prisma.latestMarketData.findUnique({
+      where: { elizaAgentId: agentId },
+    });
 
-    // Update latest market data
+    // Update latest market data timestamp
     await this.prisma.latestMarketData.update({
       where: { elizaAgentId: agentId },
       data: {
-        holders,
         updatedAt: new Date(),
       },
     });
 
     this.logger.log(
-      `Updated holders count for ${agentToken.symbol}: ${holders}`,
+      `Updated timestamp for ${agentToken.symbol}, current holders: ${currentData?.holders || 0}`,
     );
   }
-} 
+}
