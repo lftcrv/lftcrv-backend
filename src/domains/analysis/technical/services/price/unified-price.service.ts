@@ -49,12 +49,12 @@ export class UnifiedPriceService {
    * @returns Array of price data
    */
   async getHistoricalPrices(
-    platform: Platform,
+    platform: 'paradex' | 'avnu',
     identifier: string,
     timeframe: TimeFrame,
     options: BasePriceOptions = {},
   ): Promise<PriceDTO[]> {
-    const service = this.getPriceService(platform);
+    const service = platform === 'paradex' ? this.paradexService : this.avnuService;
     return service.getHistoricalPrices(identifier, timeframe, options);
   }
 

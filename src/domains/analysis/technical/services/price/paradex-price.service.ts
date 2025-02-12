@@ -44,8 +44,8 @@ export class ParadexPriceService implements IPriceService {
    * @param identifier Base token (e.g., "BTC")
    * @returns Market information object
    */
-  private getMarketSymbol(identifier: string): MarketInfo {
-    const baseAsset = identifier.toUpperCase();
+  private getMarketSymbol(token: string): MarketInfo {
+    const baseAsset = token.replace('-USD-PERP', '').toUpperCase();
     return {
       symbol: `${baseAsset}-USD-PERP`,
       baseAsset,
@@ -53,7 +53,6 @@ export class ParadexPriceService implements IPriceService {
       contractType: 'PERP',
     };
   }
-
   /**
    * Converts timeframe to API format
    * @param timeframe Our timeframe format (e.g., '1h')
@@ -89,15 +88,10 @@ export class ParadexPriceService implements IPriceService {
     const apiTimeframe = this.convertTimeframeToApiFormat(timeframe);
     const market = this.getMarketSymbol(identifier);
 
-    // Calculate start time if not given
-    const minutesInTimeframe = this.timeframeToMinutes[timeframe];
-    const calculatedStartTime =
-      startTime || endTime - minutesInTimeframe * 60 * 1000 * limit;
-
     const params: Record<string, any> = {
       symbol: market.symbol,
       resolution: apiTimeframe,
-      start_at: calculatedStartTime,
+      start_at: startTime || endTime - this.timeframeToMinutes[timeframe] * 60 * 1000 * limit,
       end_at: endTime,
     };
 
@@ -111,6 +105,10 @@ export class ParadexPriceService implements IPriceService {
 
     if (!response.data || !Array.isArray(response.data.results)) {
       throw new Error('Invalid response format from API');
+    }
+
+    if (response.data.results.length === 0) {
+      throw new Error(`No price data available for ${identifier}`);
     }
 
     const prices = response.data.results.map((candle: any) => ({
