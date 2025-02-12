@@ -5,9 +5,7 @@ import { PrismaService } from '../../shared/prisma/prisma.service';
 export class UpdateHoldersTask {
   private readonly logger = new Logger(UpdateHoldersTask.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute(): Promise<void> {
     const startTime = Date.now();
@@ -80,4 +78,4 @@ export class UpdateHoldersTask {
       `Updated timestamp for ${agentToken.symbol}, current holders: ${currentData?.holders || 0}`,
     );
   }
-} 
+}
