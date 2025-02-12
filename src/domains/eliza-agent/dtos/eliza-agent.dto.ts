@@ -26,6 +26,12 @@ export class CreateElizaAgentDto {
   @IsString()
   creatorWallet: string;
 
+  @ApiProperty({
+    description: 'Deployment fees tx hash',
+  })
+  @IsString()
+  transactionHash: string;
+
   @ApiProperty({ description: 'Character configuration for the agent' })
   @IsObject()
   @IsNotEmpty()
