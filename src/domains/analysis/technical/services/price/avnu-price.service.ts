@@ -13,7 +13,7 @@ export class AvnuPriceService implements IPriceService {
 
   private readonly timeframeToAvnuFormat: Record<TimeFrame, string> = {
     '1m': '1',
-    '3m': '5',  // AVNU n'a pas 3m, on utilise 5m
+    '3m': '5',  // AVNU doesn't have 3 min timeframe, we use 5
     '5m': '5',
     '15m': '15',
     '30m': '15', // AVNU n'a pas 30m, on utilise 15m
