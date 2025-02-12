@@ -4,8 +4,8 @@ FROM --platform=linux/amd64 node:18-alpine AS builder
 # Install build dependencies
 RUN apk add --no-cache python3 make g++ dos2unix
 
-# Install pnpm directly using npm
-RUN npm install -g pnpm@latest
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
@@ -34,8 +34,8 @@ FROM --platform=linux/amd64 node:18-alpine AS runner
 # Install runtime dependencies
 RUN apk add --no-cache python3 make g++
 
-# Install pnpm directly using npm
-RUN npm install -g pnpm@latest
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 

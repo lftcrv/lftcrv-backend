@@ -64,12 +64,11 @@ export class AvnuPriceService implements IPriceService {
   ): Promise<PriceDTO[]> {
     const { limit = 100, endTime = Date.now() } = options;
 
-    // Calculer startDate en fonction de la résolution
     const resolutionMap = {
-      '1': 60 * 1000,          // 1 minute en ms
-      '5': 5 * 60 * 1000,      // 5 minutes en ms
-      '15': 15 * 60 * 1000,    // 15 minutes en ms
-      '1H': 60 * 60 * 1000,    // 1 heure en ms
+      '1': 60 * 1000,
+      '5': 5 * 60 * 1000,
+      '15': 15 * 60 * 1000,
+      '1H': 60 * 60 * 1000,
     };
 
     const resolution = this.convertTimeframeToAvnuFormat(timeframe);

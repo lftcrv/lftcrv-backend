@@ -66,11 +66,9 @@ export class TechnicalService {
       for (const asset of assets) {
         try {
           if (platform === 'avnu') {
-            // Pour AVNU, on récupère l'adresse à partir du nom du token
             const avnuService = (this.unifiedPriceService as any).avnuService;
             const tokenAddress = avnuService.getTokenAddress(asset);
             const analysis = await this.analyzeAsset(tokenAddress, platform);
-            // On utilise le nom du token comme clé dans le résultat
             analyses[asset.toUpperCase()] = analysis;
           } else {
             const formattedSymbol = this.formatSymbol(asset, platform);

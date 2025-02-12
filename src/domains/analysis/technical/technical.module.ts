@@ -9,8 +9,6 @@ import { PivotService } from './services/pivot.service';
 import { ADXService } from './services/adx.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
-
-// Import des nouveaux services de prix
 import { ParadexPriceService } from './services/price/paradex-price.service';
 import { AvnuPriceService } from './services/price/avnu-price.service';
 import { UnifiedPriceService } from './services/price/unified-price.service';
@@ -21,11 +19,9 @@ import { UnifiedPriceService } from './services/price/unified-price.service';
   providers: [
     TechnicalService,
     PrismaService,
-    // Services de prix
     ParadexPriceService,
     AvnuPriceService,
     UnifiedPriceService,
-    // Autres services
     MovingAverageService,
     CandlestickService,
     MomentumService,
