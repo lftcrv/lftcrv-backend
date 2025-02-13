@@ -40,12 +40,15 @@ async function bootstrap() {
   // Serve static files for profile pictures
   const uploadPath = join(process.cwd(), 'uploads/profile-pictures');
   console.log('📁 Serving profile pictures from:', uploadPath);
-  app.use('/uploads/profile-pictures', express.static(uploadPath, {
-    index: false, // Disable directory listing
-    maxAge: '1d', // Cache files for 1 day
-    fallthrough: false, // Return 404 if file not found instead of falling through to next middleware
-    etag: true, // Enable ETag for caching
-  }));
+  app.use(
+    '/uploads/profile-pictures',
+    express.static(uploadPath, {
+      index: false, // Disable directory listing
+      maxAge: '1d', // Cache files for 1 day
+      fallthrough: false, // Return 404 if file not found instead of falling through to next middleware
+      etag: true, // Enable ETag for caching
+    }),
+  );
 
   // Start the server
   const port = configService.get('PORT', 8080);
