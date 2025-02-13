@@ -7,6 +7,12 @@ import { ElizaAgent, AgentStatus } from '../entities/eliza-agent.entity';
 export class ElizaAgentQueryService implements IElizaAgentQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private transformToEntity(agent: any): ElizaAgent {
+    const elizaAgent = new ElizaAgent({});
+    Object.assign(elizaAgent, agent);
+    return elizaAgent;
+  }
+
   async getAgent(id: string): Promise<ElizaAgent> {
     const agent = await this.prisma.elizaAgent.findUnique({
       where: { id },
@@ -22,25 +28,23 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
       throw new NotFoundException(`Agent with ID ${id} not found`);
     }
 
-    // Transform Prisma model to our entity
-    const elizaAgent = new ElizaAgent();
-    Object.assign(elizaAgent, agent);
-
-    return elizaAgent;
+    return this.transformToEntity(agent);
   }
 
   async listAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany({
+    const agents = await this.prisma.elizaAgent.findMany({
       include: {
         LatestMarketData: true,
         Token: true,
         Wallet: true,
       },
     });
+
+    return agents.map((agent) => this.transformToEntity(agent));
   }
 
   async listRunningAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany({
+    const agents = await this.prisma.elizaAgent.findMany({
       where: { status: AgentStatus.RUNNING },
       include: {
         LatestMarketData: true,
@@ -48,10 +52,12 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
         Wallet: true,
       },
     });
+
+    return agents.map((agent) => this.transformToEntity(agent));
   }
 
   async listLatestAgents(): Promise<ElizaAgent[]> {
-    return this.prisma.elizaAgent.findMany({
+    const agents = await this.prisma.elizaAgent.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
         LatestMarketData: true,
@@ -59,12 +65,14 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
         Wallet: true,
       },
     });
+
+    return agents.map((agent) => this.transformToEntity(agent));
   }
 
   async searchAgents(searchTerm: string): Promise<ElizaAgent[]> {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-    return this.prisma.elizaAgent.findMany({
+    const agents = await this.prisma.elizaAgent.findMany({
       where: {
         OR: [
           {
@@ -90,5 +98,7 @@ export class ElizaAgentQueryService implements IElizaAgentQueryService {
         createdAt: 'desc',
       },
     });
+
+    return agents.map((agent) => this.transformToEntity(agent));
   }
 }

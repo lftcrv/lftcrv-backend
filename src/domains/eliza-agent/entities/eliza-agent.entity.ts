@@ -1,6 +1,7 @@
 import { JsonValue } from '@prisma/client/runtime/library';
 import { AgentStatus, CurveSide } from '@prisma/client';
 import { AgentWallet } from './agent-wallet.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 export { AgentStatus, CurveSide };
 
@@ -25,6 +26,7 @@ export class ElizaAgent {
   runtimeAgentId?: string;
   port?: number;
   characterConfig: JsonValue;
+  profilePicture?: string;
   createdAt: Date;
   updatedAt: Date;
   degenScore?: number;
@@ -33,6 +35,21 @@ export class ElizaAgent {
   tradingInformation?: TradingInformation[];
   token?: AgentToken;
   wallet?: AgentWallet;
+
+  @ApiProperty({
+    description: "URL to the agent's profile picture",
+    required: false,
+  })
+  get profilePictureUrl(): string | null {
+    if (!this.profilePicture) {
+      return null;
+    }
+    return `/uploads/profile-pictures/${this.profilePicture}`;
+  }
+
+  constructor(partial: Partial<ElizaAgent>) {
+    Object.assign(this, partial);
+  }
 }
 
 export class LatestMarketData {
