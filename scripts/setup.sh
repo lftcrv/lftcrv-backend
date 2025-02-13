@@ -29,7 +29,7 @@ fi
 
 # Start PostgreSQL
 echo "Starting PostgreSQL..."
-docker compose up -d postgres || docker-compose up -d postgres
+docker compose up -d postgres || docker compose up -d postgres
 
 echo "PostgreSQL is ready!"
 
