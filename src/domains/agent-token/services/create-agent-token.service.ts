@@ -12,7 +12,7 @@ import {
   BlockchainTokens,
   IAccountService,
   IProviderService,
-} from 'src/shared/blockchain/interfaces';
+} from '../../../shared/blockchain/interfaces';
 
 export const contractJson = contractClassJson;
 export const csmJson = compiledContractJson;

@@ -10,8 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TransactionTokens, ITransactionService } from './interfaces';
-import { LoggingInterceptor } from 'src/shared/interceptors/logging.interceptor';
-import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
+import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
+import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { TransactionDto } from './dto/transaction.dto';
 import { TransactionQueryParams } from './interfaces/transaction.interface';
 
