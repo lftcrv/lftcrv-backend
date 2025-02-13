@@ -2,6 +2,7 @@
 import { IsString, IsEnum, IsObject, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CurveSide } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 export class CreateElizaAgentDto {
   @ApiProperty({
@@ -9,6 +10,7 @@ export class CreateElizaAgentDto {
     example: 'TraderBot01',
   })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
@@ -24,16 +26,32 @@ export class CreateElizaAgentDto {
     example: 'Ox1234567890',
   })
   @IsString()
+  @IsNotEmpty()
   creatorWallet: string;
 
   @ApiProperty({
     description: 'Deployment fees tx hash',
   })
   @IsString()
+  @IsNotEmpty()
   transactionHash: string;
 
-  @ApiProperty({ description: 'Character configuration for the agent' })
+  @ApiProperty({
+    description: "Agent's character configuration",
+    type: 'object',
+    additionalProperties: true,
+  })
   @IsObject()
   @IsNotEmpty()
+  @Transform(({ value }) => {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return value;
+    }
+  })
   characterConfig: Record<string, any>;
+
+  // This will be handled by the FileInterceptor
+  profilePicture?: string;
 }

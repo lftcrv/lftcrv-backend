@@ -28,13 +28,15 @@
     "@nestjs/swagger": "^8.1.1",
     "@nestjs/terminus": "^10.2.3",
     "@prisma/client": "^6.2.1",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.7.9",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "dockerode": "^4.0.3",
     "reflect-metadata": "^0.1.14",
     "rxjs": "^7.8.1",
-    "starknet": "^6.11.0"
+    "starknet": "^6.11.0",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -44,6 +46,7 @@
     "@types/dockerode": "^3.3.34",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.14",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.17.12",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^6.0.0",

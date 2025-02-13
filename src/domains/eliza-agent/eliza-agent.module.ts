@@ -13,6 +13,7 @@ import { DeployWalletStep } from './orchestration/steps/deploy-wallet.step';
 import { CreateContainerStep } from './orchestration/steps/create-container.step';
 import { StartContainerStep } from './orchestration/steps/start-container.step';
 import { DeployAgentTokenStep } from './orchestration/steps/deploy-agent-token';
+import { FileUploadService } from './services/file-upload.service';
 import {
   IOrchestrationDefinitionRegistry,
   IStepExecutorRegistry,
@@ -35,6 +36,7 @@ import { AgentTokenModule } from '../agent-token/agent-token.module';
     CreateContainerStep,
     StartContainerStep,
     DeployAgentTokenStep,
+    FileUploadService,
     {
       provide: ServiceTokens.ElizaAgentQuery,
       useClass: ElizaAgentQueryService,
