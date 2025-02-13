@@ -8,10 +8,10 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "node dist/main", 
     "start:dev": "docker compose up -d && nest start --watch",
     "stop:dev": "docker compose down && nest build",
-    "start:prod": "node dist/main",
+    "start:prod": "pnpm build && node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

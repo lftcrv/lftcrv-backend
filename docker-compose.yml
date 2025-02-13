@@ -1,36 +1,20 @@
 version: '3.8'
 
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - '8080:8080'
-    environment:
-      - NODE_ENV=development
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_NAME=lftcrv
-      - DATABASE_USER=lftcrv
-      - DATABASE_PASSWORD=lftcrv
-    depends_on:
-      - postgres
-    volumes:
-      - .:/app
-      - /app/node_modules
 
   postgres:
     image: postgres:13
     container_name: lftcrv-postgres
     environment:
-      POSTGRES_USER: lftcrv
-      POSTGRES_PASSWORD: lftcrv
-      POSTGRES_DB: lftcrv
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
