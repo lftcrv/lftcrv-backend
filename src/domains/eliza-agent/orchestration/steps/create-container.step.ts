@@ -32,7 +32,7 @@ export class CreateContainerStep extends BaseStepExecutor {
         characterConfig: dto.characterConfig,
         starknetAddress: wallet.ozContractAddress,
         starknetPrivateKey: wallet.privateKey,
-        etherueumPrivateKey: wallet.etherueumPrivateKey,
+        ethereumPrivateKey: wallet.ethereumPrivateKey,
       });
 
       const updatedAgent = await this.prisma.elizaAgent.update({
