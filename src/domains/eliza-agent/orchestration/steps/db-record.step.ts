@@ -34,23 +34,23 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         return this.failure('Missing transaction hash for deployment payment');
       }
 
-      // // Check transaction status
-      // try {
-      //   const provider = this.providerService.getProvider();
-      //   const txStatus = await provider.getTransactionStatus(
-      //     dto.transactionHash,
-      //   );
+      // Check transaction status
+      try {
+        const provider = this.providerService.getProvider();
+        const txStatus = await provider.getTransactionStatus(
+          dto.transactionHash,
+        );
 
-      //   if (txStatus.finality_status !== 'ACCEPTED_ON_L2') {
-      //     return this.failure(
-      //       `Transaction not confirmed on L2. Status: ${txStatus.finality_status}`,
-      //     );
-      //   }
-      // } catch (error) {
-      //   return this.failure(
-      //     `Failed to verify transaction status: ${error.message}`,
-      //   );
-      // }
+        if (txStatus.finality_status !== 'ACCEPTED_ON_L2') {
+          return this.failure(
+            `Transaction not confirmed on L2. Status: ${txStatus.finality_status}`,
+          );
+        }
+      } catch (error) {
+        return this.failure(
+          `Failed to verify transaction status: ${error.message}`,
+        );
+      }
 
       const createInput = {
         name: dto.name,

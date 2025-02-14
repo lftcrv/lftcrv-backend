@@ -58,7 +58,6 @@ export class WalletService implements IStarknetWallet {
 
     // Initialize the provider
     const provider = this.providerService.getProvider();
-    this.logger.debug('Provider:', { provider });
 
     // Initialize the admin account
     const adminAccount = this.accountService.getAdminAccount();
