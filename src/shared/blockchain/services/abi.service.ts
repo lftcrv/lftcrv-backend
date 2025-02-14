@@ -11,29 +11,41 @@ export class AbiService implements IAbiService {
     private readonly providerService: IProviderService,
   ) {}
 
+  private normalizeAddress(address: string): string {
+    if (address.startsWith('0x') && address.length === 66) {
+      return `0x00${address.slice(2)}`;
+    }
+    return address;
+  }
+
   async getAbi(contractAddress: string): Promise<Abi> {
     try {
       const provider = this.providerService.getProvider();
       this.logger.log(`Getting ABI for contract: ${contractAddress}`);
-
-      const classHash = await provider.getClassHashAt(contractAddress);
-      this.logger.log(
-        `Class hash for contract ${contractAddress}: ${classHash}`,
-      );
-
-      const contractClass = await provider.getClass(classHash);
-      this.logger.log('Contract class response:', contractClass);
-
-      if (!contractClass) {
-        this.logger.error(`No contract class found for hash ${classHash}`);
-        throw new Error(`No contract class found for hash ${classHash}`);
+      
+      let classHash = await provider.getClassHashAt(contractAddress);
+      
+      if (!classHash) {
+        const normalizedAddress = this.normalizeAddress(contractAddress);
+        this.logger.log(`Retrying with normalized address: ${normalizedAddress}`);
+        classHash = await provider.getClassHashAt(normalizedAddress);
       }
 
-      if (!contractClass.abi) {
-        this.logger.error(
-          'Contract class structure:',
-          JSON.stringify(contractClass, null, 2),
-        );
+      // test w/ hardcoded
+      if (!classHash) {
+        const hardcodedAddress = "0x0044fb6d9a2b7a6518d3460b613ee376c4b364cb015844cee6559a8cdd5c9072";
+        this.logger.log(`Retrying with hardcoded address: ${hardcodedAddress}`);
+        classHash = await provider.getClassHashAt(hardcodedAddress);
+      }
+
+      if (!classHash) {
+        throw new Error(`Could not get class hash for contract ${contractAddress}`);
+      }
+
+      this.logger.log(`Class hash found: ${classHash}`);
+      const contractClass = await provider.getClass(classHash);
+
+      if (!contractClass?.abi) {
         throw new Error(`No ABI found in contract class for hash ${classHash}`);
       }
 
