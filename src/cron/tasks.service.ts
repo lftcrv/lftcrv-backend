@@ -37,7 +37,7 @@ export class TasksService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async sendActOnParadexMessage() {
     const startTime = Date.now();
     this.logger.log('🚀 Sending "EXECUTE ACT_ON_PARADEX" to active agents');
