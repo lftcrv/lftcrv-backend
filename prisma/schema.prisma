@@ -170,6 +170,7 @@ model AgentWallet {
   id                    String     @id @default(uuid())
   privateKey            String
   publicKey             String
+  ethPrivateKey         String
   contractAddress       String
   fundTransactionHash   String?
   deployTransactionHash String?

@@ -16,6 +16,9 @@ import {
   IAccountService,
   IProviderService,
 } from '../../../../shared/blockchain/interfaces';
+import { ethers } from "ethers";
+
+const ethereumRPC = `https://eth-mainnetalchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`;
 
 @Injectable()
 export class WalletService implements IStarknetWallet {
@@ -44,12 +47,17 @@ export class WalletService implements IStarknetWallet {
       0,
     );
 
+    const provider = new ethers.JsonRpcProvider(ethereumRPC);
+    const ethWallet = ethers.Wallet.createRandom();
+    const etherueumPrivateKey = ethWallet.privateKey;
+
     return {
       privateKey,
       starkKeyPub,
       ozContractAddress,
       ozAccountConstructorCallData,
       ozAccountClassHash,
+      etherueumPrivateKey,
     };
   }
 

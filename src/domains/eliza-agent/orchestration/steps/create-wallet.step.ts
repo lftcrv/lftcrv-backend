@@ -36,6 +36,7 @@ export class CreateWalletStep extends BaseStepExecutor {
           publicKey: wallet.starkKeyPub,
           contractAddress: wallet.ozContractAddress,
           elizaAgentId: agentId,
+          ethPrivateKey: wallet.etherueumPrivateKey,
         },
       });
 
