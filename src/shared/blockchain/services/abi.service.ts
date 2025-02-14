@@ -16,29 +16,28 @@ export class AbiService implements IAbiService {
       const provider = this.providerService.getProvider();
       this.logger.log(`Getting ABI for contract: ${contractAddress}`);
 
-      const response = await provider.getClassAt(contractAddress);
-      this.logger.debug('Provider response:', response); // Structure complète
+      const classHash = await provider.getClassHashAt(contractAddress);
+      this.logger.log(
+        `Class hash for contract ${contractAddress}: ${classHash}`,
+      );
 
-      if (!response) {
-        this.logger.error(
-          `No response from provider for contract ${contractAddress}`,
-        );
-        throw new Error(
-          `No response from provider for contract ${contractAddress}`,
-        );
+      const contractClass = await provider.getClass(classHash);
+      this.logger.log('Contract class response:', contractClass);
+
+      if (!contractClass) {
+        this.logger.error(`No contract class found for hash ${classHash}`);
+        throw new Error(`No contract class found for hash ${classHash}`);
       }
 
-      if (!response.abi) {
+      if (!contractClass.abi) {
         this.logger.error(
-          'Response structure:',
-          JSON.stringify(response, null, 2),
+          'Contract class structure:',
+          JSON.stringify(contractClass, null, 2),
         );
-        throw new Error(
-          `No ABI found in response for contract ${contractAddress}`,
-        );
+        throw new Error(`No ABI found in contract class for hash ${classHash}`);
       }
 
-      return response.abi;
+      return contractClass.abi;
     } catch (error) {
       this.logger.error(`Error in getAbi for ${contractAddress}:`, error);
       throw error;
