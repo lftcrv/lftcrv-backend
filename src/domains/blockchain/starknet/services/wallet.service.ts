@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IStarknetWallet } from '../interfaces';
 import {
   Account,
@@ -19,6 +19,7 @@ import {
 
 @Injectable()
 export class WalletService implements IStarknetWallet {
+  private readonly logger = new Logger(WalletService.name);
   constructor(
     private readonly configService: ConfigService,
     @Inject(BlockchainTokens.Provider)
@@ -57,6 +58,7 @@ export class WalletService implements IStarknetWallet {
 
     // Initialize the provider
     const provider = this.providerService.getProvider();
+    this.logger.debug('Provider:', { provider });
 
     // Initialize the admin account
     const adminAccount = this.accountService.getAdminAccount();
