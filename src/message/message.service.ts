@@ -112,7 +112,7 @@ export class MessageService {
     const url = `http://localhost:${agent.port}/${agent.runtimeAgentId}/message`;
 
     const data = {
-      text: 'execute SIMULATE_STARKNET_TRADE',
+      text: 'EXECUTE SIMULATE_STARKNET_TRADE',
       userId: 'user1234',
       userName: 'dzk',
       roomId: 'room456',

@@ -6,6 +6,7 @@ import {
   AgentTokenTokens,
   IQueryAgentToken,
 } from '../domains/agent-token/interfaces';
+import { ElizaAgent, AgentStatus } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
@@ -32,6 +33,45 @@ export class TasksService {
       const duration = Date.now() - startTime;
       this.logger.error(
         `Failed to send messages to active agents (${duration}ms): ${error.message}`,
+      );
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async sendActOnParadexMessage() {
+    const startTime = Date.now();
+    this.logger.log('🚀 Sending "EXECUTE ACT_ON_PARADEX" to active agents');
+    try {
+      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany(
+        {
+          where: {
+            status: AgentStatus.RUNNING,
+            runtimeAgentId: { not: null },
+            port: { not: null },
+          },
+        },
+      );
+
+      this.logger.debug(`Found ${runningAgents.length} running agents`);
+      if (runningAgents.length === 0) {
+        this.logger.warn('⚠️ No active agent found.');
+        return;
+      }
+
+      for (const agent of runningAgents) {
+        await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
+          content: { text: 'EXECUTE ACT_ON_PARADEX' },
+        });
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `✅ Successfully sent "EXECUTE ACT_ON_PARADEX" to active agents (${duration}ms)`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `❌ Failed to send "EXECUTE ACT_ON_PARADEX" to active agents (${duration}ms): ${error.message}`,
       );
     }
   }
