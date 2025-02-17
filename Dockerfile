@@ -5,8 +5,7 @@ FROM --platform=linux/amd64 node:18-alpine AS builder
 RUN apk add --no-cache python3 make g++ dos2unix
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
+RUN npm install -g pnpm@latest
 WORKDIR /app
 
 # Copy package files
@@ -35,7 +34,7 @@ FROM --platform=linux/amd64 node:18-alpine AS runner
 RUN apk add --no-cache python3 make g++
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@latest
 
 WORKDIR /app
 
