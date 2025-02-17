@@ -46,9 +46,7 @@ export class StartContainerStep extends BaseStepExecutor {
       });
 
       try {
-        await this.messageService.sendMessageToAgent(runtimeAgentId, {
-          content: { text: 'EXECUTE PARADEX_ONBOARDING' },
-        });
+        await this.messageService.onboarding(runtimeAgentId);
       } catch (error) {
         console.error(`Failed to send onboarding message: ${error.message}`);
       }

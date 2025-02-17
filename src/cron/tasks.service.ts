@@ -24,7 +24,7 @@ export class TasksService {
     const startTime = Date.now();
     this.logger.log('🚀 Start sending messages to active agents');
     try {
-      await this.messageService.sendMessagesToRunningAgents();
+      await this.messageService.sendStarknetMessageToRunningAgents();
       const duration = Date.now() - startTime;
       this.logger.log(
         `✅ Successfully sent messages to active agents (${duration}ms)`,
