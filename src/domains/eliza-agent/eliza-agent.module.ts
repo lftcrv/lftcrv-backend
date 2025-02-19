@@ -38,6 +38,7 @@ import { MessageService } from 'src/message/message.service';
     StartContainerStep,
     DeployAgentTokenStep,
     FileUploadService,
+    MessageService,
     {
       provide: ServiceTokens.ElizaAgentQuery,
       useClass: ElizaAgentQueryService,

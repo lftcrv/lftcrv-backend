@@ -47,6 +47,7 @@ coverage
 *.tmp
 *.temp
 .cache
+uploads
 
 # Eliza
 agent/data
