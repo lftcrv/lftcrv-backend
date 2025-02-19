@@ -87,7 +87,7 @@ export class MessageService {
 
     try {
       this.logger.debug(
-        `Sending message to ${url} for agent ${agent.name} on port ${agent.port}`,
+        `Sending message ${message.content.text} to ${url} for agent ${agent.name} on port ${agent.port}`,
       );
 
       await axios.post(url, data, {

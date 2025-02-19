@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { IDockerService } from '../../interfaces/docker-service.interface';
 import { ServiceTokens } from '../../interfaces';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
@@ -12,6 +12,8 @@ import {
 
 @Injectable()
 export class StartContainerStep extends BaseStepExecutor {
+  private readonly logger = new Logger(StartContainerStep.name);
+
   constructor(
     @Inject(ServiceTokens.Docker)
     private readonly dockerService: IDockerService,
@@ -46,6 +48,7 @@ export class StartContainerStep extends BaseStepExecutor {
       });
 
       try {
+        this.logger.log("Starting call onboarding agent ${runtimeAgentId}")
         await this.messageService.onboarding(runtimeAgentId);
       } catch (error) {
         console.error(`Failed to send onboarding message: ${error.message}`);
