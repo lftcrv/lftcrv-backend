@@ -79,6 +79,8 @@ export class ElizaConfigService implements IElizaConfigService {
       `STARKNET_RPC_URL=${this.config.starknetRpcUrl}`,
       `STARKNET_ADDRESS=${containerConfig.starknetAddress}`,
       `STARKNET_PRIVATE_KEY=${containerConfig.starknetPrivateKey}`,
+      `ETHEREUM_PRIVATE_KEY=${containerConfig.ethereumPrivateKey}`,
+      `DEFAULT_LOG_LEVEL=log`
     ];
 
     // Add optional configuration based on cache store

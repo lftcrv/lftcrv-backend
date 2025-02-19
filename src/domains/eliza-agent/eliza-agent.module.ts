@@ -24,6 +24,7 @@ import { OrchestrationModule } from '../orchestration/orchestration.module';
 import { StarknetModule } from '../blockchain/starknet/starknet.module';
 import { ElizaConfigService } from './services/eliza-config.service';
 import { AgentTokenModule } from '../agent-token/agent-token.module';
+import { MessageService } from 'src/message/message.service';
 
 @Module({
   imports: [OrchestrationModule, StarknetModule, AgentTokenModule],

@@ -1,5 +1,13 @@
 import { MarketAnalysis } from './technical/types';
 
+
+export interface AnalysisMetadata {
+  generatedAt: string;
+  processingTimeMs: number;
+  dataSource?: string;
+  platform?: 'paradex' | 'avnu';
+}
+
 export interface SocialAnalysis {
   timestamp: number;
   sentiment: {
@@ -27,17 +35,13 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-export interface CombinedAssetAnalysis {
-  assetId: string;
-  timestamp: number;
-  technical: MarketAnalysis['analyses'][string];
-  social: SocialAnalysis | null;
-  metadata?: {
-    generatedAt: string;
-    processingTimeMs: number;
-    dataSource?: string;
-  };
-}
+  export interface CombinedAssetAnalysis {
+    assetId: string;
+    timestamp: number;
+    technical: MarketAnalysis['analyses'][string];
+    social: SocialAnalysis | null;
+    metadata?: AnalysisMetadata;
+  }
 
 // Type guard for CombinedAssetAnalysis
 export function isCombinedAssetAnalysis(
@@ -74,13 +78,16 @@ export interface AnalysisError {
   timestamp: number;
 }
 
+export interface BatchAnalysisMetadata {
+  totalProcessed: number;
+  successCount: number;
+  failureCount: number;
+  processingTimeMs: number;
+  platform?: 'paradex' | 'avnu';
+}
+
 export interface BatchAnalysisResult {
   successful: CombinedAssetAnalysis[];
   failed: AnalysisError[];
-  metadata: {
-    totalProcessed: number;
-    successCount: number;
-    failureCount: number;
-    processingTimeMs: number;
-  };
+  metadata: BatchAnalysisMetadata;
 }

@@ -10,6 +10,7 @@ import {
   isCombinedAssetAnalysis,
 } from './analysis.types';
 import { AnalysisType } from '@prisma/client';
+import { Platform } from './technical/types';
 
 @Injectable()
 export class AnalysisService {
@@ -22,14 +23,15 @@ export class AnalysisService {
 
   async analyzeSingleAsset(
     assetId: string,
+    platform: Platform = 'paradex',
   ): Promise<CombinedAssetAnalysis | AnalysisError> {
     const startTime = Date.now();
 
     try {
-      // Get technical analysis
-      const technicalAnalysis = await this.technicalService.analyzeMarkets([
-        assetId,
-      ]);
+      const technicalAnalysis = await this.technicalService.analyzeMarkets(
+        [assetId],
+        platform
+      );
       const assetTechnical = technicalAnalysis.analyses[assetId];
 
       if (!assetTechnical) {
@@ -47,6 +49,8 @@ export class AnalysisService {
         metadata: {
           generatedAt: new Date().toISOString(),
           processingTimeMs: Date.now() - startTime,
+          platform,
+          dataSource: platform === 'paradex' ? 'Paradex' : 'AVNU',
         },
       };
 
@@ -68,6 +72,7 @@ export class AnalysisService {
           timestamp: new Date(),
           metadata: {
             assetId,
+            platform,
             processingTimeMs: Date.now() - startTime,
           } as any, // Required for Prisma's JSON type
         },
@@ -75,7 +80,7 @@ export class AnalysisService {
 
       return analysis;
     } catch (error) {
-      this.logger.error(`Error analyzing asset ${assetId}: ${error.message}`);
+      this.logger.error(`Error analyzing asset ${assetId} on ${platform}: ${error.message}`);
       return {
         assetId,
         error: error.message,
@@ -86,6 +91,7 @@ export class AnalysisService {
 
   async analyzeMultipleAssets(
     assetIds: string[],
+    platform: Platform = 'paradex',
   ): Promise<BatchAnalysisResult> {
     const startTime = Date.now();
     const results: BatchAnalysisResult = {
@@ -96,6 +102,7 @@ export class AnalysisService {
         successCount: 0,
         failureCount: 0,
         processingTimeMs: 0,
+        platform,
       },
     };
 
@@ -104,7 +111,7 @@ export class AnalysisService {
     for (let i = 0; i < assetIds.length; i += BATCH_SIZE) {
       const batch = assetIds.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
-        batch.map((assetId) => this.analyzeSingleAsset(assetId)),
+        batch.map((assetId) => this.analyzeSingleAsset(assetId, platform)),
       );
 
       batchResults.forEach((result) => {
@@ -126,6 +133,7 @@ export class AnalysisService {
 
   async getLatestAnalysis(
     assetId: string,
+    platform: Platform = 'paradex',
   ): Promise<CombinedAssetAnalysis | null> {
     const latestAnalysis = await this.prisma.analysis.findFirst({
       where: {
@@ -133,6 +141,12 @@ export class AnalysisService {
         metadata: {
           path: ['assetId'],
           equals: assetId,
+        },
+        AND: {
+          metadata: {
+            path: ['platform'],
+            equals: platform,
+          },
         },
       },
       orderBy: {
@@ -145,7 +159,7 @@ export class AnalysisService {
     // Safely type check the retrieved data
     const data = latestAnalysis.data as unknown;
     if (!isJsonValue(data)) {
-      this.logger.error(`Invalid data format for analysis of asset ${assetId}`);
+      this.logger.error(`Invalid data format for analysis of asset ${assetId} on ${platform}`);
       return null;
     }
 
@@ -162,9 +176,10 @@ export class AnalysisService {
 
   async getLatestAnalyses(
     assetIds: string[],
+    platform: Platform = 'paradex',
   ): Promise<CombinedAssetAnalysis[]> {
     const analyses = await Promise.all(
-      assetIds.map((assetId) => this.getLatestAnalysis(assetId)),
+      assetIds.map((assetId) => this.getLatestAnalysis(assetId, platform)),
     );
 
     return analyses.filter(

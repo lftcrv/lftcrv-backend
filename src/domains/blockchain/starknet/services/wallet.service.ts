@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IStarknetWallet } from '../interfaces';
 import {
   Account,
@@ -16,9 +16,13 @@ import {
   IAccountService,
   IProviderService,
 } from '../../../../shared/blockchain/interfaces';
+import { ethers } from "ethers";
+
+const ethereumRPC = `https://eth-mainnetalchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`;
 
 @Injectable()
 export class WalletService implements IStarknetWallet {
+  private readonly logger = new Logger(WalletService.name);
   constructor(
     private readonly configService: ConfigService,
     @Inject(BlockchainTokens.Provider)
@@ -43,17 +47,22 @@ export class WalletService implements IStarknetWallet {
       0,
     );
 
+    const provider = new ethers.JsonRpcProvider(ethereumRPC);
+    const ethWallet = ethers.Wallet.createRandom();
+    const ethereumPrivateKey = ethWallet.privateKey;
+
     return {
       privateKey,
       starkKeyPub,
       ozContractAddress,
       ozAccountConstructorCallData,
       ozAccountClassHash,
+      ethereumPrivateKey,
     };
   }
 
   async transferFunds(ozWallet: OZWallet): Promise<OZWallet> {
-    const AMOUNT = 1000000000000000n; // 0.001 ETH in wei
+    const AMOUNT = 250000000000000n; // 0,00025 ETH in wei
 
     // Initialize the provider
     const provider = this.providerService.getProvider();

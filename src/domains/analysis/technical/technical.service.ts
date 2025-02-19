@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PriceService } from './services/price.service';
+import { UnifiedPriceService } from './services/price/unified-price.service';
 import { MovingAverageService } from './services/moving-average.service';
 import { CandlestickService } from './services/candlestick.service';
 import { MomentumService } from './services/momentum.service';
@@ -18,11 +18,19 @@ import { VolumeService } from './services/volume.service';
 import { getAllSymbols } from '../shared/utils';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 
+/**
+ * Configuration for market analysis
+ */
+export interface AnalysisConfig {
+  platform: 'paradex' | 'avnu';
+  identifier: string;
+}
+
 @Injectable()
 export class TechnicalService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly priceService: PriceService,
+    private readonly unifiedPriceService: UnifiedPriceService,
     private readonly maService: MovingAverageService,
     private readonly candlestickService: CandlestickService,
     private readonly momentumService: MomentumService,
@@ -30,13 +38,17 @@ export class TechnicalService {
     private readonly ichimokuService: IchimokuService,
     private readonly volumeService: VolumeService,
     private readonly pivotService: PivotService,
-  ) {}
+  ) { }
 
-  private formatSymbol(asset: string): string {
+  private formatSymbol(asset: string, platform: 'paradex' | 'avnu'): string {
+    if (platform === 'avnu') return asset;
     return asset.includes('-') ? asset : `${asset.toUpperCase()}-USD-PERP`;
   }
 
-  async analyzeMarkets(assets: string[]): Promise<MarketAnalysis> {
+  async analyzeMarkets(
+    assets: string[],
+    platform: 'paradex' | 'avnu' = 'paradex'
+  ): Promise<MarketAnalysis> {
     if (!assets || assets.length === 0) {
       throw new BadRequestException('No assets provided for analysis');
     }
@@ -46,25 +58,30 @@ export class TechnicalService {
     const failed: AnalysisError[] = [];
 
     try {
-      // Get all available Paradex symbols
-      const availableSymbols = await getAllSymbols(this.prisma);
+      const availableSymbols = platform === 'paradex' 
+        ? await getAllSymbols(this.prisma)
+        : [];
       const symbolsSet = new Set(availableSymbols);
 
       for (const asset of assets) {
         try {
-          const formattedSymbol = this.formatSymbol(asset);
-
-          // Check if the symbol exists in Paradex
-          if (!symbolsSet.has(formattedSymbol)) {
-            failed.push({
-              symbol: formattedSymbol,
-              message: 'Asset not available on Paradex',
-              code: 'SYMBOL_NOT_FOUND',
-            });
-            continue;
+          if (platform === 'avnu') {
+            const avnuService = (this.unifiedPriceService as any).avnuService;
+            const tokenAddress = avnuService.getTokenAddress(asset);
+            const analysis = await this.analyzeAsset(tokenAddress, platform);
+            analyses[asset.toUpperCase()] = analysis;
+          } else {
+            const formattedSymbol = this.formatSymbol(asset, platform);
+            if (!symbolsSet.has(formattedSymbol)) {
+              failed.push({
+                symbol: formattedSymbol,
+                message: 'Asset not available on Paradex',
+                code: 'SYMBOL_NOT_FOUND',
+              });
+              continue;
+            }
+            analyses[asset.toUpperCase()] = await this.analyzeAsset(formattedSymbol, platform);
           }
-
-          analyses[asset] = await this.analyzeAsset(asset);
         } catch (error) {
           failed.push({
             symbol: asset,
@@ -74,7 +91,6 @@ export class TechnicalService {
         }
       }
 
-      // Si aucune analyse n'a réussi, on lance une erreur
       if (Object.keys(analyses).length === 0) {
         throw new BadRequestException({
           message: 'No assets could be analyzed',
@@ -85,15 +101,12 @@ export class TechnicalService {
       return {
         timestamp,
         analyses,
-        ...(failed.length > 0 && { failed }), // n'inclut failed que s'il y a des erreurs
+        ...(failed.length > 0 && { failed }),
       };
     } catch (error) {
-      // Si c'est une erreur déjà formatée (BadRequestException), on la relance
       if (error instanceof BadRequestException) {
         throw error;
       }
-
-      // Sinon on formate l'erreur
       throw new BadRequestException({
         message: 'Failed to analyze markets',
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -101,19 +114,22 @@ export class TechnicalService {
     }
   }
 
-  private async analyzeAsset(asset: string): Promise<AssetAnalysis> {
-    // Get data for different timeframes
+
+  private async analyzeAsset(
+    identifier: string,
+    platform: 'paradex' | 'avnu'
+  ): Promise<AssetAnalysis> {
     const [shortTermPrices, mediumTermPrices, longTermPrices] =
       await Promise.all([
-        this.priceService.getHistoricalPrices(asset, '5m', {
+        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '5m', {
           limit: 100,
           priceKind: 'mark',
         }),
-        this.priceService.getHistoricalPrices(asset, '1h', {
+        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '1h', {
           limit: 52,
           priceKind: 'mark',
         }),
-        this.priceService.getHistoricalPrices(asset, '1h', {
+        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '1h', {
           limit: 30,
           priceKind: 'mark',
         }),
@@ -457,7 +473,7 @@ export class TechnicalService {
     for (let i = 1; i < Math.min(periods, prices.length); i++) {
       returns.push(
         ((prices[i].close! - prices[i - 1].close!) / prices[i - 1].close!) *
-          100,
+        100,
       );
     }
 

@@ -9,9 +9,11 @@ import { IchimokuService } from './technical/services/ichimoku.service';
 import { MomentumService } from './technical/services/momentum.service';
 import { MovingAverageService } from './technical/services/moving-average.service';
 import { PivotService } from './technical/services/pivot.service';
-import { PriceService } from './technical/services/price.service';
+import { ParadexPriceService } from './technical/services/price/paradex-price.service';
 import { VolumeService } from './technical/services/volume.service';
 import { TechnicalService } from './technical/technical.service';
+import { AvnuPriceService } from './technical/services/price/avnu-price.service';
+import { UnifiedPriceService } from './technical/services/price/unified-price.service';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { TechnicalService } from './technical/technical.service';
     TechnicalService,
     PrismaService,
     // Technical analysis services
-    PriceService,
+    ParadexPriceService,
+    AvnuPriceService,
+    UnifiedPriceService,
     MovingAverageService,
     CandlestickService,
     MomentumService,
@@ -34,4 +38,4 @@ import { TechnicalService } from './technical/technical.service';
   ],
   exports: [AnalysisService, TechnicalService],
 })
-export class AnalysisModule {}
+export class AnalysisModule { }

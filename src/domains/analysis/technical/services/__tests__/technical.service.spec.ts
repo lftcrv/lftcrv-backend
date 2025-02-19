@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TechnicalService } from '../../technical.service';
-import { PriceService } from '../price.service';
+import { PriceService } from '../price/paradex-price.service';
 import { MovingAverageService } from '../moving-average.service';
 import { CandlestickService } from '../candlestick.service';
 import { MomentumService } from '../momentum.service';

@@ -149,38 +149,33 @@ export class DockerService implements IDockerService, OnModuleInit {
         const logs = await container.logs({
           stdout: true,
           stderr: true,
-          tail: 500,
+          tail: 1000,
         });
         const logsStr = logs.toString('utf8');
 
-        if (logsStr.includes('REST API bound to 0.0.0.0:3000')) {
-          const allLogs = await container.logs({
-            stdout: true,
-            stderr: true,
-            tail: 1000,
-          });
-          const fullLogsStr = allLogs.toString('utf8');
+        if (logsStr.includes('Run `pnpm start:client` to start the client')) {
+          console.log('✅ Container initialization detected');
 
-          const lines = fullLogsStr.split('\n');
-          for (const line of lines) {
-            if (line.includes('Agent ID')) {
-              const nextLine = lines[lines.indexOf(line) + 1];
-              if (nextLine) {
-                const uuid = nextLine.trim().match(/[0-9a-f-]{36}/);
-                if (uuid) {
+          const lines = logsStr.split('\n');
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('Initializing AgentRuntime with options')) {
+              for (let j = i; j < i + 10 && j < lines.length; j++) {
+                const uuidMatch = lines[j].match(/[0-9a-f-]{36}/);
+                if (uuidMatch) {
                   console.log(
-                    `✅ Container started and found Agent ID: ${uuid[0]}`,
+                    `✅ Container started and found Agent ID: ${uuidMatch[0]}`,
                   );
-                  return uuid[0];
+                  return uuidMatch[0];
                 }
               }
             }
           }
+
           console.log('⚠️ Container started but Agent ID not found in logs:');
           return null;
         }
 
-        console.log('⏳ Container running but waiting for API...');
+        console.log('⏳ Container running but waiting for initialization...');
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
       } catch (error) {
         console.error(`❌ Error checking container: ${error.message}`);
