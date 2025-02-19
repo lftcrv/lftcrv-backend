@@ -22,6 +22,9 @@ import { TransactionModule } from './domains/transaction/transaction.module';
 import { TechnicalModule } from './domains/analysis/technical/technical.module';
 import { AnalysisModule } from './domains/analysis/analysis.module';
 import { AnalysisSharedModule } from './domains/analysis/shared/shared.module';
+import { OrchestrationModule } from './domains/orchestration/orchestration.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [
@@ -66,6 +69,9 @@ import { AnalysisSharedModule } from './domains/analysis/shared/shared.module';
     AnalysisSharedModule,
     TechnicalModule,
     AnalysisModule,
+    OrchestrationModule,
+    ScheduleModule.forRoot(),
+    TerminusModule,
   ],
   controllers: [AppController],
   providers: [AppService],

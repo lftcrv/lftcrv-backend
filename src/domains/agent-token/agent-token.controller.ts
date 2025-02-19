@@ -24,6 +24,78 @@ export class AgentTokenController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @Get('info')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get comprehensive token information' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token information retrieved successfully',
+  })
+  async getTokenInfo(@Param('agentId') agentId: string) {
+    // Get token data from database
+    const agentToken = await this.prisma.agentToken.findFirst({
+      where: { elizaAgentId: agentId },
+      include: {
+        Transaction: {
+          orderBy: { createdAt: 'desc' },
+          take: 10, // Get last 10 transactions
+        },
+        Prices: {
+          orderBy: { timestamp: 'desc' },
+          take: 100, // Get last 100 price points
+        },
+      },
+    });
+
+    if (!agentToken) {
+      throw new NotFoundException(`Token not found for agent ${agentId}`);
+    }
+
+    // Get on-chain data in parallel
+    const [currentPrice, bondingPercentage, marketCap] = await Promise.all([
+      this.tokenService.getCurrentPrice(agentId),
+      this.tokenService.bondingCurvePercentage(agentId),
+      this.tokenService.getMarketCap(agentId),
+    ]);
+
+    // Format transactions
+    const transactions = agentToken.Transaction.map((tx) => ({
+      hash: tx.hash,
+      buyAmount: tx.buyAmount.toString(),
+      sellAmount: tx.sellAmount.toString(),
+      userAddress: tx.userAddress,
+      timestamp: tx.createdAt.toISOString(),
+    }));
+
+    // Format price history
+    const priceHistory = agentToken.Prices.map((price) => ({
+      price: price.price,
+      timestamp: price.timestamp.toISOString(),
+    }));
+
+    return {
+      status: 'success',
+      data: {
+        // Basic token info
+        id: agentToken.id,
+        name: agentToken.token,
+        symbol: agentToken.symbol,
+        contractAddress: agentToken.contractAddress,
+        buyTax: agentToken.buyTax,
+        sellTax: agentToken.sellTax,
+
+        // Market data
+        currentPrice: currentPrice.toString(),
+        marketCap: marketCap.toString(),
+        bondingCurvePercentage: bondingPercentage,
+
+        // Historical data
+        recentTransactions: transactions,
+        priceHistory: priceHistory,
+      },
+    };
+  }
+
   @Get('current-price')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get current price of the token' })

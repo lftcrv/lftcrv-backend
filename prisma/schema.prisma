@@ -143,6 +143,7 @@ model ElizaAgent {
   runtimeAgentId  String?
   port            Int?
   characterConfig Json
+  profilePicture  String?     // URL to the agent's profile picture
   degenScore      Float?      @default(0)
   winScore        Float?      @default(0)
   createdAt       DateTime    @default(now())
