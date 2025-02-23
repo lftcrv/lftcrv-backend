@@ -172,6 +172,7 @@ model AgentWallet {
   privateKey            String
   publicKey             String
   ethPrivateKey         String
+  ethAccountAddress     String
   contractAddress       String
   fundTransactionHash   String?
   deployTransactionHash String?

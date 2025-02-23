@@ -22,8 +22,8 @@ export const environmentConfig = () => ({
   paradexNetwork: process.env.PARADEX_NETWORK,
   paradexAccountAddress: process.env.PARADEX_ACCOUNT_ADDRESS,
   paradexPrivateKey: process.env.PARADEX_PRIVATE_KEY,
-  ethereumAccountAddress: process.env.ETHEREUM_ACCOUNT_ADDRESS,
   ethereumPrivateKey: process.env.ETHEREUM_PRIVATE_KEY,
+  ethereumAccountAddress: process.env.ETHEREUM_ACCOUNT_ADDRESS,
 
   // Backend Configuration
   hostBackend: process.env.HOST_BACKEND,

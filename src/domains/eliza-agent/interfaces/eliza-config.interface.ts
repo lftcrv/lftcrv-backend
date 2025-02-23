@@ -31,6 +31,7 @@ export interface CreateElizaContainerConfig {
   starknetAddress: string;
   starknetPrivateKey: string;
   ethereumPrivateKey: string;
+  ethereumAccountAddress: string;
 }
 
 export interface ElizaContainerResult {

@@ -88,6 +88,7 @@ export class ElizaConfigService implements IElizaConfigService {
       // Paradex configuration
       `PARADEX_NETWORK=${this.config.paradexNetwork}`,
       `ETHEREUM_PRIVATE_KEY=${containerConfig.ethereumPrivateKey}`,
+      `ETHEREUM_ACCOUNT_ADDRESS=${containerConfig.ethereumAccountAddress}`,
 
       // Starknet configuration
       `STARKNET_RPC_URL=${this.config.starknetRpcUrl}`,
