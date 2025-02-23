@@ -12,17 +12,14 @@ export class ElizaConfigService implements IElizaConfigService {
 
   constructor(private readonly configService: ConfigService) {
     this.config = {
-      // Server configuration
-      serverPort: this.configService.get<number>('AGENT_SERVER_PORT', 8080),
-      serverApiKey: this.configService.get<string>('AGENT_SERVER_API_KEY'),
+      // Backend server configuration
       backendApiKey: this.configService.get<string>('BACKEND_API_KEY'),
-      backendPort: this.configService.get<number>('SERVER_PORT', 8080),
+      backendPort: this.configService.get<number>('BACKEND_PORT', 8080),
+      hostBackend: this.configService.get<string>('HOST_BACKEND', 'localhost'),
+      localDevelopment: this.configService.get<string>('LOCAL_DEVELOPMENT'),
 
-      // StarknetAgentKitServer
-      agentListeningPort: this.configService.get<number>(
-        'AGENT_LISTENING_PORT',
-        3000,
-      ),
+      // StarknetAgentKit Server
+      agentServerApiKey: this.configService.get<string>('AGENT_SERVER_API_KEY'),
 
       // AI configuration
       aiProviderApiKey: this.configService.get<string>('AI_PROVIDER_API_KEY'),
@@ -41,9 +38,6 @@ export class ElizaConfigService implements IElizaConfigService {
 
       // Starknet configuration
       starknetRpcUrl: this.configService.get<string>('STARKNET_RPC_URL'),
-      hostBackend: this.configService.get<string>('HOST_BACKEND', 'localhost'),
-      localDevelopment:
-        this.configService.get<string>('LOCAL_DEVELOPMENT') === 'TRUE',
     };
 
     this.validateConfig(this.config);
@@ -55,7 +49,6 @@ export class ElizaConfigService implements IElizaConfigService {
 
   validateConfig(config: Partial<ElizaConfig>): void {
     const requiredFields = [
-      'serverApiKey',
       'backendApiKey',
       'aiProviderApiKey',
       'aiModel',
@@ -77,12 +70,15 @@ export class ElizaConfigService implements IElizaConfigService {
 
   generateContainerEnv(containerConfig: CreateElizaContainerConfig): string[] {
     const envVars = [
-      // Server configuration
-      `SERVER_PORT=${this.config.serverPort}`,
-      `SERVER_API_KEY=${this.config.serverApiKey}`,
+      // Backend server configuration
+      `BACKEND_API_KEY=${this.config.backendApiKey}`,
+      `BACKEND_PORT=${this.config.backendPort}`,
+      `HOST_BACKEND=${this.config.hostBackend}`,
+      `LOCAL_DEVELOPMENT=${this.config.localDevelopment ? 'TRUE' : 'FALSE'}`,
 
-      // StarknetAgentKitServer
-      `AGENT_LISTENING_PORT=${this.config.agentListeningPort}`,
+      // StarknetAgentKit Server
+      `AGENT_SERVER_PORT=8080`,
+      `AGENT_SERVER_API_KEY=${this.config.agentServerApiKey}`,
 
       // AI configuration
       `AI_PROVIDER_API_KEY=${this.config.aiProviderApiKey}`,
@@ -92,11 +88,6 @@ export class ElizaConfigService implements IElizaConfigService {
       // Paradex configuration
       `PARADEX_NETWORK=${this.config.paradexNetwork}`,
       `ETHEREUM_PRIVATE_KEY=${containerConfig.ethereumPrivateKey}`,
-
-      // Backend configuration
-      `BACKEND_API_KEY=${this.config.backendApiKey}`,
-      `HOST=${this.config.hostBackend}`,
-      `LOCAL_DEVELOPMENT=${this.config.localDevelopment ? 'TRUE' : 'FALSE'}`,
 
       // Starknet configuration
       `STARKNET_RPC_URL=${this.config.starknetRpcUrl}`,

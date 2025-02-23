@@ -17,7 +17,6 @@ export class DockerService implements IDockerService, OnModuleInit {
   private docker: Docker;
   private readonly elizaBasePath: string;
   private readonly elizaEnvPath: string;
-  private readonly agentEnvTemplate: string;
   private readonly startPort = 3001;
   private readonly maxPort = 3999;
 
@@ -29,7 +28,6 @@ export class DockerService implements IDockerService, OnModuleInit {
     this.docker = new Docker();
     this.elizaBasePath = path.join(process.cwd(), 'config');
     this.elizaEnvPath = path.join(this.elizaBasePath, 'agents');
-    this.agentEnvTemplate = path.join(this.elizaBasePath, '.env.agent.example');
   }
 
   private async findAvailablePort(): Promise<number> {
@@ -59,15 +57,6 @@ export class DockerService implements IDockerService, OnModuleInit {
   async onModuleInit() {
     // Create required directories
     await fs.mkdir(this.elizaEnvPath, { recursive: true });
-
-    // Verify template env file exists
-    try {
-      await fs.access(this.agentEnvTemplate);
-    } catch {
-      throw new Error(
-        `Agent env template not found at ${this.agentEnvTemplate}`,
-      );
-    }
 
     // Verify Docker image exists
     const images = await this.docker.listImages();

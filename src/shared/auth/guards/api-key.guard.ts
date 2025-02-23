@@ -16,7 +16,7 @@ export class ApiKeyGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {
     const apiKey = this.configService.get<string>(
-      AUTH_CONSTANTS.CONFIG.API_KEY,
+      AUTH_CONSTANTS.CONFIG.BACKEND_API_KEY,
     );
     if (!apiKey) {
       throw new Error(AUTH_CONSTANTS.ERROR_MESSAGES.MISSING_ENV_VAR);
@@ -34,9 +34,9 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
-    const apiKey = request.header(AUTH_CONSTANTS.HEADERS.API_KEY);
+    const apiKey = request.header(AUTH_CONSTANTS.HEADERS.BACKEND_API_KEY);
     const validApiKey = this.configService.get<string>(
-      AUTH_CONSTANTS.CONFIG.API_KEY,
+      AUTH_CONSTANTS.CONFIG.BACKEND_API_KEY,
     );
 
     if (!validApiKey) {
