@@ -54,6 +54,8 @@ agent/data
 docker/eliza/characters/
 docker/eliza/agent/
 config/agents
+.venv
+*.pyc
 
 # Local development files
 *.local
