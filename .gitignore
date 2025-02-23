@@ -53,6 +53,7 @@ uploads
 agent/data
 docker/eliza/characters/
 docker/eliza/agent/
+config/agents
 
 # Local development files
 *.local

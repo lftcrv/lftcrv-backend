@@ -1,25 +1,30 @@
 export type CacheStore = 'database' | 'redis' | 'filesystem';
 
 export interface ElizaConfig {
-  // Cache configuration
-  cacheStore: CacheStore;
-  redisUrl?: string;
-  pgliteDataDir?: string;
-
   // Server configuration
   serverPort: number;
-
-  // API configuration
+  serverApiKey: string;
   backendApiKey: string;
   backendPort: number;
 
-  // External services configuration
+  // StarknetAgentKitServer
+  agentListeningPort: number;
+  
+  // AI configuration
   anthropicApiKey: string;
+  aiProviderApiKey: string;
+  aiModel: string;
+  aiProvider: string;
+
+  // Paradex configuration
+  paradexNetwork: string;
+  paradexAccountAddress?: string;
+  paradexPrivateKey?: string;
 
   // Starknet configuration
-  starknetAddress?: string;
-  starknetPrivateKey?: string;
   starknetRpcUrl: string;
+  hostBackend: string;
+  localDevelopment: boolean;
 }
 
 export interface CreateElizaContainerConfig {
