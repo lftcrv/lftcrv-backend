@@ -45,12 +45,6 @@ export class StartContainerStep extends BaseStepExecutor {
         },
       });
 
-      try {
-        await this.messageService.onboarding(runtimeAgentId);
-      } catch (error) {
-        console.error(`Failed to send onboarding message: ${error.message}`);
-      }
-
       return this.success(updatedAgent, { runtimeAgentId });
     } catch (error) {
       return this.failure(`Failed to start container: ${error.message}`);
