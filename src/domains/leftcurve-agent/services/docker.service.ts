@@ -17,8 +17,6 @@ export class DockerService implements IDockerService, OnModuleInit {
   private docker: Docker;
   private readonly elizaBasePath: string;
   private readonly elizaEnvPath: string;
-  private readonly dataPath: string;
-  private readonly charactersPath: string;
   private readonly startPort = 3001;
   private readonly maxPort = 3999;
 
@@ -28,14 +26,11 @@ export class DockerService implements IDockerService, OnModuleInit {
     private readonly elizaConfig: IElizaConfigService,
   ) {
     this.docker = new Docker();
-    this.elizaBasePath = path.join(process.cwd(), 'docker', 'eliza');
-    this.elizaEnvPath = path.join(this.elizaBasePath, '.env');
-    this.dataPath = path.join(this.elizaBasePath, 'agent', 'data');
-    this.charactersPath = path.join(this.elizaBasePath, 'characters');
+    this.elizaBasePath = path.join(process.cwd(), 'config');
+    this.elizaEnvPath = path.join(this.elizaBasePath, 'agents');
   }
 
   private async findAvailablePort(): Promise<number> {
-    // Récupérer tous les ports utilisés
     const usedPorts = await this.prisma.elizaAgent.findMany({
       where: {
         port: { not: null },
@@ -46,7 +41,6 @@ export class DockerService implements IDockerService, OnModuleInit {
 
     const usedPortSet = new Set(usedPorts.map((a) => a.port));
 
-    // Chercher le premier port disponible
     for (let port = this.startPort; port <= this.maxPort; port++) {
       if (!usedPortSet.has(port)) {
         return port;
@@ -62,25 +56,17 @@ export class DockerService implements IDockerService, OnModuleInit {
    */
   async onModuleInit() {
     // Create required directories
-    await fs.mkdir(this.dataPath, { recursive: true });
-    await fs.mkdir(this.charactersPath, { recursive: true });
-
-    // Verify Eliza .env file exists
-    try {
-      await fs.access(this.elizaEnvPath);
-    } catch {
-      throw new Error(`Eliza .env file not found at ${this.elizaEnvPath}`);
-    }
+    await fs.mkdir(this.elizaEnvPath, { recursive: true });
 
     // Verify Docker image exists
     const images = await this.docker.listImages();
     const baseImage = images.find((img) =>
-      img.RepoTags?.includes('julienbrs/eliza:latest'),
+      img.RepoTags?.includes('starknet-agent-kit:latest'),
     );
 
     if (!baseImage) {
       throw new Error(
-        'Base Eliza image not found. Please build it first using ./scripts/docker.sh build',
+        'Base Agent image not found. Please build it first using ./scripts/docker.sh build',
       );
     }
   }
@@ -93,47 +79,78 @@ export class DockerService implements IDockerService, OnModuleInit {
   async createContainer(
     config: CreateElizaContainerConfig,
   ): Promise<ElizaContainerResult> {
+    console.log('🚀 Starting container creation for agent:', config.name);
+
     const port = await this.findAvailablePort();
+    console.log('📍 Found available port:', port);
 
-    const agentDataPath = path.join(this.dataPath, config.name);
-    await fs.mkdir(agentDataPath, { recursive: true });
+    // Create agent config directory
+    const agentConfigPath = path.join(this.elizaEnvPath, config.name);
+    await fs.mkdir(agentConfigPath, { recursive: true });
+    console.log('📁 Created agent config directory:', agentConfigPath);
 
-    const characterPath = path.join(
-      this.charactersPath,
-      `${config.name}.character.json`,
-    );
+    // Write the agent configuration file
+    const agentConfigFile = path.join(agentConfigPath, 'default.agent.json');
     await fs.writeFile(
-      characterPath,
+      agentConfigFile,
       JSON.stringify(config.characterConfig, null, 2),
     );
+    console.log('📝 Written agent configuration to:', agentConfigFile);
 
-    // Generate environment variables for the container
-    const containerEnv = this.elizaConfig.generateContainerEnv(config);
+    // Create agent-specific .env file
+    const agentEnvFile = path.join(agentConfigPath, '.env');
+    const envVars = this.elizaConfig.generateContainerEnv(config);
+
+    console.log('🔧 Generated environment variables for container:');
+    envVars.forEach((env) => {
+      const [key, value] = env.split('=');
+      // Mask sensitive values
+      if (key.includes('KEY') || key.includes('PRIVATE')) {
+        console.log(`  ${key}=***[MASKED]***`);
+      } else {
+        console.log(`  ${key}=${value}`);
+      }
+    });
+
+    await fs.writeFile(agentEnvFile, envVars.join('\n'));
+    console.log('📝 Written environment variables to:', agentEnvFile);
+
+    console.log('🔄 Creating Docker container with configuration:');
+    console.log('  Image:', 'starknet-agent-kit:latest');
+    console.log('  Name:', `agent-${config.name}`);
+    console.log('  Port mapping:', `${port}:8080`);
+    console.log('  Mounted volumes:');
+    console.log(`    - ${this.elizaBasePath} -> /app/config`);
+    console.log(
+      `    - ${agentConfigFile} -> /app/config/agents/default.agent.json`,
+    );
+    console.log(`    - ${agentEnvFile} -> /app/.env`);
 
     const container = await this.docker.createContainer({
-      Image: 'julienbrs/eliza:latest',
-      name: `eliza-${config.name}`,
-      Env: containerEnv,
-      Cmd: [
-        'pnpm',
-        'start',
-        `--character=characters/${config.name}.character.json`,
-      ],
+      Image: 'starknet-agent-kit:latest',
+      name: `agent-${config.name}`,
+      Env: envVars,
       HostConfig: {
         Binds: [
-          `${characterPath}:/app/characters/${config.name}.character.json`,
-          `${agentDataPath}:/app/agent/data`,
+          `${this.elizaBasePath}:/app/config`,
+          `${agentConfigFile}:/app/config/agents/default.agent.json`,
+          `${agentEnvFile}:/app/.env`,
         ],
         PortBindings: {
-          '3000/tcp': [{ HostPort: port.toString() }],
+          '8080/tcp': [{ HostPort: port.toString() }],
         },
       },
       ExposedPorts: {
-        '3000/tcp': {},
+        '8080/tcp': {},
       },
     });
 
     const containerId = container.id;
+    console.log('✅ Container created successfully:', {
+      containerId: containerId.substring(0, 12),
+      port,
+      name: config.name,
+    });
 
     return { containerId, port };
   }
@@ -141,8 +158,8 @@ export class DockerService implements IDockerService, OnModuleInit {
   private async waitForLog(containerId: string): Promise<string | null> {
     const container = this.docker.getContainer(containerId);
     const startTime = Date.now();
-    const TIMEOUT = 5 * 60 * 1000;
-    const POLL_INTERVAL = 15000;
+    const TIMEOUT = 5 * 60 * 1000; // 5 minutes timeout
+    const POLL_INTERVAL = 5000; // Check every 5 seconds
 
     while (Date.now() - startTime < TIMEOUT) {
       try {
@@ -153,37 +170,27 @@ export class DockerService implements IDockerService, OnModuleInit {
         });
         const logsStr = logs.toString('utf8');
 
-        if (logsStr.includes('Run `pnpm start:client` to start the client')) {
-          console.log('✅ Container initialization detected');
-
-          const lines = logsStr.split('\n');
-          for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes('Initializing AgentRuntime with options')) {
-              for (let j = i; j < i + 10 && j < lines.length; j++) {
-                const uuidMatch = lines[j].match(/[0-9a-f-]{36}/);
-                if (uuidMatch) {
-                  console.log(
-                    `✅ Container started and found Agent ID: ${uuidMatch[0]}`,
-                  );
-                  return uuidMatch[0];
-                }
-              }
-            }
-          }
-
-          console.log('⚠️ Container started but Agent ID not found in logs:');
-          return null;
+        if (
+          logsStr.includes('Application is running on: http://127.0.0.1:8080')
+        ) {
+          console.log('✅ Agent container started successfully');
+          return containerId;
         }
 
-        console.log('⏳ Container running but waiting for initialization...');
+        if (logsStr.includes('[NestFactory] Starting Nest application')) {
+          console.log('⏳ NestJS application starting...');
+        } else if (logsStr.includes('AppModule dependencies initialized')) {
+          console.log('⏳ Modules initialization in progress...');
+        }
+
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
       } catch (error) {
-        console.error(`❌ Error checking container: ${error.message}`);
+        console.error(`❌ Error checking container logs: ${error.message}`);
         return null;
       }
     }
 
-    console.error('❌ Timeout waiting for container');
+    console.error('❌ Timeout waiting for container startup');
     return null;
   }
 
@@ -216,17 +223,17 @@ export class DockerService implements IDockerService, OnModuleInit {
   async removeContainer(containerId: string): Promise<void> {
     const container = this.docker.getContainer(containerId);
     const containerInfo = await container.inspect();
-    const name = containerInfo.Name.replace('/eliza-', '');
+    const name = containerInfo.Name.replace('/agent-', '');
 
     // Remove container
     await container.remove({ force: true });
 
     // Clean up files
     try {
-      await fs.rm(path.join(this.dataPath, name), { recursive: true });
-      await fs.unlink(path.join(this.charactersPath, `${name}.character.json`));
+      const agentConfigPath = path.join(this.elizaEnvPath, name);
+      await fs.rm(agentConfigPath, { recursive: true });
     } catch (error) {
-      console.error('Error cleaning up files:', error);
+      console.error('Error cleaning up config files:', error);
     }
   }
 }

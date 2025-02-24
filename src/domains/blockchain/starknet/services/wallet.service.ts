@@ -47,9 +47,10 @@ export class WalletService implements IStarknetWallet {
       0,
     );
 
-    const provider = new ethers.JsonRpcProvider(ethereumRPC);
+    // const provider = new ethers.JsonRpcProvider(ethereumRPC);
     const ethWallet = ethers.Wallet.createRandom();
     const ethereumPrivateKey = ethWallet.privateKey;
+    const ethereumAccountAddress = ethWallet.address;
 
     return {
       privateKey,
@@ -58,6 +59,7 @@ export class WalletService implements IStarknetWallet {
       ozAccountConstructorCallData,
       ozAccountClassHash,
       ethereumPrivateKey,
+      ethereumAccountAddress
     };
   }
 

@@ -1,11 +1,11 @@
 // domains/eliza-agent/eliza-agent.module.ts
 import { Inject, Module, OnModuleInit } from '@nestjs/common';
-import { ElizaAgentController } from './eliza-agent.controller';
+import { ElizaAgentController } from './leftcurve-agent.controller';
 import { DockerService } from './services/docker.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ServiceTokens } from './interfaces';
-import { ElizaAgentQueryService } from './services/eliza-agent-query.service';
-import { ElizaAgentLifecycleService } from './services/eliza-agent-lifecycle.service';
+import { ElizaAgentQueryService } from './services/leftcurve-agent-query.service';
+import { ElizaAgentLifecycleService } from './services/leftcurve-agent-lifecycle.service';
 import { CreateDbRecordStep } from './orchestration/steps/db-record.step';
 import { CreateWalletStep } from './orchestration/steps/create-wallet.step';
 import { FundWalletStep } from './orchestration/steps/fund-wallet.step';
@@ -22,7 +22,7 @@ import {
 import { AGENT_CREATION_DEFINITION } from './orchestration/agent-creation.definition';
 import { OrchestrationModule } from '../orchestration/orchestration.module';
 import { StarknetModule } from '../blockchain/starknet/starknet.module';
-import { ElizaConfigService } from './services/eliza-config.service';
+import { ElizaConfigService } from './services/leftcurve-config.service';
 import { AgentTokenModule } from '../agent-token/agent-token.module';
 import { MessageService } from 'src/message/message.service';
 

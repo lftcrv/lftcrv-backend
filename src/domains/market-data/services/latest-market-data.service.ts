@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { ILatestMarketDataService } from '../interfaces/latest-market-data.interface';
-import { LatestMarketData } from '../../../domains/eliza-agent/entities/eliza-agent.entity';
+import { LatestMarketData } from 'src/domains/leftcurve-agent/entities/leftcurve-agent.entity';
 
 @Injectable()
 export class ElizaAgentCreateService implements ILatestMarketDataService {

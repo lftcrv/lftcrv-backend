@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { IElizaAgentLifecycleService } from '../interfaces';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { AgentStatus } from '../entities/eliza-agent.entity';
+import { AgentStatus } from '../entities/leftcurve-agent.entity';
 import { ServiceTokens } from '../interfaces';
 
 @Injectable()

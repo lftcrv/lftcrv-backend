@@ -107,21 +107,6 @@ export class MessageService {
     }
   }
 
-  async onboarding(runtimeAgentId: string) {
-    try {
-      await this.sendMessageToAgent(
-        runtimeAgentId,
-        { content: { text: 'EXECUTE PARADEX_ONBOARDING' } },
-        true, // Ensure we wait for the agent to be ready
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to send onboarding message to agent ${runtimeAgentId}: ${error.message}`,
-      );
-      throw error;
-    }
-  }
-
   async sendStarknetMessageToRunningAgents() {
     try {
       this.logger.debug('Fetching running agents...');

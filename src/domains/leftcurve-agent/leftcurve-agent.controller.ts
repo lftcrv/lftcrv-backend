@@ -23,8 +23,8 @@ import {
 } from '@nestjs/swagger';
 import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
-import { CreateElizaAgentDto } from './dtos/eliza-agent.dto';
-import { ElizaAgent } from './entities/eliza-agent.entity';
+import { CreateElizaAgentDto } from './dtos/leftcurve-agent.dto';
+import { ElizaAgent } from './entities/leftcurve-agent.entity';
 import {
   IElizaAgentQueryService,
   IElizaAgentLifecycleService,

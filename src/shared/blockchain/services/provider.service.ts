@@ -11,7 +11,7 @@ export class ProviderService implements IProviderService, OnModuleInit {
 
   onModuleInit() {
     this.provider = new RpcProvider({
-      nodeUrl: this.configService.get<string>('NODE_URL'),
+      nodeUrl: this.configService.get<string>('STARKNET_RPC_URL'),
     });
   }
 

@@ -1,13 +1,13 @@
 import { IDockerService } from './docker-service.interface';
-import { IElizaAgentQueryService } from './eliza-agent-query.interface';
-import { IElizaAgentLifecycleService } from './eliza-agent-lifecycle.interface';
+import { IElizaAgentQueryService } from './leftcurve-agent-query.interface';
+import { IElizaAgentLifecycleService } from './leftcurve-agent-lifecycle.interface';
 import {
   IElizaConfigService,
   ElizaConfig,
   CreateElizaContainerConfig,
   ElizaContainerResult,
   CacheStore,
-} from './eliza-config.interface';
+} from './leftcurve-config.interface';
 
 export type {
   IDockerService,

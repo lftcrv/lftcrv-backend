@@ -39,7 +39,7 @@ required_vars=(
     "ENVIRONMENT"
     "DATABASE_NAME"
     "DATABASE_PORT"
-    "API_KEY"
+    "BACKEND_API_KEY"
     "RATE_LIMIT"
     "RATE_LIMIT_WINDOW"
     "ECS_CONTAINER_MEMORY"
@@ -117,7 +117,7 @@ pnpm run build
 echo "Bootstrapping CDK..."
 pnpm cdk bootstrap "aws://${AWS_ACCOUNT_ID}/${AWS_DEFAULT_REGION}" || true
 
-export API_KEY  #
+export BACKEND_API_KEY  #
 # Deploy stacks
 echo "Deploying CDK stacks..."
 pnpm cdk deploy LeftCurveVpcStack \

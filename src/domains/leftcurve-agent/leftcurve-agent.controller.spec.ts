@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ElizaAgentController } from './eliza-agent.controller';
+import { ElizaAgentController } from './leftcurve-agent.controller';
 import { FileUploadService } from './services/file-upload.service';
 import { ServiceTokens } from './interfaces';
 import { OrchestrationServiceTokens } from '../orchestration/interfaces';

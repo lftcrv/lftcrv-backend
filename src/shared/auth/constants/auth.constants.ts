@@ -3,13 +3,13 @@ export const AUTH_CONSTANTS = {
     API_KEY_PROTECTED: 'API_KEY_PROTECTED',
   },
   CONFIG: {
-    API_KEY: 'API_KEY',
+    BACKEND_API_KEY: 'BACKEND_API_KEY',
   },
   HEADERS: {
-    API_KEY: 'x-api-key',
+    BACKEND_API_KEY: 'x-api-key',
   },
   ERROR_MESSAGES: {
-    MISSING_ENV_VAR: 'API_KEY environment variable is not configured',
+    MISSING_ENV_VAR: 'BACKEND_API_KEY environment variable is not configured',
     MISSING_HEADER: 'API key is missing',
     INVALID_KEY: 'Invalid API key',
   },

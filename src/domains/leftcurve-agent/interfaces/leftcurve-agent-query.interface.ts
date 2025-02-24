@@ -1,4 +1,4 @@
-import { ElizaAgent } from '../entities/eliza-agent.entity';
+import { ElizaAgent } from '../entities/leftcurve-agent.entity';
 
 export interface IElizaAgentQueryService {
   getAgent(id: string): Promise<ElizaAgent>;

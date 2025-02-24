@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { IDockerService } from '../../interfaces/docker-service.interface';
 import { ServiceTokens } from '../../interfaces';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
-import { AgentStatus } from '../../entities/eliza-agent.entity';
+import { AgentStatus } from '../../entities/leftcurve-agent.entity';
 import { BaseStepExecutor } from '../../../../domains/orchestration/services/base-step-executor';
 import { MessageService } from 'src/message/message.service';
 import {
@@ -44,12 +44,6 @@ export class StartContainerStep extends BaseStepExecutor {
           status: AgentStatus.RUNNING,
         },
       });
-
-      try {
-        await this.messageService.onboarding(runtimeAgentId);
-      } catch (error) {
-        console.error(`Failed to send onboarding message: ${error.message}`);
-      }
 
       return this.success(updatedAgent, { runtimeAgentId });
     } catch (error) {
