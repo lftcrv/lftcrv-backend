@@ -4,7 +4,7 @@ import {
   ElizaConfig,
   CreateElizaContainerConfig,
   IElizaConfigService,
-} from '../interfaces/eliza-config.interface';
+} from '../interfaces/leftcurve-config.interface';
 
 @Injectable()
 export class ElizaConfigService implements IElizaConfigService {
