@@ -74,7 +74,7 @@ export class ElizaConfigService implements IElizaConfigService {
       `BACKEND_API_KEY=${this.config.backendApiKey}`,
       `BACKEND_PORT=${this.config.backendPort}`,
       `HOST_BACKEND=${this.config.hostBackend}`,
-      `LOCAL_DEVELOPMENT=${this.config.localDevelopment ? 'TRUE' : 'FALSE'}`,
+      `LOCAL_DEVELOPMENT=FALSE`,
 
       // StarknetAgentKit Server
       `AGENT_SERVER_PORT=8080`,

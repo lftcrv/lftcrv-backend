@@ -158,7 +158,7 @@ export class DockerService implements IDockerService, OnModuleInit {
   private async waitForLog(containerId: string): Promise<string | null> {
     const container = this.docker.getContainer(containerId);
     const startTime = Date.now();
-    const TIMEOUT = 5 * 60 * 1000; // 5 minutes timeout
+    const TIMEOUT = 15 * 60 * 1000; // 5 minutes timeout
     const POLL_INTERVAL = 5000; // Check every 5 seconds
 
     while (Date.now() - startTime < TIMEOUT) {
