@@ -84,6 +84,10 @@ export class DockerService implements IDockerService, OnModuleInit {
     const port = await this.findAvailablePort();
     console.log('📍 Found available port:', port);
 
+    // Generate a unique hash for this container
+    const uniqueHash = Math.random().toString(36).substring(2, 10);
+    const containerName = `agent-${config.name}-${uniqueHash}`;
+
     // Create agent config directory
     const agentConfigPath = path.join(this.elizaEnvPath, config.name);
     await fs.mkdir(agentConfigPath, { recursive: true });
@@ -121,19 +125,17 @@ export class DockerService implements IDockerService, OnModuleInit {
     console.log('  Port mapping:', `${port}:8080`);
     console.log('  Mounted volumes:');
     console.log(`    - ${this.elizaBasePath} -> /app/config`);
-    console.log(
-      `    - ${agentConfigFile} -> /app/config/agents/default.agent.json`,
-    );
+    console.log(`    - ${agentConfigFile} -> /app/config/agent.json`);
     console.log(`    - ${agentEnvFile} -> /app/.env`);
 
     const container = await this.docker.createContainer({
       Image: 'starknet-agent-kit:latest',
-      name: `agent-${config.name}`,
+      name: containerName,
       Env: envVars,
       HostConfig: {
         Binds: [
           `${this.elizaBasePath}:/app/config`,
-          `${agentConfigFile}:/app/config/agents/default.agent.json`,
+          `${agentConfigFile}:/app/config/agent.json`,
           `${agentEnvFile}:/app/.env`,
         ],
         PortBindings: {
@@ -223,7 +225,11 @@ export class DockerService implements IDockerService, OnModuleInit {
   async removeContainer(containerId: string): Promise<void> {
     const container = this.docker.getContainer(containerId);
     const containerInfo = await container.inspect();
-    const name = containerInfo.Name.replace('/agent-', '');
+
+    // Extract name from the format 'agent-{name}-{hash}'
+    const fullName = containerInfo.Name.replace('/', '');
+    const nameMatch = fullName.match(/^agent-(.+)-[a-z0-9]{8}$/);
+    const name = nameMatch ? nameMatch[1] : fullName.replace('agent-', '');
 
     // Remove container
     await container.remove({ force: true });
