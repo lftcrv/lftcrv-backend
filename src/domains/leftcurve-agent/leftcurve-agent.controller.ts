@@ -92,13 +92,52 @@ export class ElizaAgentController {
     let tempFileName = null;
 
     try {
-      // Log incoming file details
-      console.log('📸 Profile picture upload details:', {
-        fileName: file?.originalname,
-        mimeType: file?.mimetype,
-        size: file?.size,
-        fieldName: file?.fieldname,
-      });
+      // Si seul characterConfig est présent, le convertir en format agentConfig
+      if (dto.characterConfig && !dto.agentConfig) {
+        console.log(
+          '🔄 Converting legacy characterConfig to new agentConfig format',
+        );
+
+        // Extraction des données pertinentes de l'ancien format
+        const characterConfig = dto.characterConfig;
+
+        // Création du nouveau format
+        const agentConfig = {
+          name: characterConfig.name || dto.name,
+          bio: Array.isArray(characterConfig.bio)
+            ? characterConfig.bio.join('\n\n')
+            : '',
+          lore: Array.isArray(characterConfig.lore) ? characterConfig.lore : [],
+          objectives: [],
+          knowledge: Array.isArray(characterConfig.knowledge)
+            ? characterConfig.knowledge
+            : [],
+          interval: 30,
+          chat_id: 'test0',
+          external_plugins: [],
+          internal_plugins: ['rpc', 'lftcrv', 'paradex'],
+        };
+
+        // Ajout aux objectifs si pertinent
+        if (
+          Array.isArray(characterConfig.style?.all) &&
+          characterConfig.style.all.length > 0
+        ) {
+          agentConfig.objectives.push(
+            ...characterConfig.style.all.map((s) => `Style: ${s}`),
+          );
+        }
+
+        dto.agentConfig = agentConfig;
+        console.log('✅ Format conversion completed');
+      }
+
+      // Si aucun des formats n'est présent, c'est une erreur
+      if (!dto.agentConfig && !dto.characterConfig) {
+        throw new BadRequestException(
+          'Missing agent configuration (agentConfig or characterConfig required)',
+        );
+      }
 
       // Handle file upload if present
       if (file) {
@@ -110,7 +149,7 @@ export class ElizaAgentController {
       // Include the temporary filename in the DTO for orchestration
       const orchestrationDto = {
         ...dto,
-        profilePicture: tempFileName, // Add the temporary filename to the DTO
+        profilePicture: tempFileName,
       };
 
       // Start the orchestration with the updated DTO
@@ -118,6 +157,11 @@ export class ElizaAgentController {
         AGENT_CREATION_DEFINITION.type,
         orchestrationDto,
       );
+      console.log('🚀 Orchestration started:', {
+        orchestrationId,
+        tempFileName,
+      });
+
       console.log('🚀 Orchestration started:', {
         orchestrationId,
         tempFileName,

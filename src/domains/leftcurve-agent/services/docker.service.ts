@@ -97,7 +97,7 @@ export class DockerService implements IDockerService, OnModuleInit {
     const agentConfigFile = path.join(agentConfigPath, 'default.agent.json');
     await fs.writeFile(
       agentConfigFile,
-      JSON.stringify(config.characterConfig, null, 2),
+      JSON.stringify(config.agentConfig, null, 2),
     );
     console.log('📝 Written agent configuration to:', agentConfigFile);
 
@@ -134,8 +134,7 @@ export class DockerService implements IDockerService, OnModuleInit {
       Env: envVars,
       HostConfig: {
         Binds: [
-          `${this.elizaBasePath}:/app/config`,
-          `${agentConfigFile}:/app/config/agent.json`,
+          `${agentConfigFile}:/app/config/agents/default.agent.json`,
           `${agentEnvFile}:/app/.env`,
         ],
         PortBindings: {

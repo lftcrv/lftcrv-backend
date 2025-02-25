@@ -111,11 +111,20 @@ export class CreateDbRecordStep extends BaseStepExecutor {
       console.log('📦 Received DTO data:', {
         ...dto,
         characterConfig: '[redacted]', // Don't log the full config
+        agentConfig: '[redacted]', // Don't log the full config
       });
 
       // Verify transaction hash exists
       if (!dto.transactionHash) {
         return this.failure('Missing transaction hash for deployment payment');
+      }
+
+      // Prioritize characterConfig if it exists, otherwise use agentConfig
+      const config = dto.characterConfig || dto.agentConfig || null;
+      if (!config) {
+        return this.failure(
+          'Missing agent configuration (characterConfig or agentConfig required)',
+        );
       }
 
       // Poll for transaction confirmation
@@ -131,7 +140,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         name: dto.name,
         curveSide: dto.curveSide,
         status: AgentStatus.STARTING,
-        characterConfig: dto.characterConfig,
+        characterConfig: config, // Utilise config qui est soit characterConfig soit agentConfig
         creatorWallet: dto.creatorWallet,
         deploymentFeesTxHash: dto.transactionHash,
         degenScore: 0,
