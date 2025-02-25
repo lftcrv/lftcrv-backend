@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  BadRequestException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -67,13 +68,14 @@ export class LoggingInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
-    const { method, url } = req;
+    const { method, url, body } = req;
     const clientIp = req.headers['x-forwarded-for'] || 'unknown';
 
     this.log('REQUEST', {
       method,
       url,
       ip: clientIp.substring(0, 6),
+      body: JSON.stringify(body),
     });
 
     const now = Date.now();
@@ -87,11 +89,26 @@ export class LoggingInterceptor implements NestInterceptor {
               url,
               duration: `${Date.now() - now}ms`,
               status: data?.status || 'success',
+              data: JSON.stringify(data),
             },
             data?.status === 'error' ? 'error' : 'success',
           );
         },
         error: (error) => {
+          if (error instanceof BadRequestException) {
+            const response = error.getResponse() as any;
+            this.log(
+              'VALIDATION',
+              {
+                method,
+                url,
+                duration: `${Date.now() - now}ms`,
+                errors: JSON.stringify(response.message),
+              },
+              'warn',
+            );
+          }
+
           this.log(
             'ERROR',
             {
@@ -99,6 +116,7 @@ export class LoggingInterceptor implements NestInterceptor {
               url,
               duration: `${Date.now() - now}ms`,
               message: error.message,
+              stack: error.stack,
             },
             'error',
           );

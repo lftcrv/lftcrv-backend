@@ -38,6 +38,11 @@ enum OrchestrationStatus {
   FAILED
 }
 
+enum WalletAddressType {
+  NATIVE
+  DERIVED
+}
+
 ///
 /// Models
 ///
@@ -224,4 +229,40 @@ model PriceForToken {
   AgentToken AgentToken @relation(fields: [tokenId], references: [id])
 
   @@map("price_for_token")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  starknetAddress String           @unique
+  evmAddress      String?          @unique
+  addressType     WalletAddressType
+  twitterHandle   String?
+  lastConnection  DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Referral system
+  referralCode    ReferralCode?    @relation("UserReferralCode")
+  usedReferralCode String?         @map("used_referral_code")
+
+  @@index([starknetAddress])
+  @@index([evmAddress])
+  @@index([usedReferralCode])
+  @@map("users")
+}
+
+model ReferralCode {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  isAccessCode    Boolean   @default(true)
+  userId          String    @unique
+  user            User      @relation("UserReferralCode", fields: [userId], references: [id])
+  usageCount      Int       @default(0)
+  maxUses         Int?      // null means unlimited
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([code])
+  @@map("referral_codes")
 }
