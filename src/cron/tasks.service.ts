@@ -78,7 +78,7 @@ export class TasksService {
     }
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async updateTokenPrices() {
     const startTime = Date.now();
     this.logger.log('📊 Starting token price update cycle');
