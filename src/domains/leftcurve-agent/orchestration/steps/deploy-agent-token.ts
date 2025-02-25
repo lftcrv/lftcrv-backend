@@ -24,13 +24,38 @@ export class DeployAgentTokenStep extends BaseStepExecutor {
     });
   }
 
+  /**
+   * Creates a valid token symbol from agent name
+   * @param name The agent name
+   * @returns A valid token symbol
+   */
+  private createTokenSymbol(name: string): string {
+    // Remove spaces and special characters, keep only alphanumeric
+    const sanitized = name.replace(/[^a-zA-Z0-9]/g, '');
+
+    // Convert to uppercase for standard token symbol format
+    let symbol = sanitized.toUpperCase();
+
+    // Ensure symbol is between 3-5 characters
+    if (symbol.length < 3) {
+      // If too short, pad with agent's first letters
+      symbol = symbol.padEnd(3, symbol.charAt(0));
+    } else if (symbol.length > 5) {
+      // If too long, truncate
+      symbol = symbol.substring(0, 5);
+    }
+
+    return symbol;
+  }
+
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const { agentId, wallet } = context.metadata;
       const dto = context.data;
 
-      const symbol = `ELIZA${agentId.substring(0, 4)}`;
-      const tokenName = `${dto.name.toUpperCase()}_TOKEN`;
+      // Create meaningful symbol and token name based on agent name
+      const symbol = this.createTokenSymbol(dto.name);
+      const tokenName = `${dto.name.toUpperCase()} Token`;
 
       const agentTokenContract =
         await this.createAgentTokenService.createAgentToken({
