@@ -64,7 +64,7 @@ export class WalletService implements IStarknetWallet {
   }
 
   async transferFunds(ozWallet: OZWallet): Promise<OZWallet> {
-    const AMOUNT = 250000000000000n; // 0,00025 ETH in wei
+    const AMOUNT = 550000000000000n; // todo: should check current gwei to adapt
 
     // Initialize the provider
     const provider = this.providerService.getProvider();

@@ -60,7 +60,9 @@ export class TasksService {
 
       for (const agent of runningAgents) {
         await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
-          content: { text: 'EXECUTE ACT_ON_PARADEX' },
+          content: {
+            text: 'Analyze current market conditions on Paradex and execute the optimal trading strategy. Review markets conditions, evaluate open positions and orders, and take appropriate actions (place/cancel orders) based on current price movements, volatility trends, and technical indicators. Focus on maximizing profit while managing risk exposure. Make trading decisions that align with your personality, bio, lore, and knowledge. Provide clear explanations for all trading decisions that reflect your unique perspective and character traits.',
+          },
         });
       }
 

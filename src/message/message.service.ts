@@ -79,22 +79,24 @@ export class MessageService {
       throw new Error(`Agent not found or not ready: ${runtimeAgentId}`);
     }
 
-    const url = `http://localhost:${agent.port}/${runtimeAgentId}/message`;
-    const data = this.createMessagePayload(
-      message.content.text,
-      runtimeAgentId,
-    );
+    const apiKey = process.env.AGENT_SERVER_API_KEY || 'secret-key';
+    const url = `http://localhost:${agent.port}/api/key/request`;
 
     try {
       this.logger.debug(
         `Sending message to ${url} for agent ${agent.name} on port ${agent.port}`,
       );
 
-      await axios.post(url, data, {
-        headers: {
-          'Content-Type': 'application/json',
+      await axios.post(
+        url,
+        { request: message.content.text },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+          },
         },
-      });
+      );
 
       this.logger.debug(
         `Message sent to agent ${agent.name} on port ${agent.port}`,
@@ -127,7 +129,11 @@ export class MessageService {
       const promises = runningAgents.map((agent) =>
         this.sendMessageToAgent(
           agent.runtimeAgentId,
-          { content: { text: 'EXECUTE SIMULATE_STARKNET_TRADE' } },
+          {
+            content: {
+              text: 'Analyze current market conditions on Avnu and execute the optimal token swap strategy. Make trading decisions that align with your personality, bio, lore, and knowledge. Provide clear explanations for all swap decisions that reflect your unique perspective and character traits.',
+            },
+          },
           false, // Don't wait for ready since we already know they're running
         ).catch((err) => {
           this.logger.error(

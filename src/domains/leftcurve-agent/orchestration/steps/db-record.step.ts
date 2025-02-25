@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { AgentStatus } from '@prisma/client';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -18,6 +18,8 @@ const MAX_POLLING_ATTEMPTS = 60; // 5 minutes total
 
 @Injectable()
 export class CreateDbRecordStep extends BaseStepExecutor {
+  private readonly logger = new Logger(CreateDbRecordStep.name);
+
   private readonly tempDir = 'uploads/temp';
   private readonly uploadDir = 'uploads/profile-pictures';
 
@@ -104,6 +106,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const dto = context.data;
+      this.logger.log('🚀 receiving dto:', dto);
 
       console.log('📦 Received DTO data:', {
         ...dto,
