@@ -27,7 +27,7 @@ export interface ElizaConfig {
 
 export interface CreateElizaContainerConfig {
   name: string;
-  characterConfig: Record<string, any>;
+  agentConfig: Record<string, any>; // Nouveau format de configuration d'agent
   starknetAddress: string;
   starknetPrivateKey: string;
   ethereumPrivateKey: string;
