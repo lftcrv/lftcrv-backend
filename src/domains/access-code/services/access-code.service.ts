@@ -3,6 +3,7 @@ import {
   Inject,
   BadRequestException,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -14,6 +15,7 @@ import {
   ValidationResult,
   AccessCodeStatus,
   AccessCodeStats,
+  BatchAccessCodeResponse,
 } from '../interfaces';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import * as crypto from 'crypto';
@@ -128,52 +130,73 @@ export class AccessCodeService implements IAccessCodeService {
   // New methods for the gated access system
   async generateAccessCode(
     options: GenerateAccessCodeOptions,
-  ): Promise<AccessCodeResponse> {
-    // Generate a secure random code
-    const code = crypto.randomBytes(16).toString('hex');
+  ): Promise<AccessCodeResponse | BatchAccessCodeResponse> {
+    // Check if this is a batch generation request
+    if (options.count && options.count > 1) {
+      return this.generateBatchAccessCodes(options);
+    }
 
-    // Create the access code in the database using raw SQL
-    await this.prisma.$executeRaw`
-      INSERT INTO access_codes (
-        id, 
-        code, 
-        type, 
-        max_uses, 
-        expires_at, 
-        created_by, 
-        is_active, 
-        current_uses, 
-        created_at
-      ) 
-      VALUES (
-        gen_random_uuid(), 
-        ${code}, 
-        ${options.type}, 
-        ${options.maxUses || null}, 
-        ${options.expiresAt || null}, 
-        ${options.createdBy || null}, 
-        true, 
-        0, 
-        now()
-      )
-    `;
+    // Generate a code based on the options
+    let code: string;
 
-    // For simplicity, we'll fetch the created record
-    const createdCodes = await this.prisma.$queryRaw<any[]>`
-      SELECT * FROM access_codes WHERE code = ${code}
-    `;
+    if (options.useShortCode) {
+      // Generate a 6-character alphanumeric code
+      const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars like 0, 1, I, O
+      code = Array.from(
+        { length: 6 },
+        () => characters[Math.floor(Math.random() * characters.length)],
+      ).join('');
+    } else {
+      // Generate a secure random code (default behavior)
+      code = crypto.randomBytes(16).toString('hex');
+    }
 
-    const createdCode = createdCodes[0];
+    try {
+      // Create the access code using raw SQL
+      const result = await this.prisma.$queryRaw`
+        INSERT INTO access_codes (
+          id, 
+          code, 
+          type, 
+          "maxUses", 
+          "expiresAt", 
+          "createdBy", 
+          "isActive", 
+          "currentUses", 
+          "createdAt",
+          description
+        ) 
+        VALUES (
+          gen_random_uuid(), 
+          ${code}, 
+          ${options.type}::text::"AccessCodeType", 
+          ${options.maxUses || null}, 
+          ${options.expiresAt || null}, 
+          ${options.createdBy || null}, 
+          true, 
+          0, 
+          now(),
+          ${options.description || null}
+        )
+        RETURNING *
+      `;
 
-    return {
-      id: createdCode.id,
-      code: createdCode.code,
-      type: createdCode.type,
-      maxUses: createdCode.max_uses,
-      expiresAt: createdCode.expires_at,
-      createdAt: createdCode.created_at,
-      isActive: createdCode.is_active,
-    };
+      const accessCode = Array.isArray(result) ? result[0] : result;
+
+      return {
+        id: accessCode.id,
+        code: accessCode.code,
+        type: accessCode.type,
+        maxUses: accessCode.maxUses,
+        expiresAt: accessCode.expiresAt,
+        createdAt: accessCode.createdAt,
+        isActive: accessCode.isActive,
+        description: accessCode.description,
+      };
+    } catch (error) {
+      console.error('Error creating access code:', error);
+      throw new BadRequestException('Failed to create access code');
+    }
   }
 
   async validateAccessCode(
@@ -195,7 +218,7 @@ export class AccessCodeService implements IAccessCodeService {
     }
 
     // Check if the code is active
-    if (!accessCode.is_active) {
+    if (!accessCode.isActive) {
       return {
         isValid: false,
         error: 'CODE_INACTIVE',
@@ -203,7 +226,7 @@ export class AccessCodeService implements IAccessCodeService {
     }
 
     // Check if the code has expired
-    if (accessCode.expires_at && new Date(accessCode.expires_at) < new Date()) {
+    if (accessCode.expiresAt && new Date(accessCode.expiresAt) < new Date()) {
       return {
         isValid: false,
         error: 'CODE_EXPIRED',
@@ -212,8 +235,8 @@ export class AccessCodeService implements IAccessCodeService {
 
     // Check if the code has reached its maximum uses
     if (
-      accessCode.max_uses !== null &&
-      accessCode.current_uses >= accessCode.max_uses
+      accessCode.maxUses !== null &&
+      accessCode.currentUses >= accessCode.maxUses
     ) {
       return {
         isValid: false,
@@ -236,15 +259,15 @@ export class AccessCodeService implements IAccessCodeService {
     // Update the user with the access code using raw SQL
     await this.prisma.$executeRaw`
       UPDATE eliza_agents 
-      SET access_code_id = ${accessCode.id}, 
-          access_granted_at = now() 
+      SET accessCodeId = ${accessCode.id}, 
+          accessGrantedAt = now() 
       WHERE id = ${userId}
     `;
 
     // Increment the access code usage
     await this.prisma.$executeRaw`
       UPDATE access_codes 
-      SET current_uses = current_uses + 1 
+      SET currentUses = currentUses + 1 
       WHERE id = ${accessCode.id}
     `;
 
@@ -254,11 +277,11 @@ export class AccessCodeService implements IAccessCodeService {
         id: accessCode.id,
         code: accessCode.code,
         type: accessCode.type,
-        maxUses: accessCode.max_uses,
-        currentUses: accessCode.current_uses,
-        expiresAt: accessCode.expires_at,
-        createdAt: accessCode.created_at,
-        isActive: accessCode.is_active,
+        maxUses: accessCode.maxUses,
+        currentUses: accessCode.currentUses,
+        expiresAt: accessCode.expiresAt,
+        createdAt: accessCode.createdAt,
+        isActive: accessCode.isActive,
       },
     };
   }
@@ -276,11 +299,12 @@ export class AccessCodeService implements IAccessCodeService {
 
     return {
       id: accessCode.id,
-      isActive: accessCode.is_active,
-      currentUses: accessCode.current_uses,
-      maxUses: accessCode.max_uses,
-      expiresAt: accessCode.expires_at,
+      isActive: accessCode.isActive,
+      currentUses: accessCode.currentUses,
+      maxUses: accessCode.maxUses,
+      expiresAt: accessCode.expiresAt,
       type: accessCode.type,
+      description: accessCode.description,
     };
   }
 
@@ -296,7 +320,7 @@ export class AccessCodeService implements IAccessCodeService {
 
     await this.prisma.$executeRaw`
       UPDATE access_codes 
-      SET is_active = false 
+      SET "isActive" = false 
       WHERE id = ${codeId}
     `;
 
@@ -308,8 +332,8 @@ export class AccessCodeService implements IAccessCodeService {
     const statsResult = await this.prisma.$queryRaw<any[]>`
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN is_active = true THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN current_uses > 0 THEN 1 ELSE 0 END) as used,
+        SUM(CASE WHEN "isActive" = true THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN "currentUses" > 0 THEN 1 ELSE 0 END) as used,
         SUM(CASE WHEN type = 'ADMIN' THEN 1 ELSE 0 END) as admin,
         SUM(CASE WHEN type = 'REFERRAL' THEN 1 ELSE 0 END) as referral,
         SUM(CASE WHEN type = 'TEMPORARY' THEN 1 ELSE 0 END) as temporary
@@ -341,13 +365,13 @@ export class AccessCodeService implements IAccessCodeService {
 
     // Get active codes
     const activeCodesResult = await this.prisma.$queryRaw<any[]>`
-      SELECT COUNT(*) as count FROM access_codes WHERE is_active = true
+      SELECT COUNT(*) as count FROM access_codes WHERE "isActive" = true
     `;
     const activeCodes = Number(activeCodesResult[0].count);
 
     // Get used codes
     const usedCodesResult = await this.prisma.$queryRaw<any[]>`
-      SELECT COUNT(*) as count FROM access_codes WHERE current_uses > 0
+      SELECT COUNT(*) as count FROM access_codes WHERE "currentUses" > 0
     `;
     const usedCodes = Number(usedCodesResult[0].count);
 
@@ -372,5 +396,50 @@ export class AccessCodeService implements IAccessCodeService {
       usedCodes,
       codesByType,
     };
+  }
+
+  async listAllAccessCodes(): Promise<AccessCodeResponse[]> {
+    try {
+      const accessCodes = await this.prisma.$queryRaw<any[]>`
+        SELECT * FROM access_codes ORDER BY "createdAt" DESC
+      `;
+
+      return accessCodes.map((code) => ({
+        id: code.id,
+        code: code.code,
+        type: code.type,
+        maxUses: code.maxUses,
+        currentUses: code.currentUses,
+        expiresAt: code.expiresAt,
+        createdAt: code.createdAt,
+        isActive: code.isActive,
+        createdBy: code.createdBy,
+      }));
+    } catch (error) {
+      console.error('Error fetching access codes:', error);
+      throw new InternalServerErrorException('Failed to fetch access codes');
+    }
+  }
+
+  async generateBatchAccessCodes(
+    options: GenerateAccessCodeOptions,
+  ): Promise<BatchAccessCodeResponse> {
+    const count = options.count || 1;
+    const accessCodes: AccessCodeResponse[] = [];
+
+    // Generate the specified number of access codes
+    for (let i = 0; i < count; i++) {
+      // Create a copy of options without the count
+      const singleOptions = { ...options };
+      delete singleOptions.count;
+
+      // Generate a single access code
+      const accessCode = (await this.generateAccessCode(
+        singleOptions,
+      )) as AccessCodeResponse;
+      accessCodes.push(accessCode);
+    }
+
+    return { accessCodes };
   }
 }

@@ -25,11 +25,12 @@ export interface IAccessCodeService {
   // New methods for the gated access system
   generateAccessCode(
     options: GenerateAccessCodeOptions,
-  ): Promise<AccessCodeResponse>;
+  ): Promise<AccessCodeResponse | BatchAccessCodeResponse>;
   validateAccessCode(code: string, userId: string): Promise<ValidationResult>;
   getAccessCodeStatus(codeId: string): Promise<AccessCodeStatus>;
   disableAccessCode(codeId: string): Promise<boolean>;
   getAccessCodeStats(): Promise<AccessCodeStats>;
+  listAllAccessCodes(): Promise<AccessCodeResponse[]>;
 }
 
 export interface VerificationResult {
@@ -44,6 +45,9 @@ export interface GenerateAccessCodeOptions {
   maxUses?: number;
   expiresAt?: Date;
   createdBy?: string;
+  useShortCode?: boolean;
+  description?: string;
+  count?: number;
 }
 
 export interface AccessCodeResponse {
@@ -55,6 +59,7 @@ export interface AccessCodeResponse {
   expiresAt?: Date;
   createdAt: Date;
   isActive: boolean;
+  description?: string;
 }
 
 export interface ValidationResult {
@@ -70,6 +75,7 @@ export interface AccessCodeStatus {
   maxUses?: number;
   expiresAt?: Date;
   type: string;
+  description?: string;
 }
 
 export interface AccessCodeStats {
@@ -77,6 +83,10 @@ export interface AccessCodeStats {
   activeCodes: number;
   usedCodes: number;
   codesByType: Record<string, number>;
+}
+
+export interface BatchAccessCodeResponse {
+  accessCodes: AccessCodeResponse[];
 }
 
 // Tokens for dependency injection

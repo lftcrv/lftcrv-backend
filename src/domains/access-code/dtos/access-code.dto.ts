@@ -8,6 +8,7 @@ import {
   IsDate,
   IsEnum,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { AccessCodeType } from '../entities/access-code.entity';
@@ -69,6 +70,38 @@ export class GenerateAccessCodeDto {
   @IsOptional()
   @IsString()
   createdBy?: string;
+
+  @ApiProperty({
+    description:
+      'Generate a short 6-digit numeric code instead of a long secure code',
+    required: false,
+    default: false,
+    example: true,
+  })
+  @IsOptional()
+  useShortCode?: boolean;
+
+  @ApiProperty({
+    description: 'Description or purpose of this access code',
+    required: false,
+    example: 'Beta access for marketing team',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  description?: string;
+
+  @ApiProperty({
+    description: 'Number of codes to generate with these options',
+    required: false,
+    default: 1,
+    example: 5,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(100)
+  count?: number;
 }
 
 export class ValidateAccessCodeDto {

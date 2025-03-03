@@ -98,11 +98,20 @@ export class AccessCodeController {
   })
   @ApiResponse({ status: 400, description: 'Invalid parameters' })
   async generateAccessCode(@Body() dto: GenerateAccessCodeDto) {
-    const accessCode = await this.accessCodeService.generateAccessCode(dto);
+    const result = await this.accessCodeService.generateAccessCode(dto);
 
+    // Check if this is a batch response
+    if ('accessCodes' in result) {
+      return {
+        status: 'success',
+        data: result,
+      };
+    }
+
+    // Single access code response
     return {
       status: 'success',
-      data: { accessCode },
+      data: { accessCode: result },
     };
   }
 
@@ -171,6 +180,22 @@ export class AccessCodeController {
     return {
       status: 'success',
       data: { stats },
+    };
+  }
+
+  @Get('access-codes/list')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'List all access codes' })
+  @ApiResponse({
+    status: 200,
+    description: 'Access codes retrieved successfully',
+  })
+  async listAllAccessCodes() {
+    const accessCodes = await this.accessCodeService.listAllAccessCodes();
+
+    return {
+      status: 'success',
+      data: { accessCodes },
     };
   }
 }
