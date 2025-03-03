@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PriceDTO } from '../../dto/price.dto';
 import { TimeFrame } from '../../types';
-import { IPriceService, BasePriceOptions } from '../../interfaces/price.interface';
+import {
+  IPriceService,
+  BasePriceOptions,
+} from '../../interfaces/price.interface';
 import axios from 'axios';
 
 /**
  * Market information structure
  */
 export interface MarketInfo {
-  symbol: string;      // Full market symbol (e.g., BTC-USD-PERP)
-  baseAsset: string;   // Base currency (e.g., BTC)
-  quoteAsset: string;  // Quote currency (e.g., USD)
+  symbol: string; // Full market symbol (e.g., BTC-USD-PERP)
+  baseAsset: string; // Base currency (e.g., BTC)
+  quoteAsset: string; // Quote currency (e.g., USD)
   contractType: string; // Contract type (e.g., PERP for perpetual)
 }
 
@@ -91,7 +94,9 @@ export class ParadexPriceService implements IPriceService {
     const params: Record<string, any> = {
       symbol: market.symbol,
       resolution: apiTimeframe,
-      start_at: startTime || endTime - this.timeframeToMinutes[timeframe] * 60 * 1000 * limit,
+      start_at:
+        startTime ||
+        endTime - this.timeframeToMinutes[timeframe] * 60 * 1000 * limit,
       end_at: endTime,
     };
 
@@ -188,6 +193,9 @@ export class ParadexPriceService implements IPriceService {
     startTime: number,
     endTime: number,
   ): Promise<PriceDTO[]> {
-    return this.getHistoricalPrices(identifier, timeframe, { startTime, endTime });
+    return this.getHistoricalPrices(identifier, timeframe, {
+      startTime,
+      endTime,
+    });
   }
 }

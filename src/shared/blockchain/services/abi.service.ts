@@ -12,7 +12,7 @@ export class AbiService implements IAbiService {
   private abi: Abi;
 
   async getAbi(contractAddress: string): Promise<Abi> {
-    this.logger.debug('calling ABI..'); 
+    this.logger.debug('calling ABI..');
     const provider = this.providerService.getProvider();
     const { abi } = await provider.getClassAt(contractAddress);
 

@@ -43,7 +43,7 @@ describe('FileUploadService', () => {
       } as Express.Multer.File;
 
       const result = await service.uploadFile(mockFile);
-      
+
       expect(result).toMatch(/^[a-f0-9-]+\.jpg$/); // UUID format with jpg extension
       expect(fs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('uploads/profile-pictures/'),
@@ -57,9 +57,13 @@ describe('FileUploadService', () => {
         buffer: Buffer.from('test'),
       } as Express.Multer.File;
 
-      (fs.writeFile as jest.Mock).mockRejectedValueOnce(new Error('Save failed'));
+      (fs.writeFile as jest.Mock).mockRejectedValueOnce(
+        new Error('Save failed'),
+      );
 
-      await expect(service.uploadFile(mockFile)).rejects.toThrow('Failed to save file');
+      await expect(service.uploadFile(mockFile)).rejects.toThrow(
+        'Failed to save file',
+      );
     });
   });
 
@@ -72,17 +76,19 @@ describe('FileUploadService', () => {
     it('should delete file if filename provided', async () => {
       const filename = 'test.jpg';
       await service.deleteFile(filename);
-      
+
       expect(fs.unlink).toHaveBeenCalledWith(
         path.join('uploads/profile-pictures', filename),
       );
     });
 
     it('should handle deletion errors gracefully', async () => {
-      (fs.unlink as jest.Mock).mockRejectedValueOnce(new Error('Delete failed'));
-      
+      (fs.unlink as jest.Mock).mockRejectedValueOnce(
+        new Error('Delete failed'),
+      );
+
       // Should not throw error
       await expect(service.deleteFile('test.jpg')).resolves.not.toThrow();
     });
   });
-}); 
+});

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PriceDTO } from '../../dto/price.dto';
 import { TimeFrame } from '../../types';
-import { IPriceService, BasePriceOptions } from '../../interfaces/price.interface';
+import {
+  IPriceService,
+  BasePriceOptions,
+} from '../../interfaces/price.interface';
 import { ParadexPriceService } from './paradex-price.service';
 import { AvnuPriceService } from './avnu-price.service';
 
@@ -21,7 +24,7 @@ export interface UnifiedPriceOptions extends BasePriceOptions {
 export class UnifiedPriceService {
   constructor(
     private readonly paradexService: ParadexPriceService,
-    private readonly avnuService: AvnuPriceService
+    private readonly avnuService: AvnuPriceService,
   ) {}
 
   /**
@@ -55,9 +58,12 @@ export class UnifiedPriceService {
     options: BasePriceOptions = {},
   ): Promise<PriceDTO[]> {
     if (platform !== 'paradex' && platform !== 'avnu') {
-        throw new Error(`Unsupported platform: ${platform}. Must be either paradex or avnu`);
+      throw new Error(
+        `Unsupported platform: ${platform}. Must be either paradex or avnu`,
+      );
     }
-    const service = platform === 'paradex' ? this.paradexService : this.avnuService;
+    const service =
+      platform === 'paradex' ? this.paradexService : this.avnuService;
     return service.getHistoricalPrices(identifier, timeframe, options);
   }
 
@@ -125,15 +131,17 @@ export class UnifiedPriceService {
     timeframe: TimeFrame,
     options: BasePriceOptions = {},
   ): Promise<Record<Platform, PriceDTO[]>> {
-    const tasks = Object.entries(identifiers).map(async ([platform, identifier]) => {
-      const data = await this.getHistoricalPrices(
-        platform as Platform,
-        identifier,
-        timeframe,
-        options
-      );
-      return [platform, data];
-    });
+    const tasks = Object.entries(identifiers).map(
+      async ([platform, identifier]) => {
+        const data = await this.getHistoricalPrices(
+          platform as Platform,
+          identifier,
+          timeframe,
+          options,
+        );
+        return [platform, data];
+      },
+    );
 
     const results = await Promise.all(tasks);
     return Object.fromEntries(results);
