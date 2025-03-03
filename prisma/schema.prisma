@@ -38,6 +38,17 @@ enum OrchestrationStatus {
   FAILED
 }
 
+enum BondingStatus {
+  BONDING
+  LIVE
+}
+
+enum AccessCodeType {
+  ADMIN
+  REFERRAL
+  TEMPORARY
+}
+
 ///
 /// Models
 ///
@@ -52,9 +63,24 @@ model OTP {
   @@index([code])
 }
 
-enum BondingStatus {
-  BONDING
-  LIVE
+model AccessCode {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  createdAt   DateTime       @default(now())
+  expiresAt   DateTime?
+  maxUses     Int?
+  currentUses Int            @default(0)
+  createdBy   String?        // For referral tracking
+  isActive    Boolean        @default(true)
+  type        AccessCodeType
+  
+  // Relation to ElizaAgent
+  agents      ElizaAgent[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([type])
+  @@map("access_codes")
 }
 
 model LatestMarketData {
@@ -132,22 +158,27 @@ model Analysis {
 }
 
 model ElizaAgent {
-  id              String      @id @default(uuid())
-  name            String
-  curveSide       CurveSide
-  creatorWallet   String
+  id                 String      @id @default(uuid())
+  name               String
+  curveSide          CurveSide
+  creatorWallet      String
   deploymentFeesTxHash String     @map("deployment_fees_tx_hash") // Required, frontend sends confirmed tx hash
-  status          AgentStatus @default(STARTING)
-  failureReason   String?     // For storing detailed error info
-  containerId     String?
-  runtimeAgentId  String?
-  port            Int?
-  characterConfig Json
-  profilePicture  String?     // URL to the agent's profile picture
-  degenScore      Float?      @default(0)
-  winScore        Float?      @default(0)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  status             AgentStatus @default(STARTING)
+  failureReason      String?     // For storing detailed error info
+  containerId        String?
+  runtimeAgentId     String?
+  port               Int?
+  characterConfig    Json
+  profilePicture     String?     // URL to the agent's profile picture
+  degenScore         Float?      @default(0)
+  winScore           Float?      @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  
+  // Access code fields
+  accessCodeId       String?
+  accessCode         AccessCode? @relation(fields: [accessCodeId], references: [id])
+  accessGrantedAt    DateTime?
 
   TradingInformation TradingInformation[]
   LatestMarketData   LatestMarketData?
