@@ -10,7 +10,7 @@ import {
 } from './shared/config/env.config';
 import { AccessCodeModule } from './domains/access-code/access-code.module';
 import { HealthModule } from './shared/health/health.module';
-import { ElizaAgentModule } from './domains/eliza-agent/eliza-agent.module';
+import { ElizaAgentModule } from './domains/leftcurve-agent/leftcurve-agent.module';
 import { TasksModule } from './cron/tasks.module';
 import { MessageModule } from './message/message.module';
 import { TradingInformationModule } from './domains/trading-information/trading-information.module';

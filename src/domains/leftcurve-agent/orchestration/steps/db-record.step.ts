@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { AgentStatus } from '@prisma/client';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -18,6 +18,8 @@ const MAX_POLLING_ATTEMPTS = 60; // 5 minutes total
 
 @Injectable()
 export class CreateDbRecordStep extends BaseStepExecutor {
+  private readonly logger = new Logger(CreateDbRecordStep.name);
+
   private readonly tempDir = 'uploads/temp';
   private readonly uploadDir = 'uploads/profile-pictures';
 
@@ -104,15 +106,25 @@ export class CreateDbRecordStep extends BaseStepExecutor {
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const dto = context.data;
+      this.logger.log('🚀 receiving dto:', dto);
 
       console.log('📦 Received DTO data:', {
         ...dto,
         characterConfig: '[redacted]', // Don't log the full config
+        agentConfig: '[redacted]', // Don't log the full config
       });
 
       // Verify transaction hash exists
       if (!dto.transactionHash) {
         return this.failure('Missing transaction hash for deployment payment');
+      }
+
+      // Prioritize characterConfig if it exists, otherwise use agentConfig
+      const config = dto.characterConfig || dto.agentConfig || null;
+      if (!config) {
+        return this.failure(
+          'Missing agent configuration (characterConfig or agentConfig required)',
+        );
       }
 
       // Poll for transaction confirmation
@@ -128,7 +140,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         name: dto.name,
         curveSide: dto.curveSide,
         status: AgentStatus.STARTING,
-        characterConfig: dto.characterConfig,
+        characterConfig: config, // Utilise config qui est soit characterConfig soit agentConfig
         creatorWallet: dto.creatorWallet,
         deploymentFeesTxHash: dto.transactionHash,
         degenScore: 0,

@@ -19,7 +19,8 @@ export class TechnicalController {
   @ApiQuery({
     name: 'assets',
     required: true,
-    description: 'Comma-separated list of assets to analyze (e.g., "BTC,ETH" for Paradex or "ETH,STRK" for AVNU)',
+    description:
+      'Comma-separated list of assets to analyze (e.g., "BTC,ETH" for Paradex or "ETH,STRK" for AVNU)',
     type: String,
   })
   @ApiQuery({
@@ -27,7 +28,7 @@ export class TechnicalController {
     required: false,
     description: 'Trading platform to use (paradex or avnu)',
     enum: ['paradex', 'avnu'],
-    default: 'paradex'
+    default: 'paradex',
   })
   @ApiResponse({
     status: 200,
@@ -45,11 +46,15 @@ export class TechnicalController {
       throw new BadRequestException('Assets parameter is required');
     }
 
-    const assetsToAnalyze = platform === 'paradex' 
-      ? assetsQuery.toUpperCase().split(',')
-      : assetsQuery.split(','); 
+    const assetsToAnalyze =
+      platform === 'paradex'
+        ? assetsQuery.toUpperCase().split(',')
+        : assetsQuery.split(',');
 
-    const analysis = await this.technicalService.analyzeMarkets(assetsToAnalyze, platform);
+    const analysis = await this.technicalService.analyzeMarkets(
+      assetsToAnalyze,
+      platform,
+    );
 
     return {
       status: 'success',

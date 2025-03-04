@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IElizaAgentQueryService } from '../interfaces';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { ElizaAgent, AgentStatus } from '../entities/eliza-agent.entity';
+import { ElizaAgent, AgentStatus } from '../entities/leftcurve-agent.entity';
 
 @Injectable()
 export class ElizaAgentQueryService implements IElizaAgentQueryService {

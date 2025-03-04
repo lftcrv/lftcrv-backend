@@ -3,7 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { ElizaAgent } from '../eliza-agent/entities/eliza-agent.entity';
+import { ElizaAgent } from '../leftcurve-agent/entities/leftcurve-agent.entity';
 
 @ApiTags('Leaderboard')
 @Controller('api/leaderboard')

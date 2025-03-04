@@ -25,14 +25,18 @@ export class CreateContainerStep extends BaseStepExecutor {
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const dto = context.data;
-    
+
       const { agentId, wallet } = context.metadata;
+
+      const agentConfig = dto.agentConfig || dto.characterConfig;
+
       const { containerId, port } = await this.dockerService.createContainer({
         name: dto.name,
-        characterConfig: dto.characterConfig,
+        agentConfig: agentConfig,
         starknetAddress: wallet.ozContractAddress,
         starknetPrivateKey: wallet.privateKey,
         ethereumPrivateKey: wallet.ethereumPrivateKey,
+        ethereumAccountAddress: wallet.ethereumAccountAddress,
       });
 
       const updatedAgent = await this.prisma.elizaAgent.update({

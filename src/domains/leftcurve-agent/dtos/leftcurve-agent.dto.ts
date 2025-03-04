@@ -1,5 +1,11 @@
 // dtos/eliza-agent.dto.ts
-import { IsString, IsEnum, IsObject, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsObject,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CurveSide } from '@prisma/client';
 import { Transform } from 'class-transformer';
@@ -37,12 +43,12 @@ export class CreateElizaAgentDto {
   transactionHash: string;
 
   @ApiProperty({
-    description: "Agent's character configuration",
+    description: "Agent's character configuration (legacy format)",
     type: 'object',
     additionalProperties: true,
   })
   @IsObject()
-  @IsNotEmpty()
+  @IsOptional()
   @Transform(({ value }) => {
     try {
       return typeof value === 'string' ? JSON.parse(value) : value;
@@ -50,7 +56,23 @@ export class CreateElizaAgentDto {
       return value;
     }
   })
-  characterConfig: Record<string, any>;
+  characterConfig?: Record<string, any>;
+
+  @ApiProperty({
+    description: "Agent's configuration (new format)",
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsObject()
+  @IsOptional()
+  @Transform(({ value }) => {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return value;
+    }
+  })
+  agentConfig?: Record<string, any>;
 
   // This will be handled by the FileInterceptor
   profilePicture?: string;

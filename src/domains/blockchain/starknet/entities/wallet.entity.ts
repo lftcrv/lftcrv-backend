@@ -8,4 +8,5 @@ export interface OZWallet {
   deployTransactionHash?: string;
   deployedContractAddress?: string;
   ethereumPrivateKey?: string;
+  ethereumAccountAddress?: string;
 }

@@ -97,7 +97,7 @@ describe('Profile Picture Upload (e2e)', () => {
   });
 
   it('should handle profile picture upload and make it accessible', async () => {
-    const apiKey = configService.get('API_KEY');
+    const apiKey = configService.get('BACKEND_API_KEY');
     expect(apiKey).toBeDefined();
 
     // Create a test image
@@ -214,7 +214,7 @@ describe('Profile Picture Upload (e2e)', () => {
   });
 
   it('should reject non-image files', async () => {
-    const apiKey = configService.get('API_KEY');
+    const apiKey = configService.get('BACKEND_API_KEY');
     const testFilePath = path.join(__dirname, 'test-file.txt');
     fs.writeFileSync(testFilePath, 'not an image');
 

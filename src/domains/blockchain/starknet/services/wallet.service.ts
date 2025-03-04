@@ -16,7 +16,7 @@ import {
   IAccountService,
   IProviderService,
 } from '../../../../shared/blockchain/interfaces';
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 const ethereumRPC = `https://eth-mainnetalchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`;
 
@@ -47,9 +47,10 @@ export class WalletService implements IStarknetWallet {
       0,
     );
 
-    const provider = new ethers.JsonRpcProvider(ethereumRPC);
+    // const provider = new ethers.JsonRpcProvider(ethereumRPC);
     const ethWallet = ethers.Wallet.createRandom();
     const ethereumPrivateKey = ethWallet.privateKey;
+    const ethereumAccountAddress = ethWallet.address;
 
     return {
       privateKey,
@@ -58,11 +59,12 @@ export class WalletService implements IStarknetWallet {
       ozAccountConstructorCallData,
       ozAccountClassHash,
       ethereumPrivateKey,
+      ethereumAccountAddress,
     };
   }
 
   async transferFunds(ozWallet: OZWallet): Promise<OZWallet> {
-    const AMOUNT = 250000000000000n; // 0,00025 ETH in wei
+    const AMOUNT = 550000000000000n; // todo: should check current gwei to adapt
 
     // Initialize the provider
     const provider = this.providerService.getProvider();

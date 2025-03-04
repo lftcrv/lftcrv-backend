@@ -1,4 +1,4 @@
-import { LatestMarketData } from '../../../domains/eliza-agent/entities/eliza-agent.entity';
+import { LatestMarketData } from 'src/domains/leftcurve-agent/entities/leftcurve-agent.entity';
 
 export interface ILatestMarketDataService {
   updateMarketData(

@@ -118,12 +118,12 @@ export class EcsStack extends cdk.Stack {
       }),
       environment: {
         NODE_ENV: 'production',
-        PORT: '8080',
+        BACKEND_PORT: '8080',
         LOG_LEVEL: 'debug',
-        HOST: '0.0.0.0',
+        HOST_BACKEND: '0.0.0.0',
         RATE_LIMIT: process.env.RATE_LIMIT || '10',
         RATE_LIMIT_WINDOW: process.env.RATE_LIMIT_WINDOW || '60',
-        API_KEY: process.env.API_KEY,
+        BACKEND_API_KEY: process.env.BACKEND_API_KEY,
         CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
         RUN_MIGRATIONS: 'false', // Don't run migrations in the main container
       },
@@ -165,11 +165,11 @@ export class EcsStack extends cdk.Stack {
       }),
       environment: {
         NODE_ENV: 'production',
-        PORT: '8080',
+        BACKEND_PORT: '8080',
         LOG_LEVEL: 'debug',
         RATE_LIMIT: '10',
         RATE_LIMIT_WINDOW: '60',
-        API_KEY: process.env.API_KEY || '',
+        BACKEND_API_KEY: process.env.BACKEND_API_KEY || '',
         CORS_ORIGIN: '*',
         RUN_MIGRATIONS: 'true', // This container will run migrations
       },

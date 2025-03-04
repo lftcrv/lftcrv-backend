@@ -106,7 +106,7 @@ export class VolumeService {
     const ma1 = firstHalf.reduce((sum, v) => sum + v, 0) / firstHalf.length;
     const ma2 = secondHalf.reduce((sum, v) => sum + v, 0) / secondHalf.length;
 
-    let change = (ma2 - ma1) / ma1;
+    const change = (ma2 - ma1) / ma1;
     return Math.max(Math.min(isFinite(change) ? change : 0, 1), -1);
   }
 
