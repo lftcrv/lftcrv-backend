@@ -1,46 +1,11 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-///
-/// Enums
-///
-
-enum AgentStatus {
-  STARTING
-  RUNNING
-  STOPPED
-  FAILED
-  ERROR
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
-
-enum CurveSide {
-  LEFT
-  RIGHT
-}
-
-enum AnalysisType {
-  TECHNICAL
-  SENTIMENT
-  MARKET
-  OVERALL
-}
-
-enum OrchestrationStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  FAILED
-}
-
-///
-/// Models
-///
 
 model OTP {
   id        String    @id @default(uuid())
@@ -52,15 +17,28 @@ model OTP {
   @@index([code])
 }
 
-enum BondingStatus {
-  BONDING
-  LIVE
+model AccessCode {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  createdAt   DateTime       @default(now())
+  expiresAt   DateTime?
+  maxUses     Int?
+  currentUses Int            @default(0)
+  createdBy   String?
+  isActive    Boolean        @default(true)
+  type        AccessCodeType
+  description String?
+  agents      ElizaAgent[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([type])
+  @@map("access_codes")
 }
 
 model LatestMarketData {
   id             String        @id @default(uuid())
   elizaAgentId   String        @unique
-  elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
   price          Float         @default(0)
   priceChange24h Float         @default(0)
   holders        Int           @default(0)
@@ -68,6 +46,7 @@ model LatestMarketData {
   bondingStatus  BondingStatus @default(BONDING)
   updatedAt      DateTime      @updatedAt
   createdAt      DateTime      @default(now())
+  elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
 
   @@index([price])
   @@index([priceChange24h])
@@ -102,14 +81,14 @@ model ParadexMarket {
 
 model Orchestration {
   id            String              @id @default(uuid())
-  type          String // Type of orchestration (e.g., "agent-creation")
+  type          String
   status        OrchestrationStatus
   currentStepId String
-  data          Json // Store orchestration input data
-  result        Json? // Store result data
-  error         String? // Error message if failed
+  data          Json
+  result        Json?
+  error         String?
   progress      Float               @default(0)
-  metadata      Json? // Store metadata
+  metadata      Json?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -121,38 +100,40 @@ model Orchestration {
 
 model Analysis {
   id        String       @id @default(uuid())
-  type      AnalysisType // Using the enum
+  type      AnalysisType
   data      Json
-  score     Float? // Optional overall score
+  score     Float?
   timestamp DateTime     @default(now())
-  metadata  Json? // Optional metadata
+  metadata  Json?
 
   @@index([timestamp])
   @@map("analyses")
 }
 
 model ElizaAgent {
-  id              String      @id @default(uuid())
-  name            String
-  curveSide       CurveSide
-  creatorWallet   String
-  deploymentFeesTxHash String     @map("deployment_fees_tx_hash") // Required, frontend sends confirmed tx hash
-  status          AgentStatus @default(STARTING)
-  failureReason   String?     // For storing detailed error info
-  containerId     String?
-  runtimeAgentId  String?
-  port            Int?
-  characterConfig Json
-  profilePicture  String?     // URL to the agent's profile picture
-  degenScore      Float?      @default(0)
-  winScore        Float?      @default(0)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  TradingInformation TradingInformation[]
-  LatestMarketData   LatestMarketData?
-  Wallet             AgentWallet?
-  Token              AgentToken?
+  id                   String               @id @default(uuid())
+  name                 String
+  curveSide            CurveSide
+  creatorWallet        String
+  deploymentFeesTxHash String               @map("deployment_fees_tx_hash")
+  status               AgentStatus          @default(STARTING)
+  failureReason        String?
+  containerId          String?
+  runtimeAgentId       String?
+  port                 Int?
+  characterConfig      Json
+  profilePicture       String?
+  degenScore           Float?               @default(0)
+  winScore             Float?               @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  accessCodeId         String?
+  accessGrantedAt      DateTime?
+  Token                AgentToken?
+  Wallet               AgentWallet?
+  accessCode           AccessCode?          @relation(fields: [accessCodeId], references: [id])
+  LatestMarketData     LatestMarketData?
+  TradingInformation   TradingInformation[]
 
   @@map("eliza_agents")
 }
@@ -194,8 +175,8 @@ model AgentToken {
   sellTax         Int
   elizaAgentId    String          @unique
   elizaAgent      ElizaAgent      @relation(fields: [elizaAgentId], references: [id])
-  Transaction     Transaction[]
   Prices          PriceForToken[]
+  Transaction     Transaction[]
 
   @@map("agent_token")
 }
@@ -225,4 +206,42 @@ model PriceForToken {
   AgentToken AgentToken @relation(fields: [tokenId], references: [id])
 
   @@map("price_for_token")
+}
+
+enum AgentStatus {
+  STARTING
+  RUNNING
+  STOPPED
+  FAILED
+  ERROR
+}
+
+enum CurveSide {
+  LEFT
+  RIGHT
+}
+
+enum AnalysisType {
+  TECHNICAL
+  SENTIMENT
+  MARKET
+  OVERALL
+}
+
+enum OrchestrationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum BondingStatus {
+  BONDING
+  LIVE
+}
+
+enum AccessCodeType {
+  ADMIN
+  REFERRAL
+  TEMPORARY
 }
