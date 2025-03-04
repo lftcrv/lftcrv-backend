@@ -25,6 +25,7 @@ import { AnalysisSharedModule } from './domains/analysis/shared/shared.module';
 import { OrchestrationModule } from './domains/orchestration/orchestration.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TerminusModule } from '@nestjs/terminus';
+import { UserModule } from './domains/user/user.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { TerminusModule } from '@nestjs/terminus';
     TechnicalModule,
     AnalysisModule,
     OrchestrationModule,
+    UserModule,
     ScheduleModule.forRoot(),
     TerminusModule,
   ],
