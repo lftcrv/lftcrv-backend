@@ -25,11 +25,11 @@ export class CreateContainerStep extends BaseStepExecutor {
   async execute(context: StepExecutionContext): Promise<StepExecutionResult> {
     try {
       const dto = context.data;
-    
+
       const { agentId, wallet } = context.metadata;
 
       const agentConfig = dto.agentConfig || dto.characterConfig;
-      
+
       const { containerId, port } = await this.dockerService.createContainer({
         name: dto.name,
         agentConfig: agentConfig,

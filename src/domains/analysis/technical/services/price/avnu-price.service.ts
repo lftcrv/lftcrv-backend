@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PriceDTO } from '../../dto/price.dto';
 import { TimeFrame } from '../../types';
-import { IPriceService, BasePriceOptions } from '../../interfaces/price.interface';
+import {
+  IPriceService,
+  BasePriceOptions,
+} from '../../interfaces/price.interface';
 import { AvnuToken, AVNU_TOKENS } from '../../config/tokens.config';
 import axios from 'axios';
 
@@ -13,15 +16,15 @@ export class AvnuPriceService implements IPriceService {
 
   private readonly timeframeToAvnuFormat: Record<TimeFrame, string> = {
     '1m': '1',
-    '3m': '5',  // AVNU doesn't have 3 min timeframe, we use 5
+    '3m': '5', // AVNU doesn't have 3 min timeframe, we use 5
     '5m': '5',
     '15m': '15',
     '30m': '15', // AVNU doesn't have 30 min timeframe, we use 15
-    '1h': '1H'
+    '1h': '1H',
   };
 
   constructor() {
-    AVNU_TOKENS.forEach(token => {
+    AVNU_TOKENS.forEach((token) => {
       this.tokenMap.set(token.name.toUpperCase(), token.address);
       this.reverseTokenMap.set(token.address, token.name.toUpperCase());
     });
@@ -76,14 +79,17 @@ export class AvnuPriceService implements IPriceService {
     const startDate = new Date(endTime - timeWindow);
 
     try {
-      const response = await axios.get(`${this.baseUrl}/tokens/${identifier}/prices/line`, {
-        params: {
-          resolution,
-          startDate: startDate.toISOString(),
-          endDate: new Date(endTime).toISOString(),
-          in: 'usd'
-        }
-      });
+      const response = await axios.get(
+        `${this.baseUrl}/tokens/${identifier}/prices/line`,
+        {
+          params: {
+            resolution,
+            startDate: startDate.toISOString(),
+            endDate: new Date(endTime).toISOString(),
+            in: 'usd',
+          },
+        },
+      );
 
       if (!response.data || !Array.isArray(response.data)) {
         throw new Error('Invalid response format from AVNU API');
@@ -96,16 +102,18 @@ export class AvnuPriceService implements IPriceService {
         open: parseFloat(item.value),
         high: parseFloat(item.value),
         low: parseFloat(item.value),
-        volume: 0
+        volume: 0,
       }));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('AVNU API Error Details:', {
           status: error.response?.status,
           data: error.response?.data,
-          config: error.config
+          config: error.config,
         });
-        throw new Error(`AVNU API Error: ${error.response?.data?.messages?.[0] || error.message}`);
+        throw new Error(
+          `AVNU API Error: ${error.response?.data?.messages?.[0] || error.message}`,
+        );
       }
       throw error;
     }
@@ -122,11 +130,14 @@ export class AvnuPriceService implements IPriceService {
     options: { priceKind?: string } = {},
   ): Promise<number> {
     try {
-      const response = await axios.get(`${this.baseUrl}/tokens/${identifier}/prices/latest`, {
-        params: {
-          in: 'usd'
-        }
-      });
+      const response = await axios.get(
+        `${this.baseUrl}/tokens/${identifier}/prices/latest`,
+        {
+          params: {
+            in: 'usd',
+          },
+        },
+      );
 
       if (!response.data || !response.data.value) {
         throw new Error('Invalid response format from AVNU API');
@@ -135,7 +146,9 @@ export class AvnuPriceService implements IPriceService {
       return parseFloat(response.data.value);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`AVNU API Error: ${error.response?.data?.message || error.message}`);
+        throw new Error(
+          `AVNU API Error: ${error.response?.data?.message || error.message}`,
+        );
       }
       throw error;
     }
@@ -168,6 +181,9 @@ export class AvnuPriceService implements IPriceService {
     startTime: number,
     endTime: number,
   ): Promise<PriceDTO[]> {
-    return this.getHistoricalPrices(identifier, timeframe, { startTime, endTime });
+    return this.getHistoricalPrices(identifier, timeframe, {
+      startTime,
+      endTime,
+    });
   }
 }

@@ -16,7 +16,7 @@ import {
   IAccountService,
   IProviderService,
 } from '../../../../shared/blockchain/interfaces';
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 const ethereumRPC = `https://eth-mainnetalchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`;
 
@@ -59,7 +59,7 @@ export class WalletService implements IStarknetWallet {
       ozAccountConstructorCallData,
       ozAccountClassHash,
       ethereumPrivateKey,
-      ethereumAccountAddress
+      ethereumAccountAddress,
     };
   }
 

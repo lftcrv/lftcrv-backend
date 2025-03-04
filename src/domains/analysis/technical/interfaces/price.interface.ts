@@ -26,7 +26,7 @@ export interface IPriceService {
   getHistoricalPrices(
     identifier: string,
     timeframe: TimeFrame,
-    options?: BasePriceOptions
+    options?: BasePriceOptions,
   ): Promise<PriceDTO[]>;
 
   /**
@@ -37,7 +37,7 @@ export interface IPriceService {
    */
   getCurrentPrice(
     identifier: string,
-    options?: { priceKind?: string }
+    options?: { priceKind?: string },
   ): Promise<number>;
 
   /**
@@ -49,7 +49,7 @@ export interface IPriceService {
   getLastCandles(
     identifier: string,
     number: number,
-    timeframe: TimeFrame
+    timeframe: TimeFrame,
   ): Promise<PriceDTO[]>;
 
   /**
@@ -63,6 +63,6 @@ export interface IPriceService {
     identifier: string,
     timeframe: TimeFrame,
     startTime: number,
-    endTime: number
+    endTime: number,
   ): Promise<PriceDTO[]>;
 }

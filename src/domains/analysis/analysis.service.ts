@@ -30,7 +30,7 @@ export class AnalysisService {
     try {
       const technicalAnalysis = await this.technicalService.analyzeMarkets(
         [assetId],
-        platform
+        platform,
       );
       const assetTechnical = technicalAnalysis.analyses[assetId];
 
@@ -80,7 +80,9 @@ export class AnalysisService {
 
       return analysis;
     } catch (error) {
-      this.logger.error(`Error analyzing asset ${assetId} on ${platform}: ${error.message}`);
+      this.logger.error(
+        `Error analyzing asset ${assetId} on ${platform}: ${error.message}`,
+      );
       return {
         assetId,
         error: error.message,
@@ -159,7 +161,9 @@ export class AnalysisService {
     // Safely type check the retrieved data
     const data = latestAnalysis.data as unknown;
     if (!isJsonValue(data)) {
-      this.logger.error(`Invalid data format for analysis of asset ${assetId} on ${platform}`);
+      this.logger.error(
+        `Invalid data format for analysis of asset ${assetId} on ${platform}`,
+      );
       return null;
     }
 

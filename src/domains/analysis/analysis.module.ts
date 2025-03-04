@@ -38,4 +38,4 @@ import { UnifiedPriceService } from './technical/services/price/unified-price.se
   ],
   exports: [AnalysisService, TechnicalService],
 })
-export class AnalysisModule { }
+export class AnalysisModule {}

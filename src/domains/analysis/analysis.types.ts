@@ -1,6 +1,5 @@
 import { MarketAnalysis } from './technical/types';
 
-
 export interface AnalysisMetadata {
   generatedAt: string;
   processingTimeMs: number;
@@ -35,13 +34,13 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-  export interface CombinedAssetAnalysis {
-    assetId: string;
-    timestamp: number;
-    technical: MarketAnalysis['analyses'][string];
-    social: SocialAnalysis | null;
-    metadata?: AnalysisMetadata;
-  }
+export interface CombinedAssetAnalysis {
+  assetId: string;
+  timestamp: number;
+  technical: MarketAnalysis['analyses'][string];
+  social: SocialAnalysis | null;
+  metadata?: AnalysisMetadata;
+}
 
 // Type guard for CombinedAssetAnalysis
 export function isCombinedAssetAnalysis(

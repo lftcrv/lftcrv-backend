@@ -38,7 +38,7 @@ export class TechnicalService {
     private readonly ichimokuService: IchimokuService,
     private readonly volumeService: VolumeService,
     private readonly pivotService: PivotService,
-  ) { }
+  ) {}
 
   private formatSymbol(asset: string, platform: 'paradex' | 'avnu'): string {
     if (platform === 'avnu') return asset;
@@ -47,7 +47,7 @@ export class TechnicalService {
 
   async analyzeMarkets(
     assets: string[],
-    platform: 'paradex' | 'avnu' = 'paradex'
+    platform: 'paradex' | 'avnu' = 'paradex',
   ): Promise<MarketAnalysis> {
     if (!assets || assets.length === 0) {
       throw new BadRequestException('No assets provided for analysis');
@@ -58,9 +58,8 @@ export class TechnicalService {
     const failed: AnalysisError[] = [];
 
     try {
-      const availableSymbols = platform === 'paradex' 
-        ? await getAllSymbols(this.prisma)
-        : [];
+      const availableSymbols =
+        platform === 'paradex' ? await getAllSymbols(this.prisma) : [];
       const symbolsSet = new Set(availableSymbols);
 
       for (const asset of assets) {
@@ -80,7 +79,10 @@ export class TechnicalService {
               });
               continue;
             }
-            analyses[asset.toUpperCase()] = await this.analyzeAsset(formattedSymbol, platform);
+            analyses[asset.toUpperCase()] = await this.analyzeAsset(
+              formattedSymbol,
+              platform,
+            );
           }
         } catch (error) {
           failed.push({
@@ -114,25 +116,39 @@ export class TechnicalService {
     }
   }
 
-
   private async analyzeAsset(
     identifier: string,
-    platform: 'paradex' | 'avnu'
+    platform: 'paradex' | 'avnu',
   ): Promise<AssetAnalysis> {
     const [shortTermPrices, mediumTermPrices, longTermPrices] =
       await Promise.all([
-        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '5m', {
-          limit: 100,
-          priceKind: 'mark',
-        }),
-        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '1h', {
-          limit: 52,
-          priceKind: 'mark',
-        }),
-        this.unifiedPriceService.getHistoricalPrices(platform, identifier, '1h', {
-          limit: 30,
-          priceKind: 'mark',
-        }),
+        this.unifiedPriceService.getHistoricalPrices(
+          platform,
+          identifier,
+          '5m',
+          {
+            limit: 100,
+            priceKind: 'mark',
+          },
+        ),
+        this.unifiedPriceService.getHistoricalPrices(
+          platform,
+          identifier,
+          '1h',
+          {
+            limit: 52,
+            priceKind: 'mark',
+          },
+        ),
+        this.unifiedPriceService.getHistoricalPrices(
+          platform,
+          identifier,
+          '1h',
+          {
+            limit: 30,
+            priceKind: 'mark',
+          },
+        ),
       ]);
 
     const lastPrice = shortTermPrices[shortTermPrices.length - 1].close!;
@@ -473,7 +489,7 @@ export class TechnicalService {
     for (let i = 1; i < Math.min(periods, prices.length); i++) {
       returns.push(
         ((prices[i].close! - prices[i - 1].close!) / prices[i - 1].close!) *
-        100,
+          100,
       );
     }
 

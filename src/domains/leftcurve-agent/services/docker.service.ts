@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { IDockerService } from '../interfaces/docker-service.interface';
 import * as Docker from 'dockerode';
 import * as path from 'path';
@@ -19,13 +19,13 @@ export class DockerService implements IDockerService, OnModuleInit {
   private readonly elizaEnvPath: string;
   private readonly startPort = 3001;
   private readonly maxPort = 3999;
+  private readonly logger = new Logger(DockerService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     @Inject(ServiceTokens.ElizaConfig)
     private readonly elizaConfig: IElizaConfigService,
   ) {
-    this.docker = new Docker();
     this.elizaBasePath = path.join(process.cwd(), 'config');
     this.elizaEnvPath = path.join(this.elizaBasePath, 'agents');
   }
@@ -55,6 +55,8 @@ export class DockerService implements IDockerService, OnModuleInit {
    * @throws Error if environment files or Docker image are missing
    */
   async onModuleInit() {
+    this.docker = new Docker();
+
     // Create required directories
     await fs.mkdir(this.elizaEnvPath, { recursive: true });
 
