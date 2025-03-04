@@ -60,12 +60,6 @@ export class DockerService implements IDockerService, OnModuleInit {
     // Create required directories
     await fs.mkdir(this.elizaEnvPath, { recursive: true });
 
-    // Skip Docker checks if in local development mode
-    if (process.env.LOCAL_DEVELOPMENT === 'TRUE') {
-      this.logger.log('Skipping Docker image check in local development mode');
-      return;
-    }
-
     // Verify Docker image exists
     const images = await this.docker.listImages();
     const baseImage = images.find((img) =>
