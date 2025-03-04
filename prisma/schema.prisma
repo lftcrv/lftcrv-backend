@@ -1,15 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-///
 /// Enums
-///
+enum WalletAddressType {
+  NATIVE
+  DERIVED
+}
 
 enum AgentStatus {
   STARTING
@@ -38,15 +40,18 @@ enum OrchestrationStatus {
   FAILED
 }
 
-enum WalletAddressType {
-  NATIVE
-  DERIVED
+enum BondingStatus {
+  BONDING
+  LIVE
 }
 
-///
-/// Models
-///
+enum AccessCodeType {
+  ADMIN
+  REFERRAL
+  TEMPORARY
+}
 
+/// Models
 model OTP {
   id        String    @id @default(uuid())
   code      String    @unique
@@ -57,15 +62,28 @@ model OTP {
   @@index([code])
 }
 
-enum BondingStatus {
-  BONDING
-  LIVE
+model AccessCode {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  createdAt   DateTime       @default(now())
+  expiresAt   DateTime?
+  maxUses     Int?
+  currentUses Int            @default(0)
+  createdBy   String?
+  isActive    Boolean        @default(true)
+  type        AccessCodeType
+  description String?
+  agents      ElizaAgent[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([type])
+  @@map("access_codes")
 }
 
 model LatestMarketData {
   id             String        @id @default(uuid())
   elizaAgentId   String        @unique
-  elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
   price          Float         @default(0)
   priceChange24h Float         @default(0)
   holders        Int           @default(0)
@@ -73,6 +91,7 @@ model LatestMarketData {
   bondingStatus  BondingStatus @default(BONDING)
   updatedAt      DateTime      @updatedAt
   createdAt      DateTime      @default(now())
+  elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
 
   @@index([price])
   @@index([priceChange24h])
@@ -107,14 +126,14 @@ model ParadexMarket {
 
 model Orchestration {
   id            String              @id @default(uuid())
-  type          String // Type of orchestration (e.g., "agent-creation")
+  type          String
   status        OrchestrationStatus
   currentStepId String
-  data          Json // Store orchestration input data
-  result        Json? // Store result data
-  error         String? // Error message if failed
+  data          Json
+  result        Json?
+  error         String?
   progress      Float               @default(0)
-  metadata      Json? // Store metadata
+  metadata      Json?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
@@ -126,38 +145,40 @@ model Orchestration {
 
 model Analysis {
   id        String       @id @default(uuid())
-  type      AnalysisType // Using the enum
+  type      AnalysisType
   data      Json
-  score     Float? // Optional overall score
+  score     Float?
   timestamp DateTime     @default(now())
-  metadata  Json? // Optional metadata
+  metadata  Json?
 
   @@index([timestamp])
   @@map("analyses")
 }
 
 model ElizaAgent {
-  id              String      @id @default(uuid())
-  name            String
-  curveSide       CurveSide
-  creatorWallet   String
-  deploymentFeesTxHash String     @map("deployment_fees_tx_hash") // Required, frontend sends confirmed tx hash
-  status          AgentStatus @default(STARTING)
-  failureReason   String?     // For storing detailed error info
-  containerId     String?
-  runtimeAgentId  String?
-  port            Int?
-  characterConfig Json
-  profilePicture  String?     // URL to the agent's profile picture
-  degenScore      Float?      @default(0)
-  winScore        Float?      @default(0)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  TradingInformation TradingInformation[]
-  LatestMarketData   LatestMarketData?
-  Wallet             AgentWallet?
-  Token              AgentToken?
+  id                   String               @id @default(uuid())
+  name                 String
+  curveSide            CurveSide
+  creatorWallet        String
+  deploymentFeesTxHash String               @map("deployment_fees_tx_hash")
+  status               AgentStatus          @default(STARTING)
+  failureReason        String?
+  containerId          String?
+  runtimeAgentId       String?
+  port                 Int?
+  characterConfig      Json
+  profilePicture       String?
+  degenScore           Float?               @default(0)
+  winScore             Float?               @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  accessCodeId         String?
+  accessGrantedAt      DateTime?
+  Token                AgentToken?
+  Wallet               AgentWallet?
+  accessCode           AccessCode?          @relation(fields: [accessCodeId], references: [id])
+  LatestMarketData     LatestMarketData?
+  TradingInformation   TradingInformation[]
 
   @@map("eliza_agents")
 }
@@ -177,6 +198,7 @@ model AgentWallet {
   privateKey            String
   publicKey             String
   ethPrivateKey         String
+  ethAccountAddress     String
   contractAddress       String
   fundTransactionHash   String?
   deployTransactionHash String?
@@ -198,8 +220,8 @@ model AgentToken {
   sellTax         Int
   elizaAgentId    String          @unique
   elizaAgent      ElizaAgent      @relation(fields: [elizaAgentId], references: [id])
-  Transaction     Transaction[]
   Prices          PriceForToken[]
+  Transaction     Transaction[]
 
   @@map("agent_token")
 }
@@ -232,18 +254,18 @@ model PriceForToken {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  starknetAddress String           @unique
-  evmAddress      String?          @unique
+  id              String            @id @default(cuid())
+  starknetAddress String            @unique
+  evmAddress      String?           @unique
   addressType     WalletAddressType
   twitterHandle   String?
   lastConnection  DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   // Referral system
-  referralCode    ReferralCode?    @relation("UserReferralCode")
-  usedReferralCode String?         @map("used_referral_code")
+  referralCode     ReferralCode? @relation("UserReferralCode")
+  usedReferralCode String?       @map("used_referral_code")
 
   @@index([starknetAddress])
   @@index([evmAddress])
@@ -252,16 +274,16 @@ model User {
 }
 
 model ReferralCode {
-  id              String    @id @default(cuid())
-  code            String    @unique
-  isAccessCode    Boolean   @default(true)
-  userId          String    @unique
-  user            User      @relation("UserReferralCode", fields: [userId], references: [id])
-  usageCount      Int       @default(0)
-  maxUses         Int?      // null means unlimited
-  expiresAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  code         String    @unique
+  isAccessCode Boolean   @default(true)
+  userId       String    @unique
+  user         User      @relation("UserReferralCode", fields: [userId], references: [id])
+  usageCount   Int       @default(0)
+  maxUses      Int? // null means unlimited
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([code])
   @@map("referral_codes")
