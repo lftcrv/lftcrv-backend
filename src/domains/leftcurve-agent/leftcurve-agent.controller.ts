@@ -266,6 +266,69 @@ export class ElizaAgentController {
     }
   }
 
+  @Get('by-transaction')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Find an agent by transaction hash' })
+  async findByTransaction(
+    @Query('transactionHash') transactionHash: string,
+    @Query('creatorWallet') creatorWallet?: string,
+  ) {
+    try {
+      console.log('Finding agent by transaction:', {
+        transactionHash,
+        creatorWallet,
+      });
+
+      if (!transactionHash) {
+        throw new BadRequestException('Transaction hash is required');
+      }
+
+      const query: any = {
+        deploymentFeesTxHash: transactionHash,
+      };
+
+      if (creatorWallet) {
+        query.creatorWallet = creatorWallet;
+      }
+
+      const agent = await this.prisma.elizaAgent.findFirst({
+        where: query,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          Token: true,
+        },
+      });
+
+      if (!agent) {
+        console.log('No agent found with transaction hash:', transactionHash);
+        return {
+          status: 'success',
+          data: { agent: null },
+        };
+      }
+
+      console.log('Found agent by transaction:', {
+        id: agent.id,
+        name: agent.name,
+      });
+
+      return {
+        status: 'success',
+        data: { agent },
+      };
+    } catch (error) {
+      console.error('Error finding agent by transaction:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to find agent: ${error.message}`,
+      );
+    }
+  }
+
   @Get()
   @RequireApiKey()
   @ApiOperation({ summary: 'List all Eliza agents' })

@@ -45,7 +45,13 @@ export class StartContainerStep extends BaseStepExecutor {
         },
       });
 
-      return this.success(updatedAgent, { runtimeAgentId });
+      return this.success(updatedAgent, {
+        runtimeAgentId,
+        agent: {
+          id: agentId,
+          name: updatedAgent.name,
+        },
+      });
     } catch (error) {
       return this.failure(`Failed to start container: ${error.message}`);
     }
