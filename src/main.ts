@@ -32,9 +32,15 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', '*'),
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Accept', 'x-api-key'],
+    origin: [
+      'https://lftcrv.fun',
+      'https://www.lftcrv.fun',
+      'https://lftcrv.vercel.app',
+      'http://localhost:3000',
+    ],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept', 'x-api-key', 'Authorization'],
+    credentials: true,
   });
 
   // Serve static files for profile pictures
