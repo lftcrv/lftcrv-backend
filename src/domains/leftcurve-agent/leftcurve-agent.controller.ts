@@ -92,16 +92,13 @@ export class ElizaAgentController {
     let tempFileName = null;
 
     try {
-      // Si seul characterConfig est présent, le convertir en format agentConfig
       if (dto.characterConfig && !dto.agentConfig) {
         console.log(
           '🔄 Converting legacy characterConfig to new agentConfig format',
         );
 
-        // Extraction des données pertinentes de l'ancien format
         const characterConfig = dto.characterConfig;
 
-        // Création du nouveau format
         const agentConfig = {
           name: characterConfig.name || dto.name,
           bio: Array.isArray(characterConfig.bio)
@@ -118,7 +115,6 @@ export class ElizaAgentController {
           internal_plugins: ['rpc', 'lftcrv', 'paradex'],
         };
 
-        // Ajout aux objectifs si pertinent
         if (
           Array.isArray(characterConfig.style?.all) &&
           characterConfig.style.all.length > 0
@@ -132,7 +128,6 @@ export class ElizaAgentController {
         console.log('✅ Format conversion completed');
       }
 
-      // Si aucun des formats n'est présent, c'est une erreur
       if (!dto.agentConfig && !dto.characterConfig) {
         throw new BadRequestException(
           'Missing agent configuration (agentConfig or characterConfig required)',
@@ -161,55 +156,6 @@ export class ElizaAgentController {
         orchestrationId,
         tempFileName,
       });
-
-      console.log('🚀 Orchestration started:', {
-        orchestrationId,
-        tempFileName,
-      });
-
-      // Wait for the first step to complete to get the agent ID
-      let retries = 0;
-      let agentId = null;
-      while (retries < 30 && !agentId) {
-        // Try for up to 2.5 minutes
-        const status =
-          await this.orchestrator.getOrchestrationStatus(orchestrationId);
-
-        if (status.status === 'FAILED') {
-          throw new Error(`Orchestration failed: ${status.error}`);
-        }
-
-        if (status.result?.id) {
-          agentId = status.result.id;
-          break;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds
-        retries++;
-      }
-
-      // If we have both a temporary file and an agent ID, move the file to its final location
-      if (tempFileName && agentId) {
-        console.log('🔄 Moving profile picture to final location...');
-        const finalFileName = await this.fileUploadService.moveToFinal(
-          tempFileName,
-          agentId,
-        );
-
-        // Update the agent record with the final profile picture name
-        await this.prisma.elizaAgent.update({
-          where: { id: agentId },
-          data: {
-            profilePicture: finalFileName,
-          } as { profilePicture: string },
-        });
-
-        console.log('✅ Profile picture moved and agent updated:', {
-          agentId,
-          profilePicture: finalFileName,
-        });
-      }
-
       return {
         status: 'success',
         data: {
@@ -262,6 +208,69 @@ export class ElizaAgentController {
     } catch (error) {
       throw new NotFoundException(
         `Creation process ${orchestrationId} not found`,
+      );
+    }
+  }
+
+  @Get('by-transaction')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Find an agent by transaction hash' })
+  async findByTransaction(
+    @Query('transactionHash') transactionHash: string,
+    @Query('creatorWallet') creatorWallet?: string,
+  ) {
+    try {
+      console.log('Finding agent by transaction:', {
+        transactionHash,
+        creatorWallet,
+      });
+
+      if (!transactionHash) {
+        throw new BadRequestException('Transaction hash is required');
+      }
+
+      const query: any = {
+        deploymentFeesTxHash: transactionHash,
+      };
+
+      if (creatorWallet) {
+        query.creatorWallet = creatorWallet;
+      }
+
+      const agent = await this.prisma.elizaAgent.findFirst({
+        where: query,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          Token: true,
+        },
+      });
+
+      if (!agent) {
+        console.log('No agent found with transaction hash:', transactionHash);
+        return {
+          status: 'success',
+          data: { agent: null },
+        };
+      }
+
+      console.log('Found agent by transaction:', {
+        id: agent.id,
+        name: agent.name,
+      });
+
+      return {
+        status: 'success',
+        data: { agent },
+      };
+    } catch (error) {
+      console.error('Error finding agent by transaction:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to find agent: ${error.message}`,
       );
     }
   }
