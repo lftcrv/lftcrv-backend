@@ -92,16 +92,13 @@ export class ElizaAgentController {
     let tempFileName = null;
 
     try {
-      // Si seul characterConfig est présent, le convertir en format agentConfig
       if (dto.characterConfig && !dto.agentConfig) {
         console.log(
           '🔄 Converting legacy characterConfig to new agentConfig format',
         );
 
-        // Extraction des données pertinentes de l'ancien format
         const characterConfig = dto.characterConfig;
 
-        // Création du nouveau format
         const agentConfig = {
           name: characterConfig.name || dto.name,
           bio: Array.isArray(characterConfig.bio)
@@ -118,7 +115,6 @@ export class ElizaAgentController {
           internal_plugins: ['rpc', 'lftcrv', 'paradex'],
         };
 
-        // Ajout aux objectifs si pertinent
         if (
           Array.isArray(characterConfig.style?.all) &&
           characterConfig.style.all.length > 0
@@ -132,7 +128,6 @@ export class ElizaAgentController {
         console.log('✅ Format conversion completed');
       }
 
-      // Si aucun des formats n'est présent, c'est une erreur
       if (!dto.agentConfig && !dto.characterConfig) {
         throw new BadRequestException(
           'Missing agent configuration (agentConfig or characterConfig required)',
@@ -161,55 +156,6 @@ export class ElizaAgentController {
         orchestrationId,
         tempFileName,
       });
-
-      console.log('🚀 Orchestration started:', {
-        orchestrationId,
-        tempFileName,
-      });
-
-      // Wait for the first step to complete to get the agent ID
-      let retries = 0;
-      let agentId = null;
-      while (retries < 30 && !agentId) {
-        // Try for up to 2.5 minutes
-        const status =
-          await this.orchestrator.getOrchestrationStatus(orchestrationId);
-
-        if (status.status === 'FAILED') {
-          throw new Error(`Orchestration failed: ${status.error}`);
-        }
-
-        if (status.result?.id) {
-          agentId = status.result.id;
-          break;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds
-        retries++;
-      }
-
-      // If we have both a temporary file and an agent ID, move the file to its final location
-      if (tempFileName && agentId) {
-        console.log('🔄 Moving profile picture to final location...');
-        const finalFileName = await this.fileUploadService.moveToFinal(
-          tempFileName,
-          agentId,
-        );
-
-        // Update the agent record with the final profile picture name
-        await this.prisma.elizaAgent.update({
-          where: { id: agentId },
-          data: {
-            profilePicture: finalFileName,
-          } as { profilePicture: string },
-        });
-
-        console.log('✅ Profile picture moved and agent updated:', {
-          agentId,
-          profilePicture: finalFileName,
-        });
-      }
-
       return {
         status: 'success',
         data: {
