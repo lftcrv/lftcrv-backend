@@ -40,6 +40,17 @@ else
   echo "PostgreSQL is already running."
 fi
 if [ "$CLEAN_DB" = true ]; then
+  echo "Warning: You are about to delete the database $DATABASE_NAME. This action cannot be undone."
+  read -p "Are you sure? (yes/no): " CONFIRM
+  if [ "$CONFIRM" != "yes" ]; then
+    echo "Database deletion aborted."
+    exit 1
+  fi
+  read -p "Are you absolutely sure? This will erase all data. (yes/no): " CONFIRM
+  if [ "$CONFIRM" != "yes" ]; then
+    echo "Database deletion aborted."
+    exit 1
+  fi
   echo "Clean option enabled: removing database $DATABASE_NAME..."
   PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -U $DATABASE_USER -d postgres -c "DROP DATABASE IF EXISTS \"$DATABASE_NAME\";"
   echo "Database deleted!"
