@@ -23,31 +23,34 @@ export class TasksService {
     private readonly tokenService: IQueryAgentToken,
     private readonly configService: ConfigService,
   ) {
-    const isLocalDevelopment = this.configService.get<string>('LOCAL_DEVELOPMENT') === 'TRUE';
-    const host = isLocalDevelopment ? 'localhost' : this.configService.get<string>('HOST_BACKEND');
+    const isLocalDevelopment =
+      this.configService.get<string>('LOCAL_DEVELOPMENT') === 'TRUE';
+    const host = isLocalDevelopment
+      ? 'localhost'
+      : this.configService.get<string>('HOST_BACKEND');
     const port = this.configService.get<string>('BACKEND_PORT');
 
     this.apiUrl = `http://${host}:${port}`;
     this.apiKey = this.configService.get<string>('BACKEND_API_KEY');
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
-  async handleCron() {
-    const startTime = Date.now();
-    this.logger.log('Start sending messages to active agents');
-    try {
-      await this.messageService.sendStarknetMessageToRunningAgents();
-      const duration = Date.now() - startTime;
-      this.logger.log(
-        `Successfully sent messages to active agents (${duration}ms)`,
-      );
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      this.logger.error(
-        `Failed to send messages to active agents (${duration}ms): ${error.message}`,
-      );
-    }
-  }
+  // @Cron(CronExpression.EVERY_HOUR)
+  // async handleCron() {
+  //   const startTime = Date.now();
+  //   this.logger.log('Start sending messages to active agents');
+  //   try {
+  //     await this.messageService.sendStarknetMessageToRunningAgents();
+  //     const duration = Date.now() - startTime;
+  //     this.logger.log(
+  //       `Successfully sent messages to active agents (${duration}ms)`,
+  //     );
+  //   } catch (error) {
+  //     const duration = Date.now() - startTime;
+  //     this.logger.error(
+  //       `Failed to send messages to active agents (${duration}ms): ${error.message}`,
+  //     );
+  //   }
+  // }
 
   @Cron(CronExpression.EVERY_HOUR)
   async sendActOnParadexMessage() {
@@ -121,8 +124,8 @@ export class TasksService {
 
           const priceChange24h = oldPrice
             ? ((Number(currentPrice) - Number(oldPrice.price)) /
-              Number(oldPrice.price)) *
-            100
+                Number(oldPrice.price)) *
+              100
             : 0;
 
           await this.prisma.priceForToken.create({
@@ -178,85 +181,84 @@ export class TasksService {
           headers: {
             'x-api-key': this.apiKey,
           },
-        }
+        },
       );
 
       const duration = Date.now() - startTime;
       this.logger.log(
-        `Paradex markets refresh completed successfully - Status: ${response.status}, Duration: ${duration}ms`
+        `Paradex markets refresh completed successfully - Status: ${response.status}, Duration: ${duration}ms`,
       );
     } catch (error) {
       const duration = Date.now() - startTime;
       this.logger.error(
-        `Failed to refresh Paradex markets (${duration}ms): ${error.message}`
+        `Failed to refresh Paradex markets (${duration}ms): ${error.message}`,
       );
     }
   }
 
-@Cron('5 */4 * * *')
-async generateParadexAnalysis() {
-  const startTime = Date.now();
-  this.logger.log('Starting Paradex asset analysis generation');
+  @Cron(CronExpression.EVERY_HOUR)
+  async generateParadexAnalysis() {
+    const startTime = Date.now();
+    this.logger.log('Starting Paradex asset analysis generation');
 
-  try {
-    const response = await axios.post(
-      `${this.apiUrl}/analysis/generate`,
-      {},
-      {
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json',
+    try {
+      const response = await axios.post(
+        `${this.apiUrl}/analysis/generate`,
+        {},
+        {
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            assets: 'BTC,ETH,STRK,AAVE,AI16Z',
+            platform: 'paradex',
+          },
         },
-        params: {
-          assets: 'BTC,ETH,STRK,AAVE,AI16Z',
-          platform: 'paradex'
-        }
-      }
-    );
+      );
 
-    const duration = Date.now() - startTime;
-    this.logger.log(
-      `Paradex asset analysis generated successfully - Status: ${response.status}, Duration: ${duration}ms`
-    );
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    this.logger.error(
-      `Failed to generate Paradex asset analysis (${duration}ms): ${error.message}`
-    );
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Paradex asset analysis generated successfully - Status: ${response.status}, Duration: ${duration}ms`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to generate Paradex asset analysis (${duration}ms): ${error.message}`,
+      );
+    }
   }
-}
 
-@Cron('10 */4 * * *')
-async generateAvnuAnalysis() {
-  const startTime = Date.now();
-  this.logger.log('Starting AVNU asset analysis generation');
+  @Cron('10 */4 * * *')
+  async generateAvnuAnalysis() {
+    const startTime = Date.now();
+    this.logger.log('Starting AVNU asset analysis generation');
 
-  try {
-    const response = await axios.post(
-      `${this.apiUrl}/analysis/generate`,
-      {},
-      {
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json',
+    try {
+      const response = await axios.post(
+        `${this.apiUrl}/analysis/generate`,
+        {},
+        {
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json',
+          },
+          params: {
+            assets: 'BROTHER,STRK,LORDS,USDC,ETH,UNI',
+            platform: 'avnu',
+          },
         },
-        params: {
-          assets: 'BROTHER,STRK,LORDS,USDC,ETH,UNI',
-          platform: 'avnu'
-        }
-      }
-    );
+      );
 
-    const duration = Date.now() - startTime;
-    this.logger.log(
-      `AVNU asset analysis generated successfully - Status: ${response.status}, Duration: ${duration}ms`
-    );
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    this.logger.error(
-      `Failed to generate AVNU asset analysis (${duration}ms): ${error.message}`
-    );
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `AVNU asset analysis generated successfully - Status: ${response.status}, Duration: ${duration}ms`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to generate AVNU asset analysis (${duration}ms): ${error.message}`,
+      );
+    }
   }
-}
-
 }
