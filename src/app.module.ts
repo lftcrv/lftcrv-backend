@@ -27,6 +27,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TerminusModule } from '@nestjs/terminus';
 import { UserModule } from './domains/user/user.module';
 import { FundingModule } from './domains/blockchain/funding/funding.module';
+import { KPIModule } from './domains/kpi/kpi.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { FundingModule } from './domains/blockchain/funding/funding.module';
     HealthModule,
     ElizaAgentModule,
     TradingInformationModule,
+    KPIModule,
     TasksModule,
     MessageModule,
     LeaderboardModule,
