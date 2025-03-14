@@ -36,6 +36,30 @@ if ! docker ps | grep -q "lftcrv-postgres"; then
   echo "PostgreSQL is not running. Starting it now..."
   docker compose up -d postgres
   echo "PostgreSQL started!"
+  
+  # Add a delay to ensure PostgreSQL is fully ready
+  echo "Waiting for PostgreSQL to be fully ready..."
+  sleep 5
+  
+  # Test connection until it succeeds or times out
+  MAX_RETRIES=10
+  RETRY_COUNT=0
+  
+  while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -U $DATABASE_USER -d postgres -c "SELECT 1" > /dev/null 2>&1; then
+      echo "PostgreSQL is ready!"
+      break
+    fi
+    
+    echo "PostgreSQL not ready yet, waiting..."
+    sleep 2
+    RETRY_COUNT=$((RETRY_COUNT+1))
+  done
+  
+  if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo "Failed to connect to PostgreSQL after multiple attempts. Please check the logs."
+    exit 1
+  fi
 else
   echo "PostgreSQL is already running."
 fi
