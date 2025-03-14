@@ -179,6 +179,7 @@ model ElizaAgent {
   accessCode           AccessCode?          @relation(fields: [accessCodeId], references: [id])
   LatestMarketData     LatestMarketData?
   TradingInformation   TradingInformation[]
+  ParadexAccountBalance ParadexAccountBalance[]
 
   @@map("eliza_agents")
 }
@@ -191,6 +192,16 @@ model TradingInformation {
   elizaAgent   ElizaAgent @relation(fields: [elizaAgentId], references: [id])
 
   @@map("trading_information")
+}
+
+model ParadexAccountBalance {
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now())
+  balanceInUSD Int
+  agentId String
+  elizaAgent   ElizaAgent @relation(fields: [agentId], references: [id])
+
+  @@map("paradex_account_balance")
 }
 
 model AgentWallet {
