@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FundWalletDto {
@@ -7,19 +7,17 @@ export class FundWalletDto {
   @IsNotEmpty()
   txHash: string;
 
-  @ApiProperty({ description: 'ID of the agent receiving the funds' })
+  @ApiProperty({ description: 'Runtime agent ID receiving the liquidity' })
   @IsString()
   @IsNotEmpty()
   runtimeAgentId: string;
 
-  @ApiProperty({
-    description: 'Amount (in Wei, ETH, or other) that was transferred',
-  })
-  @IsNumber()
-  amount: number;
-
-  @ApiProperty({ description: 'Recipient wallet address of the agent' })
+  @ApiProperty({ description: 'Sender address of the transaction' })
   @IsString()
   @IsNotEmpty()
-  recipient: string;
+  sender: string;
+
+  @ApiProperty({ description: 'Amount of USDC transferred (in smallest unit)' })
+  @IsNumber()
+  amount: number;
 }

@@ -11,11 +11,21 @@ export class FundingController {
 
   @Post('record')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Poll transaction, then record the funding if successful' })
-  @ApiResponse({ status: 201, description: 'Funding recorded successfully' })
+  @ApiOperation({
+    summary: 'Record a liquidity deposit after transaction confirmation',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Liquidity deposit recorded successfully',
+  })
   async recordFunding(@Body() body: FundWalletDto) {
-    const { txHash, runtimeAgentId, amount } = body;
-    const result = await this.fundingService.recordFunding(txHash, runtimeAgentId, amount);
+    const { txHash, runtimeAgentId, sender, amount } = body;
+    const result = await this.fundingService.recordFunding(
+      txHash,
+      runtimeAgentId,
+      sender,
+      amount,
+    );
     return {
       status: 'success',
       data: result,
