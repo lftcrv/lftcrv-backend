@@ -50,7 +50,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         );
         const txStatus = await provider.getTransactionStatus(txHash);
 
-        if (txStatus.finality_status === 'ACCEPTED_ON_L2') {
+        if (txStatus.finality_status === 'ACCEPTED_ON_L2' || txStatus.finality_status === 'ACCEPTED_ON_L1') {
           console.log('✅ Transaction confirmed on L2');
           return true;
         } else if (txStatus.finality_status === 'REJECTED') {
