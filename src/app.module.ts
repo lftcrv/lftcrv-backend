@@ -26,6 +26,7 @@ import { OrchestrationModule } from './domains/orchestration/orchestration.modul
 import { ScheduleModule } from '@nestjs/schedule';
 import { TerminusModule } from '@nestjs/terminus';
 import { UserModule } from './domains/user/user.module';
+import { FundingModule } from './domains/blockchain/funding/funding.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { UserModule } from './domains/user/user.module';
     MessageModule,
     LeaderboardModule,
     StarknetModule,
+    FundingModule,
     AgentTokenModule,
     TransactionModule,
     AnalysisSharedModule,
