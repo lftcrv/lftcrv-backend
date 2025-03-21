@@ -9,6 +9,7 @@ import {
   BlockchainTokens,
   IProviderService,
 } from '../../../shared/blockchain/interfaces';
+import { MessageService } from 'src/message/message.service';
 
 @Injectable()
 export class FundingService {
@@ -20,6 +21,7 @@ export class FundingService {
     private readonly prisma: PrismaService,
     @Inject(BlockchainTokens.Provider)
     private readonly providerService: IProviderService,
+    private readonly messageService: MessageService,
   ) {}
 
   private delay(ms: number) {
@@ -112,9 +114,18 @@ export class FundingService {
         txHash,
         runtimeAgentId,
         sender,
-        amount: BigInt(amount), // Stored as BigInt for precision
+        amount: BigInt(amount),
         recipient,
       },
+    });
+
+    this.logger.log(
+      `📢 Sending deposit instruction to agent: ${runtimeAgentId}`,
+    );
+
+    const depositMessage = `execute deposit_to_paradex ${amount} usdc to ${recipient}`;
+    await this.messageService.sendMessageToAgent(runtimeAgentId, {
+      content: { text: depositMessage },
     });
 
     return {
