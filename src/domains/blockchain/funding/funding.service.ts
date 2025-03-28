@@ -102,22 +102,23 @@ export class FundingService {
 
     const recipient = agent.Wallet.contractAddress;
 
-    // 2️⃣ Poll for transaction confirmation
     const confirmed = await this.pollTransactionStatus(txHash);
     if (!confirmed) {
       throw new BadRequestException(`Transaction ${txHash} was not confirmed.`);
     }
 
-    // 3️⃣ Store the deposit in `LiquidityDeposit`
+    const usdcAmount = BigInt(Math.round(amount * 1_000_000));
+
     const deposit = await this.prisma.liquidityDeposit.create({
       data: {
         txHash,
         runtimeAgentId,
         sender,
-        amount: BigInt(amount),
+        amount: usdcAmount,
         recipient,
       },
     });
+    
 
     this.logger.log(
       `📢 Sending deposit instruction to agent: ${runtimeAgentId}`,
