@@ -112,7 +112,7 @@ export class ElizaAgentController {
           interval: 30,
           chat_id: 'test0',
           external_plugins: [],
-          internal_plugins: ['rpc', 'lftcrv', 'paradex'],
+          internal_plugins: ['rpc', 'leftcurve', 'paradex'],
         };
 
         if (

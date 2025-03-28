@@ -26,6 +26,7 @@ import { OrchestrationModule } from './domains/orchestration/orchestration.modul
 import { ScheduleModule } from '@nestjs/schedule';
 import { TerminusModule } from '@nestjs/terminus';
 import { UserModule } from './domains/user/user.module';
+import { FundingModule } from './domains/blockchain/funding/funding.module';
 import { KPIModule } from './domains/kpi/kpi.module';
 
 @Module({
@@ -67,6 +68,7 @@ import { KPIModule } from './domains/kpi/kpi.module';
     MessageModule,
     LeaderboardModule,
     StarknetModule,
+    FundingModule,
     AgentTokenModule,
     TransactionModule,
     AnalysisSharedModule,

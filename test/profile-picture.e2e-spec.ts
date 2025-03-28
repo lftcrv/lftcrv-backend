@@ -8,7 +8,7 @@ import { AppModule } from '../src/app.module';
 import { ConfigService } from '@nestjs/config';
 import { BlockchainTokens } from '../src/shared/blockchain/interfaces';
 import { OrchestrationServiceTokens } from '../src/domains/orchestration/interfaces';
-import { ServiceTokens } from '../src/domains/eliza-agent/interfaces';
+import { ServiceTokens } from '../src/domains/leftcurve-agent/interfaces';
 
 describe('Profile Picture Upload (e2e)', () => {
   let app: INestApplication;
