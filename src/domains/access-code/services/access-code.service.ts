@@ -245,7 +245,7 @@ export class AccessCodeService implements IAccessCodeService {
     }
 
     // Find the user
-    const user = await this.prisma.elizaAgent.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -256,20 +256,23 @@ export class AccessCodeService implements IAccessCodeService {
       };
     }
 
-    // Update the user with the access code using raw SQL
-    await this.prisma.$executeRaw`
-      UPDATE eliza_agents 
-      SET accessCodeId = ${accessCode.id}, 
-          accessGrantedAt = now() 
-      WHERE id = ${userId}
-    `;
+    // Update the user with the access code
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        usedReferralCode: accessCode.id,
+      },
+    });
 
     // Increment the access code usage
-    await this.prisma.$executeRaw`
-      UPDATE access_codes 
-      SET currentUses = currentUses + 1 
-      WHERE id = ${accessCode.id}
-    `;
+    await this.prisma.accessCode.update({
+      where: { id: accessCode.id },
+      data: {
+        currentUses: {
+          increment: 1,
+        },
+      },
+    });
 
     return {
       isValid: true,
