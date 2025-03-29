@@ -5,6 +5,7 @@ import {
   IsObject,
   IsNotEmpty,
   IsOptional,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CurveSide } from '@prisma/client';
@@ -41,6 +42,15 @@ export class CreateElizaAgentDto {
   @IsString()
   @IsNotEmpty()
   transactionHash: string;
+
+  @ApiProperty({
+    description: 'ID of the agent to fork from (optional)',
+    required: false,
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  @IsOptional()
+  forkedFromId?: string;
 
   @ApiProperty({
     description: "Agent's character configuration (legacy format)",
