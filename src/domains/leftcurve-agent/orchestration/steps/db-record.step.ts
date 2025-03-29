@@ -110,8 +110,8 @@ export class CreateDbRecordStep extends BaseStepExecutor {
 
       console.log('📦 Received DTO data:', {
         ...dto,
-        characterConfig: '[redacted]', // Don't log the full config
-        agentConfig: '[redacted]', // Don't log the full config
+        characterConfig: '[redacted]',
+        agentConfig: '[redacted]',
       });
 
       // Verify transaction hash exists
@@ -119,8 +119,58 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         return this.failure('Missing transaction hash for deployment payment');
       }
 
-      // Prioritize characterConfig if it exists, otherwise use agentConfig
-      const config = dto.characterConfig || dto.agentConfig || null;
+      // Handle forking logic if forkedFromId is provided
+      let config = dto.characterConfig || dto.agentConfig || null;
+
+      if (dto.forkedFromId) {
+        try {
+          console.log(`🍴 Forking from agent with ID: ${dto.forkedFromId}`);
+
+          // Get the source agent
+          const sourceAgent = await this.prisma.elizaAgent.findUnique({
+            where: { id: dto.forkedFromId },
+            include: { LatestMarketData: true },
+          });
+
+          if (!sourceAgent) {
+            return this.failure(
+              `Source agent with ID ${dto.forkedFromId} not found`,
+            );
+          }
+
+          // Use the source agent's config if none provided
+          if (!config) {
+            config = sourceAgent.characterConfig;
+            console.log('📋 Using source agent configuration');
+          }
+
+          // Increment the fork count for the source agent
+          if (sourceAgent.LatestMarketData) {
+            try {
+              // Use direct update instead of increment operation to avoid type issues
+              await this.prisma.latestMarketData.update({
+                where: { id: sourceAgent.LatestMarketData.id },
+                data: {
+                  forkCount: sourceAgent.LatestMarketData.forkCount + 1,
+                },
+              });
+              console.log(
+                `📊 Incremented fork count for source agent ${dto.forkedFromId}`,
+              );
+            } catch (error) {
+              console.error(
+                `⚠️ Failed to increment fork count: ${error.message}`,
+              );
+              // Continue execution even if this fails
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Error during forking process: ${error.message}`);
+          // Continue with creation even if forking fails
+        }
+      }
+
+      // If still no config, return failure
       if (!config) {
         return this.failure(
           'Missing agent configuration (characterConfig or agentConfig required)',
@@ -140,17 +190,23 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         name: dto.name,
         curveSide: dto.curveSide,
         status: AgentStatus.STARTING,
-        characterConfig: config, // Utilise config qui est soit characterConfig soit agentConfig
+        characterConfig: config,
         creatorWallet: dto.creatorWallet,
         deploymentFeesTxHash: dto.transactionHash,
         degenScore: 0,
         winScore: 0,
+        forkedFromId: dto.forkedFromId, // Add the forkedFromId if provided
         LatestMarketData: {
           create: {
             price: 0,
             priceChange24h: 0,
             holders: 0,
             marketCap: 0,
+            forkCount: 0,
+            pnlCycle: 0,
+            pnl24h: 0,
+            tradeCount: 0,
+            tvl: 0,
           },
         },
       };

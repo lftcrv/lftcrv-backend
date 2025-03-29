@@ -24,7 +24,8 @@ import {
 import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { CreateElizaAgentDto } from './dtos/leftcurve-agent.dto';
-import { ElizaAgent } from './entities/leftcurve-agent.entity';
+import { ElizaAgentResponseDto } from './dtos/eliza-agent-response.dto';
+import { AgentCreationResponseDto } from './dtos/agent-creation-response.dto';
 import {
   IElizaAgentQueryService,
   IElizaAgentLifecycleService,
@@ -60,6 +61,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 202,
     description: 'Agent creation initiated',
+    type: AgentCreationResponseDto
   })
   @ApiResponse({
     status: 400,
@@ -88,7 +90,7 @@ export class ElizaAgentController {
   async createAgent(
     @Body() dto: CreateElizaAgentDto,
     @UploadedFile() file?: Express.Multer.File,
-  ) {
+  ): Promise<AgentCreationResponseDto> {
     let tempFileName = null;
 
     try {
@@ -281,7 +283,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 200,
     description: 'List of agents retrieved successfully',
-    type: [ElizaAgent],
+    type: [ElizaAgentResponseDto],
   })
   async listAgents() {
     const agents = await this.queryService.listAgents();
@@ -297,7 +299,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 200,
     description: 'List of running agents retrieved successfully',
-    type: [ElizaAgent],
+    type: [ElizaAgentResponseDto],
   })
   async listRunningAgents() {
     const agents = await this.queryService.listRunningAgents();
@@ -313,7 +315,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 200,
     description: 'List of latest agents retrieved successfully',
-    type: [ElizaAgent],
+    type: [ElizaAgentResponseDto],
   })
   async listLatestAgents() {
     const agents = await this.queryService.listLatestAgents();
@@ -329,7 +331,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 200,
     description: 'List of matching agents retrieved successfully',
-    type: [ElizaAgent],
+    type: [ElizaAgentResponseDto],
   })
   async searchAgents(@Query('term') searchTerm: string) {
     if (!searchTerm || searchTerm.trim().length === 0) {
@@ -353,7 +355,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 200,
     description: 'Agent retrieved successfully',
-    type: ElizaAgent,
+    type: ElizaAgentResponseDto,
   })
   async getAgent(@Param('id') id: string) {
     const agent = await this.queryService.getAgent(id);

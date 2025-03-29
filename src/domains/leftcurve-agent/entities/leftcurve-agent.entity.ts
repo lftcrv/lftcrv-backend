@@ -1,5 +1,5 @@
 import { JsonValue } from '@prisma/client/runtime/library';
-import { AgentStatus, CurveSide } from '@prisma/client';
+import { AgentStatus, BondingStatus, CurveSide } from '@prisma/client';
 import { AgentWallet } from './agent-wallet.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -12,6 +12,13 @@ export class AgentToken {
   contractAddress: string;
   buyTax: number;
   sellTax: number;
+  elizaAgentId: string;
+}
+
+export class TradingInformation {
+  id: string;
+  createdAt: Date;
+  information: any;
   elizaAgentId: string;
 }
 
@@ -35,6 +42,10 @@ export class ElizaAgent {
   tradingInformation?: TradingInformation[];
   token?: AgentToken;
   wallet?: AgentWallet;
+  // Fork relationship fields
+  forkedFromId?: string;
+  forkedFrom?: ElizaAgent;
+  forks?: ElizaAgent[];
 
   @ApiProperty({
     description: "URL to the agent's profile picture",
@@ -59,13 +70,17 @@ export class LatestMarketData {
   priceChange24h: number;
   holders: number;
   marketCap: number;
+  bondingStatus: BondingStatus;
   updatedAt: Date;
   createdAt: Date;
-}
+  // New performance metrics
+  forkCount: number;
+  pnlCycle: number;
+  pnl24h: number;
+  tradeCount: number;
+  tvl: number;
 
-export class TradingInformation {
-  id: string;
-  elizaAgentId: string;
-  information: JsonValue;
-  createdAt: Date;
+  constructor(partial: Partial<LatestMarketData>) {
+    Object.assign(this, partial);
+  }
 }
