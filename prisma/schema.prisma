@@ -163,33 +163,34 @@ model Analysis {
 }
 
 model ElizaAgent {
-  id                   String               @id @default(uuid())
+  id                   String                    @id @default(uuid())
   name                 String
   curveSide            CurveSide
   creatorWallet        String
-  deploymentFeesTxHash String               @map("deployment_fees_tx_hash")
-  status               AgentStatus          @default(STARTING)
+  deploymentFeesTxHash String                    @map("deployment_fees_tx_hash")
+  status               AgentStatus               @default(STARTING)
   failureReason        String?
   containerId          String?
   runtimeAgentId       String?
   port                 Int?
   characterConfig      Json
   profilePicture       String?
-  degenScore           Float?               @default(0)
-  winScore             Float?               @default(0)
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  degenScore           Float?                    @default(0)
+  winScore             Float?                    @default(0)
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
   accessCodeId         String?
   accessGrantedAt      DateTime?
   forkedFromId         String?
-  forkedFrom           ElizaAgent?          @relation("AgentForks", fields: [forkedFromId], references: [id])
-  forks                ElizaAgent[]         @relation("AgentForks")
+  forkedFrom           ElizaAgent?               @relation("AgentForks", fields: [forkedFromId], references: [id])
+  forks                ElizaAgent[]              @relation("AgentForks")
   Token                AgentToken?
   Wallet               AgentWallet?
-  accessCode           AccessCode?          @relation(fields: [accessCodeId], references: [id])
+  accessCode           AccessCode?               @relation(fields: [accessCodeId], references: [id])
   LatestMarketData     LatestMarketData?
   TradingInformation   TradingInformation[]
-  ParadexAccountBalance ParadexAccountBalance[]
+  PerformanceSnapshots AgentPerformanceSnapshot[]
+  AccountBalances      ParadexAccountBalance[]
 
   @@map("eliza_agents")
 }
@@ -202,16 +203,6 @@ model TradingInformation {
   elizaAgent   ElizaAgent @relation(fields: [elizaAgentId], references: [id])
 
   @@map("trading_information")
-}
-
-model ParadexAccountBalance {
-  id           String     @id @default(uuid())
-  createdAt    DateTime   @default(now())
-  balanceInUSD Int
-  agentId String
-  elizaAgent   ElizaAgent @relation(fields: [agentId], references: [id])
-
-  @@map("paradex_account_balance")
 }
 
 model AgentWallet {
@@ -264,19 +255,6 @@ model Transaction {
   @@map("transactions")
 }
 
-model LiquidityDeposit {
-  id             String   @id @default(uuid())
-  txHash         String   @unique
-  runtimeAgentId String
-  sender         String
-  amount         BigInt
-  recipient      String
-  createdAt      DateTime @default(now())
-
-  @@index([runtimeAgentId])
-  @@index([txHash])
-}
-
 model PriceForToken {
   id         String     @id @default(uuid())
   price      String
@@ -287,19 +265,51 @@ model PriceForToken {
   @@map("price_for_token")
 }
 
+model ParadexAccountBalance {
+  id           String     @id @default(uuid())
+  agentId      String
+  balanceInUSD Float
+  createdAt    DateTime   @default(now())
+  agent        ElizaAgent @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("paradex_account_balances")
+}
+
+model AgentPerformanceSnapshot {
+  id            String     @id @default(uuid())
+  agentId       String
+  timestamp     DateTime   @default(now())
+  balanceInUSD  Float
+  pnl           Float      @default(0)
+  pnlPercentage Float      @default(0)
+  pnl24h        Float      @default(0)
+  pnlCycle      Float      @default(0)
+  tradeCount    Int        @default(0)
+  tvl           Float      @default(0)
+  price         Float      @default(0)
+  marketCap     Float      @default(0)
+  agent         ElizaAgent @relation(fields: [agentId], references: [id])
+
+  @@index([agentId])
+  @@index([timestamp])
+  @@map("agent_performance_snapshots")
+}
+
 model User {
-  id              String            @id @default(cuid())
-  starknetAddress String            @unique
-  evmAddress      String?           @unique
+  id              String           @id @default(cuid())
+  starknetAddress String           @unique
+  evmAddress      String?          @unique
   addressType     WalletAddressType
   twitterHandle   String?
   lastConnection  DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   // Referral system
-  referralCode     ReferralCode? @relation("UserReferralCode")
-  usedReferralCode String?       @map("used_referral_code")
+  referralCode    ReferralCode?    @relation("UserReferralCode")
+  usedReferralCode String?         @map("used_referral_code")
 
   @@index([starknetAddress])
   @@index([evmAddress])
@@ -308,16 +318,16 @@ model User {
 }
 
 model ReferralCode {
-  id           String    @id @default(cuid())
-  code         String    @unique
-  isAccessCode Boolean   @default(true)
-  userId       String    @unique
-  user         User      @relation("UserReferralCode", fields: [userId], references: [id])
-  usageCount   Int       @default(0)
-  maxUses      Int? // null means unlimited
-  expiresAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  code            String    @unique
+  isAccessCode    Boolean   @default(true)
+  userId          String    @unique
+  user            User      @relation("UserReferralCode", fields: [userId], references: [id])
+  usageCount      Int       @default(0)
+  maxUses         Int?      // null means unlimited
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([code])
   @@map("referral_codes")

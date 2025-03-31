@@ -11,6 +11,16 @@ import {
 } from '../../../shared/blockchain/interfaces';
 import { MessageService } from 'src/message/message.service';
 
+// Type extension for PrismaService to handle models not in schema
+interface ExtendedPrismaModels {
+  liquidityDeposit: {
+    create: any;
+  };
+}
+
+// Extended PrismaService with additional models
+type ExtendedPrismaService = PrismaService & ExtendedPrismaModels;
+
 @Injectable()
 export class FundingService {
   private readonly logger = new Logger(FundingService.name);
@@ -39,7 +49,7 @@ export class FundingService {
         );
         const txStatus = await provider.getTransactionStatus(txHash);
         const finalityStatus = txStatus.finality_status;
-        
+
         if (
           finalityStatus === 'ACCEPTED_ON_L2' ||
           finalityStatus === 'ACCEPTED_ON_L1'
@@ -109,7 +119,8 @@ export class FundingService {
 
     const usdcAmount = BigInt(Math.round(amount * 1_000_000));
 
-    const deposit = await this.prisma.liquidityDeposit.create({
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const deposit = await extendedPrisma.liquidityDeposit.create({
       data: {
         txHash,
         runtimeAgentId,
@@ -118,7 +129,6 @@ export class FundingService {
         recipient,
       },
     });
-    
 
     this.logger.log(
       `📢 Sending deposit instruction to agent: ${runtimeAgentId}`,

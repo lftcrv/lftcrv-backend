@@ -3,15 +3,28 @@ import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { IAccountBalance } from '../interfaces/kpi.interface';
 import { AccountBalanceDto } from '../dtos/kpi.dto';
 
+// Type extension for PrismaService to handle models not in schema
+interface ExtendedPrismaModels {
+  paradexAccountBalance: {
+    create: any;
+    findMany: any;
+  };
+  agentPerformanceSnapshot?: {
+    create: any;
+    findMany: any;
+  };
+}
+
+// Extended PrismaService with additional models
+type ExtendedPrismaService = PrismaService & ExtendedPrismaModels;
+
 @Injectable()
 export class KPIService implements IAccountBalance {
   private readonly logger = new Logger();
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async createAccountBalanceData(
-    data: AccountBalanceDto,
-  ): Promise<any> {
+  async createAccountBalanceData(data: AccountBalanceDto): Promise<any> {
     this.logger.log('Creating trading information:', data);
 
     const agent = await this.prisma.elizaAgent.findFirst({
@@ -35,7 +48,8 @@ export class KPIService implements IAccountBalance {
         );
       }
 
-      return this.prisma.paradexAccountBalance.create({
+      const extendedPrisma = this.prisma as ExtendedPrismaService;
+      return extendedPrisma.paradexAccountBalance.create({
         data: {
           createdAt: new Date(),
           balanceInUSD: data.balanceInUSD,
@@ -44,7 +58,8 @@ export class KPIService implements IAccountBalance {
       });
     }
 
-    return this.prisma.paradexAccountBalance.create({
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    return extendedPrisma.paradexAccountBalance.create({
       data: {
         createdAt: new Date(),
         balanceInUSD: data.balanceInUSD,
@@ -54,7 +69,9 @@ export class KPIService implements IAccountBalance {
   }
 
   async getAgentPnL(runtimeAgentId: string): Promise<any> {
-    this.logger.log(`Calculating PnL for agent with runtimeAgentId: ${runtimeAgentId}`);
+    this.logger.log(
+      `Calculating PnL for agent with runtimeAgentId: ${runtimeAgentId}`,
+    );
     const agent = await this.findAgentByRuntimeId(runtimeAgentId);
 
     if (!agent) {
@@ -65,45 +82,46 @@ export class KPIService implements IAccountBalance {
 
     return this.calculatePnLForAgent(agent);
   }
-  
+
   async getAllAgentsPnL(): Promise<any[]> {
     this.logger.log('Calculating PnL for all agents');
     const agents = await this.prisma.elizaAgent.findMany();
     const results = await Promise.all(
-      agents.map(agent => this.calculatePnLForAgent(agent))
+      agents.map((agent) => this.calculatePnLForAgent(agent)),
     );
-    
+
     return results.sort((a, b) => b.pnl - a.pnl);
   }
-  
+
   async getBestPerformingAgent(): Promise<any> {
     this.logger.log('Finding the best performing agent by PnL');
-    
+
     const allAgentsPnL = await this.getAllAgentsPnL();
-    
+
     if (allAgentsPnL.length === 0) {
       return {
         message: 'No agents with PnL data available',
-        bestAgent: null
+        bestAgent: null,
       };
     }
     const bestAgent = allAgentsPnL[0];
-    
+
     if (!bestAgent.firstBalance || bestAgent.pnl === 0) {
       return {
         message: 'Found a best agent, but no significant PnL data available',
-        bestAgent
+        bestAgent,
       };
     }
-    
+
     return {
       message: 'Best performing agent found',
-      bestAgent
+      bestAgent,
     };
   }
-  
+
   private async calculatePnLForAgent(agent: any): Promise<any> {
-    const balances = await this.prisma.paradexAccountBalance.findMany({
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const balances = await extendedPrisma.paradexAccountBalance.findMany({
       where: {
         agentId: agent.id,
       },
@@ -128,12 +146,12 @@ export class KPIService implements IAccountBalance {
     const firstBalance = balances[0];
     const latestBalance = balances[balances.length - 1];
 
-
     const pnl = latestBalance.balanceInUSD - firstBalance.balanceInUSD;
-    
-    const pnlPercentage = firstBalance.balanceInUSD !== 0 
-      ? (pnl / firstBalance.balanceInUSD) * 100 
-      : 0;
+
+    const pnlPercentage =
+      firstBalance.balanceInUSD !== 0
+        ? (pnl / firstBalance.balanceInUSD) * 100
+        : 0;
 
     return {
       agentId: agent.id,
@@ -148,23 +166,11 @@ export class KPIService implements IAccountBalance {
     };
   }
 
-  private async findAgentByRuntimeId(runtimeAgentId: string) {
-    let agent = await this.prisma.elizaAgent.findFirst({
+  private async findAgentByRuntimeId(runtimeAgentId: string): Promise<any> {
+    return this.prisma.elizaAgent.findFirst({
       where: {
-        runtimeAgentId: {
-          startsWith: runtimeAgentId,
-        },
+        runtimeAgentId,
       },
     });
-
-    if (!agent) {
-      agent = await this.prisma.elizaAgent.findFirst({
-        where: {
-          runtimeAgentId: runtimeAgentId,
-        },
-      });
-    }
-
-    return agent;
   }
 }
