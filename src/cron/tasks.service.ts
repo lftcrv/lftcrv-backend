@@ -9,6 +9,7 @@ import {
 import { ElizaAgent, AgentStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { PerformanceSnapshotService } from '../domains/kpi/services/performance-snapshot.service';
 
 @Injectable()
 export class TasksService {
@@ -22,6 +23,7 @@ export class TasksService {
     @Inject(AgentTokenTokens.QueryAgentToken)
     private readonly tokenService: IQueryAgentToken,
     private readonly configService: ConfigService,
+    private readonly performanceSnapshotService: PerformanceSnapshotService,
   ) {
     const isLocalDevelopment =
       this.configService.get<string>('LOCAL_DEVELOPMENT') === 'TRUE';
@@ -258,6 +260,73 @@ export class TasksService {
       const duration = Date.now() - startTime;
       this.logger.error(
         `Failed to generate AVNU asset analysis (${duration}ms): ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Update agent performance snapshots every hour
+   * This captures historical data for agent performance metrics including PnL
+   */
+  @Cron('0 * * * *') // Run every hour at minute 0
+  async updateAgentPerformanceSnapshots() {
+    const startTime = Date.now();
+    this.logger.log('Starting agent performance snapshot updates');
+    
+    try {
+      const agents = await this.prisma.elizaAgent.findMany({
+        where: { status: AgentStatus.RUNNING }
+      });
+      
+      let successCount = 0;
+      let failureCount = 0;
+      
+      for (const agent of agents) {
+        try {
+          await this.performanceSnapshotService.createAgentPerformanceSnapshot(agent.id);
+          successCount++;
+        } catch (error) {
+          failureCount++;
+          this.logger.error(
+            `Failed to create performance snapshot for agent ${agent.id}: ${error.message}`
+          );
+        }
+      }
+      
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Performance snapshot updates completed - Success: ${successCount}, Failed: ${failureCount}, Duration: ${duration}ms`
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to update agent performance snapshots (${duration}ms): ${error.message}`
+      );
+    }
+  }
+
+  /**
+   * Apply data retention policy for performance snapshots daily
+   * - Keep hourly data for 7 days
+   * - Keep daily data for 90 days
+   * - Weekly data is kept indefinitely
+   */
+  @Cron('0 0 * * *') // Run daily at midnight
+  async cleanupPerformanceData() {
+    const startTime = Date.now();
+    this.logger.log('Starting performance data cleanup');
+    
+    try {
+      const result = await this.performanceSnapshotService.applyDataRetentionPolicy();
+      
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Performance data cleanup completed - Deleted ${result.deleted} records, Duration: ${duration}ms`
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to clean up performance data (${duration}ms): ${error.message}`
       );
     }
   }

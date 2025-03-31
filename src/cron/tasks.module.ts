@@ -5,6 +5,7 @@ import { MessageModule } from '../message/message.module';
 import { PrismaModule } from '../shared/prisma/prisma.module';
 import { AgentTokenModule } from '../domains/agent-token/agent-token.module';
 import { BlockchainModule } from '../shared/blockchain/blockchain.module';
+import { KPIModule } from '../domains/kpi/kpi.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { BlockchainModule } from '../shared/blockchain/blockchain.module';
     PrismaModule,
     AgentTokenModule,
     BlockchainModule,
+    KPIModule,
   ],
   providers: [TasksService],
 })
