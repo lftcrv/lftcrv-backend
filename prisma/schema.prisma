@@ -91,11 +91,18 @@ model LatestMarketData {
   bondingStatus  BondingStatus @default(BONDING)
   updatedAt      DateTime      @updatedAt
   createdAt      DateTime      @default(now())
+  forkCount      Int           @default(0)
+  pnlCycle       Float         @default(0)
+  pnl24h         Float         @default(0)
+  tradeCount     Int           @default(0)
+  tvl            Float         @default(0)
   elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
 
   @@index([price])
   @@index([priceChange24h])
   @@index([marketCap])
+  @@index([tvl])
+  @@index([pnl24h])
   @@map("latest_market_data")
 }
 
@@ -174,6 +181,9 @@ model ElizaAgent {
   updatedAt            DateTime             @updatedAt
   accessCodeId         String?
   accessGrantedAt      DateTime?
+  forkedFromId         String?
+  forkedFrom           ElizaAgent?          @relation("AgentForks", fields: [forkedFromId], references: [id])
+  forks                ElizaAgent[]         @relation("AgentForks")
   Token                AgentToken?
   Wallet               AgentWallet?
   accessCode           AccessCode?          @relation(fields: [accessCodeId], references: [id])
