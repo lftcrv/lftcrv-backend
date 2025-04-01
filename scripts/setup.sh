@@ -52,13 +52,13 @@ if [ "$CLEAN_DB" = true ]; then
     exit 1
   fi
   echo "Clean option enabled: removing database $DATABASE_NAME..."
-  PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -U $DATABASE_USER -d postgres -c "DROP DATABASE IF EXISTS \"$DATABASE_NAME\";"
+  PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -c "DROP DATABASE IF EXISTS \"$DATABASE_NAME\";"
   echo "Database deleted!"
 fi
-DB_EXISTS=$(PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -U $DATABASE_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DATABASE_NAME';")
+DB_EXISTS=$(PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DATABASE_NAME';")
 if [ "$DB_EXISTS" != "1" ]; then
   echo "Creating database $DATABASE_NAME..."
-  PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -U $DATABASE_USER -d postgres -c "CREATE DATABASE \"$DATABASE_NAME\";"
+  PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -c "CREATE DATABASE \"$DATABASE_NAME\";"
   echo "Database created!"
 else
   echo "Database already exists. Skipping creation."
