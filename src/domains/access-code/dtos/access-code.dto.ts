@@ -56,7 +56,7 @@ export class GenerateAccessCodeDto {
   @ApiProperty({
     description: 'Expiration date for the code',
     required: false,
-    example: '2023-12-31T23:59:59Z',
+    example: '2026-12-31T23:59:59Z',
   })
   @IsOptional()
   @IsDate()
