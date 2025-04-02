@@ -8,4 +8,7 @@ export interface IAccountBalance {
   getAgentPnL(runtimeAgentId: string): Promise<any>;
   getAllAgentsPnL(): Promise<any[]>;
   getBestPerformingAgent(): Promise<any>;
+  
+  getAgentBalanceHistory(agentId: string): Promise<any>;
+  getAgentCurrentBalance(agentId: string): Promise<any>;
 }

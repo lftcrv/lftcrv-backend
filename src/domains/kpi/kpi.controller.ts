@@ -30,13 +30,22 @@ export class KPIController {
     description: 'Balance account data created successfully',
   })
   @ApiResponse({ status: 400, description: 'Invalid information provided' })
-  async createAccountBalanceData(
-    @Body() dto: AccountBalanceDto,
-  ): Promise<any> {
+  async createAccountBalanceData(@Body() dto: AccountBalanceDto): Promise<any> {
     return this.balanceAccountService.createAccountBalanceData({
       runtimeAgentId: dto.runtimeAgentId,
       balanceInUSD: dto.balanceInUSD,
     });
+  }
+
+  @Get('pnl/best')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get the agent with the best PnL performance' })
+  @ApiResponse({
+    status: 200,
+    description: 'Best performing agent retrieved successfully',
+  })
+  async getBestPerformingAgent(): Promise<any> {
+    return this.balanceAccountService.getBestPerformingAgent();
   }
 
   @Get('pnl/:runtimeAgentId')
@@ -52,7 +61,7 @@ export class KPIController {
   ): Promise<any> {
     return this.balanceAccountService.getAgentPnL(runtimeAgentId);
   }
-  
+
   @Get('pnl')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get PnL (Profit and Loss) for all agents' })
@@ -63,15 +72,32 @@ export class KPIController {
   async getAllAgentsPnL(): Promise<any[]> {
     return this.balanceAccountService.getAllAgentsPnL();
   }
-  
-  @Get('pnl/best')
+
+  @Get('balance/:agentId')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Get the agent with the best PnL performance' })
+  @ApiOperation({ summary: 'Get balance history for a specific agent' })
   @ApiResponse({
     status: 200,
-    description: 'Best performing agent retrieved successfully',
+    description: 'Balance history retrieved successfully',
   })
-  async getBestPerformingAgent(): Promise<any> {
-    return this.balanceAccountService.getBestPerformingAgent();
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentBalanceHistory(
+    @Param('agentId') agentId: string,
+  ): Promise<any> {
+    return this.balanceAccountService.getAgentBalanceHistory(agentId);
+  }
+
+  @Get('balance/:agentId/current')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get current balance for a specific agent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current balance retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentCurrentBalance(
+    @Param('agentId') agentId: string,
+  ): Promise<any> {
+    return this.balanceAccountService.getAgentCurrentBalance(agentId);
   }
 }

@@ -173,4 +173,71 @@ export class KPIService implements IAccountBalance {
       },
     });
   }
+
+  async getAgentBalanceHistory(agentId: string): Promise<any> {
+    this.logger.log(`Getting balance history for agent with ID: ${agentId}`);
+    
+    // Verify the agent exists first
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id: agentId },
+    });
+
+    if (!agent) {
+      throw new NotFoundException(`Agent with ID ${agentId} not found`);
+    }
+
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const balances = await extendedPrisma.paradexAccountBalance.findMany({
+      where: {
+        agentId: agent.id,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    return {
+      agentId: agent.id,
+      balances,
+    };
+  }
+
+  async getAgentCurrentBalance(agentId: string): Promise<any> {
+    this.logger.log(`Getting current balance for agent with ID: ${agentId}`);
+    
+    // Verify the agent exists first
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id: agentId },
+    });
+
+    if (!agent) {
+      throw new NotFoundException(`Agent with ID ${agentId} not found`);
+    }
+
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const latestBalance = await extendedPrisma.paradexAccountBalance.findMany({
+      where: {
+        agentId: agent.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 1,
+    });
+
+    if (latestBalance.length === 0) {
+      return {
+        agentId: agent.id,
+        currentBalance: 0,
+        timestamp: null,
+        message: 'No balance data available for this agent',
+      };
+    }
+
+    return {
+      agentId: agent.id,
+      currentBalance: latestBalance[0].balanceInUSD,
+      timestamp: latestBalance[0].createdAt,
+    };
+  }
 }
