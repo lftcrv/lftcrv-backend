@@ -30,13 +30,8 @@ export class KPIController {
     description: 'Balance account data created successfully',
   })
   @ApiResponse({ status: 400, description: 'Invalid information provided' })
-  async createAccountBalanceData(
-    @Body() dto: AccountBalanceDto,
-  ): Promise<any> {
-    return this.balanceAccountService.createAccountBalanceData({
-      runtimeAgentId: dto.runtimeAgentId,
-      balanceInUSD: dto.balanceInUSD,
-    });
+  async createAccountBalanceData(@Body() dto: AccountBalanceDto): Promise<any> {
+    return this.balanceAccountService.createAccountBalanceData(dto);
   }
 
   @Get('pnl/:runtimeAgentId')
@@ -52,7 +47,7 @@ export class KPIController {
   ): Promise<any> {
     return this.balanceAccountService.getAgentPnL(runtimeAgentId);
   }
-  
+
   @Get('pnl')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get PnL (Profit and Loss) for all agents' })
@@ -63,7 +58,7 @@ export class KPIController {
   async getAllAgentsPnL(): Promise<any[]> {
     return this.balanceAccountService.getAllAgentsPnL();
   }
-  
+
   @Get('pnl/best')
   @RequireApiKey()
   @ApiOperation({ summary: 'Get the agent with the best PnL performance' })
@@ -73,5 +68,19 @@ export class KPIController {
   })
   async getBestPerformingAgent(): Promise<any> {
     return this.balanceAccountService.getBestPerformingAgent();
+  }
+
+  @Get('portfolio/:runtimeAgentId')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get token portfolio data for a specific agent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Portfolio data retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentPortfolio(
+    @Param('runtimeAgentId') runtimeAgentId: string,
+  ): Promise<any> {
+    return this.balanceAccountService.getAgentPortfolio(runtimeAgentId);
   }
 }
