@@ -1,17 +1,30 @@
-import { IsString, IsNumber, IsNotEmpty, IsObject, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsNotEmpty,
+  IsObject,
+  ValidateNested,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 
-class BalanceData {
-  @ApiProperty({ example: 1000, description: 'Balance amount in a specific currency' })
-  @IsNumber()
-  @IsNotEmpty()
-  USD: number;
-
-  @ApiProperty({ example: "2025-03-12T14:00:00Z", description: 'Last update timestamp' })
+export class TokenBalanceDto {
+  @ApiProperty({ example: 'ETH', description: 'Token symbol' })
   @IsString()
   @IsNotEmpty()
-  updatedAt: string;
+  symbol: string;
+
+  @ApiProperty({ example: 1.5, description: 'Token balance amount' })
+  @IsNumber()
+  @IsNotEmpty()
+  balance: number;
+
+  @ApiProperty({ example: 3000, description: 'Token price in USD' })
+  @IsNumber()
+  @IsNotEmpty()
+  price: number;
 }
 
 export class AccountBalanceDto {
@@ -21,8 +34,14 @@ export class AccountBalanceDto {
   runtimeAgentId: string;
 
   @ApiProperty({ example: 1000, description: 'Balance amount in USD' })
-  @Transform(({ value }) => parseInt(value))
   @IsNumber()
   @IsNotEmpty()
   balanceInUSD: number;
+
+  @ApiProperty({ type: [TokenBalanceDto], description: 'Token balances' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TokenBalanceDto)
+  @IsOptional()
+  tokens?: TokenBalanceDto[];
 }
