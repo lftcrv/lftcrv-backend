@@ -35,11 +35,49 @@ export class TradingInformationService implements ITradingInformation {
       },
     });
 
-    return trades;
+    // Format trades to expose the information at the top level
+    return trades.map((trade) => {
+      // Extract information from nested structure to top level
+      if (trade.information) {
+        const info = trade.information as any;
+        // Use type assertion to handle the extended properties
+        return {
+          ...trade,
+          tradeType: info.tradeType || 'Unknown',
+          asset: info.asset || 'Unknown',
+          amount: info.amount || 0,
+          price: info.price || 0,
+          totalCost: info.totalCost || 0,
+        } as TradingInformation;
+      }
+      return trade;
+    });
   }
 
-  getTradingInformation(id: string): Promise<TradingInformation> {
-    return this.prisma.tradingInformation.findUnique({ where: { id } });
+  async getTradingInformation(id: string): Promise<TradingInformation> {
+    const trade = await this.prisma.tradingInformation.findUnique({
+      where: { id },
+    });
+    
+    if (!trade) {
+      return null;
+    }
+    
+    // Format trade to expose the information at the top level
+    if (trade.information) {
+      const info = trade.information as any;
+      // Use type assertion to handle the extended properties
+      return {
+        ...trade,
+        tradeType: info.tradeType || 'Unknown',
+        asset: info.asset || 'Unknown',
+        amount: info.amount || 0,
+        price: info.price || 0,
+        totalCost: info.totalCost || 0,
+      } as TradingInformation;
+    }
+    
+    return trade;
   }
 
   async createTradingInformation(
@@ -69,21 +107,78 @@ export class TradingInformationService implements ITradingInformation {
         );
       }
 
-      return this.prisma.tradingInformation.create({
+      // Create the trade information
+      const tradeInfo = await this.prisma.tradingInformation.create({
         data: {
           createdAt: new Date(),
           information: data.information,
           elizaAgentId: exactAgent.id,
         },
       });
+
+      // Increment the trade count in LatestMarketData
+      await this.updateTradeCount(exactAgent.id);
+
+      return tradeInfo;
     }
 
-    return this.prisma.tradingInformation.create({
+    // Create the trade information
+    const tradeInfo = await this.prisma.tradingInformation.create({
       data: {
         createdAt: new Date(),
         information: data.information,
         elizaAgentId: agent.id,
       },
     });
+
+    // Increment the trade count in LatestMarketData
+    await this.updateTradeCount(agent.id);
+
+    return tradeInfo;
+  }
+
+  /**
+   * Updates the trade count in the LatestMarketData table
+   * @param agentId The ID of the agent
+   */
+  private async updateTradeCount(agentId: string): Promise<void> {
+    try {
+      // First check if the LatestMarketData record exists
+      const marketData = await this.prisma.latestMarketData.findUnique({
+        where: { elizaAgentId: agentId },
+      });
+
+      if (marketData) {
+        // Increment the trade count
+        await this.prisma.latestMarketData.update({
+          where: { elizaAgentId: agentId },
+          data: {
+            tradeCount: marketData.tradeCount + 1,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        // Create a new LatestMarketData record with trade count 1
+        await this.prisma.latestMarketData.create({
+          data: {
+            elizaAgentId: agentId,
+            tradeCount: 1,
+            price: 0,
+            priceChange24h: 0,
+            holders: 0,
+            marketCap: 0,
+            bondingStatus: 'BONDING',
+            forkCount: 0,
+            pnlCycle: 0,
+            pnl24h: 0,
+            tvl: 0,
+          },
+        });
+      }
+
+      this.logger.log(`Updated trade count for agent ${agentId}`);
+    } catch (error) {
+      this.logger.error(`Error updating trade count: ${error.message}`);
+    }
   }
 }
