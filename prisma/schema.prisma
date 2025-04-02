@@ -163,30 +163,30 @@ model Analysis {
 }
 
 model ElizaAgent {
-  id                   String                    @id @default(uuid())
+  id                   String                     @id @default(uuid())
   name                 String
   curveSide            CurveSide
   creatorWallet        String
-  deploymentFeesTxHash String                    @map("deployment_fees_tx_hash")
-  status               AgentStatus               @default(STARTING)
+  deploymentFeesTxHash String                     @map("deployment_fees_tx_hash")
+  status               AgentStatus                @default(STARTING)
   failureReason        String?
   containerId          String?
   runtimeAgentId       String?
   port                 Int?
   characterConfig      Json
   profilePicture       String?
-  degenScore           Float?                    @default(0)
-  winScore             Float?                    @default(0)
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
+  degenScore           Float?                     @default(0)
+  winScore             Float?                     @default(0)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
   accessCodeId         String?
   accessGrantedAt      DateTime?
   forkedFromId         String?
-  forkedFrom           ElizaAgent?               @relation("AgentForks", fields: [forkedFromId], references: [id])
-  forks                ElizaAgent[]              @relation("AgentForks")
+  forkedFrom           ElizaAgent?                @relation("AgentForks", fields: [forkedFromId], references: [id])
+  forks                ElizaAgent[]               @relation("AgentForks")
   Token                AgentToken?
   Wallet               AgentWallet?
-  accessCode           AccessCode?               @relation(fields: [accessCodeId], references: [id])
+  accessCode           AccessCode?                @relation(fields: [accessCodeId], references: [id])
   LatestMarketData     LatestMarketData?
   TradingInformation   TradingInformation[]
   PerformanceSnapshots AgentPerformanceSnapshot[]
@@ -265,12 +265,29 @@ model PriceForToken {
   @@map("price_for_token")
 }
 
+model PortfolioTokenBalance {
+  id               String                @id @default(uuid())
+  accountBalanceId String                @map("account_balance_id")
+  tokenSymbol      String                @map("token_symbol") @db.VarChar(50)
+  amount           Decimal               @db.Decimal(18, 8)
+  priceUsd         Decimal               @map("price_usd") @db.Decimal(18, 8)
+  valueUsd         Decimal               @map("value_usd") @db.Decimal(18, 8)
+  createdAt        DateTime              @default(now()) @map("created_at")
+  accountBalance   ParadexAccountBalance @relation(fields: [accountBalanceId], references: [id], onDelete: Cascade)
+
+  @@index([accountBalanceId])
+  @@index([tokenSymbol])
+  @@index([createdAt])
+  @@map("portfolio_token_balances")
+}
+
 model ParadexAccountBalance {
-  id           String     @id @default(uuid())
-  agentId      String
-  balanceInUSD Float
-  createdAt    DateTime   @default(now())
-  agent        ElizaAgent @relation(fields: [agentId], references: [id])
+  id            String                  @id @default(uuid())
+  agentId       String
+  balanceInUSD  Float
+  createdAt     DateTime                @default(now())
+  agent         ElizaAgent              @relation(fields: [agentId], references: [id])
+  tokenBalances PortfolioTokenBalance[]
 
   @@index([agentId])
   @@index([createdAt])
@@ -298,18 +315,18 @@ model AgentPerformanceSnapshot {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  starknetAddress String           @unique
-  evmAddress      String?          @unique
+  id              String            @id @default(cuid())
+  starknetAddress String            @unique
+  evmAddress      String?           @unique
   addressType     WalletAddressType
   twitterHandle   String?
   lastConnection  DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   // Referral system
-  referralCode    ReferralCode?    @relation("UserReferralCode")
-  usedReferralCode String?         @map("used_referral_code")
+  referralCode     ReferralCode? @relation("UserReferralCode")
+  usedReferralCode String?       @map("used_referral_code")
 
   @@index([starknetAddress])
   @@index([evmAddress])
@@ -318,16 +335,16 @@ model User {
 }
 
 model ReferralCode {
-  id              String    @id @default(cuid())
-  code            String    @unique
-  isAccessCode    Boolean   @default(true)
-  userId          String    @unique
-  user            User      @relation("UserReferralCode", fields: [userId], references: [id])
-  usageCount      Int       @default(0)
-  maxUses         Int?      // null means unlimited
-  expiresAt       DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  code         String    @unique
+  isAccessCode Boolean   @default(true)
+  userId       String    @unique
+  user         User      @relation("UserReferralCode", fields: [userId], references: [id])
+  usageCount   Int       @default(0)
+  maxUses      Int? // null means unlimited
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([code])
   @@map("referral_codes")
