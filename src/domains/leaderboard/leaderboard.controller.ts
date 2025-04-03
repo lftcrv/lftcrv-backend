@@ -37,6 +37,11 @@ export class LeaderboardController {
       contractAddress: data.elizaAgent.Token?.contractAddress || '',
       profilePicture: data.elizaAgent.profilePicture,
       profilePictureUrl: agent.profilePictureUrl,
+      balanceInUSD: data.balanceInUSD || 0,
+      pnlCycle: data.pnlCycle || 0,
+      pnl24h: data.pnl24h || 0,
+      pnlRank: data.pnlRank || 0,
+      tradeCount: data.tradeCount || 0,
     };
   }
 
@@ -55,7 +60,6 @@ export class LeaderboardController {
       where: {
         elizaAgent: {
           curveSide: 'LEFT',
-          Token: { isNot: null },
         },
       },
       include: {
@@ -98,7 +102,6 @@ export class LeaderboardController {
       where: {
         elizaAgent: {
           curveSide: 'RIGHT',
-          Token: { isNot: null },
         },
       },
       include: {
@@ -115,6 +118,42 @@ export class LeaderboardController {
             winScore: 'desc',
           },
         },
+      ],
+    });
+
+    const formattedAgents = marketData.map(this.formatAgentResponse);
+
+    return {
+      status: 'success',
+      data: formattedAgents,
+    };
+  }
+
+  @Get('pnl-leaderboard')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get top agents by PnL performance' })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'PnL leaderboard retrieved successfully',
+  })
+  async getPnlLeaderboard(@Query('limit') limit = 10) {
+    const take = parseInt(limit.toString(), 10);
+
+    const marketData = await this.prisma.latestMarketData.findMany({
+      where: {
+        elizaAgent: {},
+      },
+      include: {
+        elizaAgent: {
+          include: {
+            Token: true,
+          },
+        },
+      },
+      take,
+      orderBy: [
+        { pnlCycle: 'desc' }, // Order by PnL descending
       ],
     });
 
