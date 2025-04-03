@@ -143,11 +143,20 @@ export class KPIService implements IAccountBalance {
     this.logger.log(
       `Calculating PnL for agent with runtimeAgentId: ${runtimeAgentId}`,
     );
-    const agent = await this.findAgentByRuntimeId(runtimeAgentId);
+
+    // First try to find by runtimeAgentId
+    let agent = await this.findAgentByRuntimeId(runtimeAgentId);
+
+    // If not found, try to find by regular id
+    if (!agent) {
+      agent = await this.prisma.elizaAgent.findUnique({
+        where: { id: runtimeAgentId },
+      });
+    }
 
     if (!agent) {
       throw new NotFoundException(
-        `Agent with runtimeAgentId ${runtimeAgentId} not found`,
+        `Agent with runtimeAgentId or id ${runtimeAgentId} not found`,
       );
     }
 
@@ -217,23 +226,37 @@ export class KPIService implements IAccountBalance {
     }
 
     // Get token balances for this balance record
-    const tokenBalances = await this.prisma.portfolioTokenBalance.findMany({
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const tokenBalances = await extendedPrisma.portfolioTokenBalance.findMany({
       where: { accountBalanceId: latestBalance.id },
       orderBy: { valueUsd: 'desc' },
     });
+
+    // Recalculate the total balance based on the sum of token values
+    // This ensures consistency between total and parts
+    const totalValueUsd = tokenBalances.reduce(
+      (sum, token) => sum + Number(token.valueUsd),
+      0,
+    );
+
+    // Use the calculated total instead of the stored balance if they don't match
+    const actualBalanceInUSD =
+      Math.abs(totalValueUsd - latestBalance.balanceInUSD) < 0.01
+        ? latestBalance.balanceInUSD
+        : totalValueUsd;
 
     return {
       agentId: agent.id,
       runtimeAgentId: agent.runtimeAgentId,
       name: agent.name,
       timestamp: latestBalance.createdAt,
-      balanceInUSD: latestBalance.balanceInUSD,
+      balanceInUSD: actualBalanceInUSD,
       portfolio: tokenBalances.map((token) => ({
         symbol: token.tokenSymbol,
         balance: Number(token.amount),
         price: Number(token.priceUsd),
         valueUsd: Number(token.valueUsd),
-        percentage: (Number(token.valueUsd) / latestBalance.balanceInUSD) * 100,
+        percentage: (Number(token.valueUsd) / actualBalanceInUSD) * 100,
       })),
     };
   }
@@ -262,15 +285,64 @@ export class KPIService implements IAccountBalance {
       };
     }
 
-    const firstBalance = balances[0];
-    const latestBalance = balances[balances.length - 1];
+    // Filter out any zero balance records - these shouldn't be used for PnL calculations
+    const nonZeroBalances = balances.filter(
+      (balance) => balance.balanceInUSD !== 0 && balance.balanceInUSD !== null,
+    );
 
-    const pnl = latestBalance.balanceInUSD - firstBalance.balanceInUSD;
+    if (nonZeroBalances.length === 0) {
+      return {
+        agentId: agent.id,
+        runtimeAgentId: agent.runtimeAgentId,
+        name: agent.name,
+        pnl: 0,
+        pnlPercentage: 0,
+        firstBalance: null,
+        latestBalance: null,
+        message: 'No non-zero balance data available for this agent',
+      };
+    }
+
+    const firstBalanceRecord = nonZeroBalances[0];
+    const latestBalanceRecord = nonZeroBalances[nonZeroBalances.length - 1];
+
+    // Get token balances for the first and latest balance records
+    const firstTokenBalances =
+      await extendedPrisma.portfolioTokenBalance.findMany({
+        where: { accountBalanceId: firstBalanceRecord.id },
+      });
+
+    const latestTokenBalances =
+      await extendedPrisma.portfolioTokenBalance.findMany({
+        where: { accountBalanceId: latestBalanceRecord.id },
+      });
+
+    // Calculate actual balance values
+    const firstTotalValueUsd = firstTokenBalances.reduce(
+      (sum, token) => sum + Number(token.valueUsd),
+      0,
+    );
+
+    const latestTotalValueUsd = latestTokenBalances.reduce(
+      (sum, token) => sum + Number(token.valueUsd),
+      0,
+    );
+
+    // Use calculated values or stored values if very close
+    const actualFirstBalance =
+      Math.abs(firstTotalValueUsd - firstBalanceRecord.balanceInUSD) < 0.01
+        ? firstBalanceRecord.balanceInUSD
+        : firstTotalValueUsd || 0;
+
+    const actualLatestBalance =
+      Math.abs(latestTotalValueUsd - latestBalanceRecord.balanceInUSD) < 0.01
+        ? latestBalanceRecord.balanceInUSD
+        : latestTotalValueUsd || 0;
+
+    const pnl = actualLatestBalance - actualFirstBalance;
 
     const pnlPercentage =
-      firstBalance.balanceInUSD !== 0
-        ? (pnl / firstBalance.balanceInUSD) * 100
-        : 0;
+      actualFirstBalance !== 0 ? (pnl / actualFirstBalance) * 100 : 0;
 
     return {
       agentId: agent.id,
@@ -278,10 +350,10 @@ export class KPIService implements IAccountBalance {
       name: agent.name,
       pnl,
       pnlPercentage,
-      firstBalanceDate: firstBalance.createdAt,
-      latestBalanceDate: latestBalance.createdAt,
-      firstBalance: firstBalance.balanceInUSD,
-      latestBalance: latestBalance.balanceInUSD,
+      firstBalanceDate: firstBalanceRecord.createdAt,
+      latestBalanceDate: latestBalanceRecord.createdAt,
+      firstBalance: actualFirstBalance,
+      latestBalance: actualLatestBalance,
     };
   }
 
@@ -291,5 +363,145 @@ export class KPIService implements IAccountBalance {
         runtimeAgentId,
       },
     });
+  }
+
+  async getAgentBalanceHistory(agentId: string): Promise<any> {
+    this.logger.log(`Getting balance history for agent with ID: ${agentId}`);
+    // Verify the agent exists first
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id: agentId },
+    });
+
+    if (!agent) {
+      throw new NotFoundException(`Agent with ID ${agentId} not found`);
+    }
+
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const balances = await extendedPrisma.paradexAccountBalance.findMany({
+      where: {
+        agentId: agent.id,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    // Get corrected balance values for each record
+    const balancesWithCorrectValues = await Promise.all(
+      balances.map(async (balance) => {
+        const tokenBalances =
+          await extendedPrisma.portfolioTokenBalance.findMany({
+            where: { accountBalanceId: balance.id },
+          });
+
+        const totalValueUsd = tokenBalances.reduce(
+          (sum, token) => sum + Number(token.valueUsd),
+          0,
+        );
+
+        // Mark zero-balance records to avoid using them in PnL calculations
+        const isZeroBalance = totalValueUsd === 0 || balance.balanceInUSD === 0;
+
+        const correctedBalance = {
+          ...balance,
+          originalBalanceInUSD: balance.balanceInUSD, // Keep original for reference
+          balanceInUSD:
+            Math.abs(totalValueUsd - balance.balanceInUSD) < 0.01
+              ? balance.balanceInUSD
+              : totalValueUsd,
+          isZeroBalance, // Add flag for UI to handle
+          tokenBalances: tokenBalances.map((token) => ({
+            symbol: token.tokenSymbol,
+            balance: Number(token.amount),
+            price: Number(token.priceUsd),
+            valueUsd: Number(token.valueUsd),
+          })),
+        };
+
+        return correctedBalance;
+      }),
+    );
+
+    // Also calculate a PnL series with non-zero balances only
+    const nonZeroBalances = balancesWithCorrectValues.filter(
+      (b) => !b.isZeroBalance,
+    );
+
+    // Calculate PnL for each point compared to the first non-zero balance
+    let pnlSeries = [];
+    if (nonZeroBalances.length > 0) {
+      const firstBalance = nonZeroBalances[0].balanceInUSD;
+      pnlSeries = nonZeroBalances.map((balance) => ({
+        timestamp: balance.createdAt,
+        balance: balance.balanceInUSD,
+        pnl: balance.balanceInUSD - firstBalance,
+        pnlPercentage:
+          firstBalance !== 0
+            ? ((balance.balanceInUSD - firstBalance) / firstBalance) * 100
+            : 0,
+      }));
+    }
+
+    return {
+      agentId: agent.id,
+      balances: balancesWithCorrectValues,
+      pnlSeries,
+      validBalanceCount: nonZeroBalances.length,
+    };
+  }
+
+  async getAgentCurrentBalance(agentId: string): Promise<any> {
+    this.logger.log(`Getting current balance for agent with ID: ${agentId}`);
+    // Verify the agent exists first
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id: agentId },
+    });
+
+    if (!agent) {
+      throw new NotFoundException(`Agent with ID ${agentId} not found`);
+    }
+
+    const extendedPrisma = this.prisma as ExtendedPrismaService;
+    const latestBalance = await extendedPrisma.paradexAccountBalance.findMany({
+      where: {
+        agentId: agent.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 1,
+    });
+
+    if (latestBalance.length === 0) {
+      return {
+        agentId: agent.id,
+        currentBalance: 0,
+        timestamp: null,
+        message: 'No balance data available for this agent',
+      };
+    }
+
+    // Get token balances to calculate the actual balance value (same as in getAgentPortfolio)
+    const tokenBalances = await extendedPrisma.portfolioTokenBalance.findMany({
+      where: { accountBalanceId: latestBalance[0].id },
+    });
+
+    // Recalculate the total balance based on the sum of token values
+    const totalValueUsd = tokenBalances.reduce(
+      (sum, token) => sum + Number(token.valueUsd),
+      0,
+    );
+
+    // Use the calculated total instead of the stored balance if they don't match
+    const actualBalanceInUSD =
+      Math.abs(totalValueUsd - latestBalance[0].balanceInUSD) < 0.01
+        ? latestBalance[0].balanceInUSD
+        : totalValueUsd;
+
+    return {
+      agentId: agent.id,
+      currentBalance: actualBalanceInUSD,
+      timestamp: latestBalance[0].createdAt,
+    };
   }
 }

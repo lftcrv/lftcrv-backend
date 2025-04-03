@@ -83,4 +83,32 @@ export class KPIController {
   ): Promise<any> {
     return this.balanceAccountService.getAgentPortfolio(runtimeAgentId);
   }
+
+  @Get('balance/:agentId')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get balance history for a specific agent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Balance history retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentBalanceHistory(
+    @Param('agentId') agentId: string,
+  ): Promise<any> {
+    return this.balanceAccountService.getAgentBalanceHistory(agentId);
+  }
+
+  @Get('balance/:agentId/current')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get current balance for a specific agent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current balance retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentCurrentBalance(
+    @Param('agentId') agentId: string,
+  ): Promise<any> {
+    return this.balanceAccountService.getAgentCurrentBalance(agentId);
+  }
 }
