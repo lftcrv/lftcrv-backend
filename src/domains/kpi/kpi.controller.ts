@@ -69,6 +69,8 @@ export class KPIController {
   async getBestPerformingAgent(): Promise<any> {
     return this.balanceAccountService.getBestPerformingAgent();
   }
+}
+
 
   @Get('portfolio/:runtimeAgentId')
   @RequireApiKey()

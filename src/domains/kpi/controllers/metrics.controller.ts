@@ -1,7 +1,9 @@
 import {
   Controller,
   Get,
+  Param,
   UseInterceptors,
+  NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -25,6 +27,40 @@ type ExtendedPrismaService = PrismaService & ExtendedPrismaModels;
 @UseInterceptors(LoggingInterceptor)
 export class MetricsController {
   constructor(private readonly prisma: PrismaService) {}
+
+  @Get('agent/:agentId/trades')
+  @RequireApiKey()
+  @ApiOperation({ summary: 'Get total trade count for a specific agent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Trade count retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentTradeCount(@Param('agentId') agentId: string): Promise<any> {
+    try {
+      const agent = await this.prisma.elizaAgent.findUnique({
+        where: { id: agentId },
+        include: { LatestMarketData: true },
+      });
+
+      if (!agent) {
+        throw new NotFoundException(`Agent with ID ${agentId} not found`);
+      }
+
+      return {
+        agentId: agent.id,
+        name: agent.name,
+        tradeCount: agent.LatestMarketData?.tradeCount || 0,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to get trade count: ${error.message}`,
+      );
+    }
+  }
 
   @Get('global/agent-count')
   @RequireApiKey()
