@@ -58,11 +58,11 @@ export class TradingInformationService implements ITradingInformation {
     const trade = await this.prisma.tradingInformation.findUnique({
       where: { id },
     });
-    
+
     if (!trade) {
       return null;
     }
-    
+
     // Format trade to expose the information at the top level
     if (trade.information) {
       const info = trade.information as any;
@@ -76,7 +76,7 @@ export class TradingInformationService implements ITradingInformation {
         totalCost: info.totalCost || 0,
       } as TradingInformation;
     }
-    
+
     return trade;
   }
 
