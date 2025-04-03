@@ -59,7 +59,7 @@ async function createDailySnapshot(daysAgo, balanceValue, pnlValue) {
         timestamp: date,
         balanceInUSD: balanceValue,
         pnl: pnlValue,
-        pnlPercentage: (pnlValue / (balanceValue - pnlValue)) * 100,
+        pnlPercentage: balanceValue === pnlValue ? 0 : (pnlValue / (balanceValue - pnlValue)) * 100,
         pnl24h:
           daysAgo < 7 ? balanceValue - (balanceValue - pnlValue) : pnlValue,
         pnlCycle: 0,
