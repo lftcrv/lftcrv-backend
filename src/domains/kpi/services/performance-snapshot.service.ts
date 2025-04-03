@@ -37,6 +37,23 @@ export class PerformanceSnapshotService {
 
     const pnlData = this.calculatePnLFromBalances(balances);
 
+    // Calculate 24 hour PnL
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+    // Get balances from the last 24 hours
+    const balances24h = await this.prisma.$queryRaw`
+      SELECT * FROM paradex_account_balances 
+      WHERE "agentId" = ${agent.id} 
+        AND "createdAt" >= ${twentyFourHoursAgo}
+      ORDER BY "createdAt" ASC
+    `;
+
+    // Calculate PnL for the last 24 hours
+    const pnlData24h = this.calculatePnLFromBalances(balances24h as any[]);
+    // If no data in the last 24 hours, use the existing pnl24h value from LatestMarketData
+    const pnl24h = pnlData24h.pnl || agent.LatestMarketData?.pnl24h || 0;
+
     // Create snapshot with all KPIs directly using $queryRaw
     await this.prisma.$executeRaw`
       INSERT INTO "agent_performance_snapshots" (
@@ -59,7 +76,7 @@ export class PerformanceSnapshotService {
         ${pnlData.latestBalance || 0}, 
         ${pnlData.pnl || 0}, 
         ${pnlData.pnlPercentage || 0}, 
-        ${agent.LatestMarketData?.pnl24h || 0}, 
+        ${pnl24h}, 
         ${agent.LatestMarketData?.pnlCycle || 0}, 
         ${agent.LatestMarketData?.tradeCount || 0}, 
         ${agent.LatestMarketData?.tvl || 0}, 
@@ -67,6 +84,32 @@ export class PerformanceSnapshotService {
         ${agent.LatestMarketData?.marketCap || 0}
       )
     `;
+
+    // Update or create the LatestMarketData with the calculated 24h PnL
+    if (agent.LatestMarketData) {
+      // Update existing record
+      await this.prisma.latestMarketData.update({
+        where: { elizaAgentId: agent.id },
+        data: { pnl24h },
+      });
+    } else {
+      // Create new record
+      await this.prisma.latestMarketData.create({
+        data: {
+          elizaAgentId: agent.id,
+          pnl24h,
+          price: 0,
+          priceChange24h: 0,
+          holders: 0,
+          marketCap: 0,
+          bondingStatus: 'BONDING',
+          forkCount: 0,
+          pnlCycle: 0,
+          tradeCount: 0,
+          tvl: 0,
+        },
+      });
+    }
 
     this.logger.log(`Created performance snapshot for agent ${agentId}`);
 
@@ -77,7 +120,7 @@ export class PerformanceSnapshotService {
       balanceInUSD: pnlData.latestBalance || 0,
       pnl: pnlData.pnl || 0,
       pnlPercentage: pnlData.pnlPercentage || 0,
-      pnl24h: agent.LatestMarketData?.pnl24h || 0,
+      pnl24h,
       pnlCycle: agent.LatestMarketData?.pnlCycle || 0,
       tradeCount: agent.LatestMarketData?.tradeCount || 0,
       tvl: agent.LatestMarketData?.tvl || 0,
@@ -166,6 +209,29 @@ export class PerformanceSnapshotService {
     snapshots: any[],
     interval: 'daily' | 'weekly',
   ): any[] {
+    this.logger.log(
+      `Aggregating ${snapshots.length} snapshots by ${interval} interval`,
+    );
+
+    // TEMPORARY OVERRIDE: Return each snapshot as-is for testing purposes
+    // This will show each snapshot separately in the history
+    return snapshots.map((snapshot) => {
+      return {
+        timestamp: snapshot.timestamp,
+        balanceInUSD: snapshot.balanceInUSD,
+        pnl: snapshot.pnl,
+        pnlPercentage: snapshot.pnlPercentage,
+        pnl24h: snapshot.pnl24h,
+        pnlCycle: snapshot.pnlCycle,
+        tradeCount: snapshot.tradeCount,
+        tvl: snapshot.tvl,
+        price: snapshot.price,
+        marketCap: snapshot.marketCap,
+        dataPoints: 1, // Each snapshot is one data point
+      };
+    });
+
+    /* Original aggregation code remains here for future reference
     const aggregateMap = new Map();
 
     // Group by day or week
@@ -211,38 +277,40 @@ export class PerformanceSnapshotService {
       }
 
       const periodData = aggregateMap.get(periodKey);
-      periodData.count += 1;
+      periodData.count++;
       periodData.balanceInUSD += snapshot.balanceInUSD;
       periodData.pnl += snapshot.pnl;
       periodData.pnlPercentage += snapshot.pnlPercentage;
       periodData.pnl24h += snapshot.pnl24h;
-      periodData.pnlCycle += snapshot.pnlCycle;
-      periodData.tradeCount += snapshot.tradeCount;
-      periodData.tvl += snapshot.tvl;
-      periodData.price += snapshot.price;
-      periodData.marketCap += snapshot.marketCap;
+      periodData.pnlCycle = snapshot.pnlCycle; // Use the latest
+      periodData.tradeCount = snapshot.tradeCount; // Use the latest
+      periodData.tvl = snapshot.tvl; // Use the latest
+      periodData.price = snapshot.price; // Use the latest
+      periodData.marketCap = snapshot.marketCap; // Use the latest
     });
 
-    // Calculate averages and prepare result
-    const result = [];
-    for (const [data] of aggregateMap.entries()) {
-      result.push({
-        timestamp: data.period,
+    // Calculate averages and format for response
+    const aggregatedResults = [];
+    aggregateMap.forEach((data, key) => {
+      aggregatedResults.push({
+        timestamp: data.period.toISOString(),
         balanceInUSD: data.balanceInUSD / data.count,
         pnl: data.pnl / data.count,
         pnlPercentage: data.pnlPercentage / data.count,
         pnl24h: data.pnl24h / data.count,
-        pnlCycle: data.pnlCycle / data.count,
-        tradeCount: Math.round(data.tradeCount / data.count),
-        tvl: data.tvl / data.count,
-        price: data.price / data.count,
-        marketCap: data.marketCap / data.count,
+        pnlCycle: data.pnlCycle,
+        tradeCount: data.tradeCount,
+        tvl: data.tvl,
+        price: data.price,
+        marketCap: data.marketCap,
         dataPoints: data.count,
       });
-    }
+    });
 
-    // Sort by timestamp
-    return result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    return aggregatedResults.sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+    */
   }
 
   /**

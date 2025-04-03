@@ -5,9 +5,15 @@ import { AccountBalanceTokens } from './interfaces';
 import { PerformanceSnapshotService } from './services/performance-snapshot.service';
 import { PerformanceSnapshotController } from './controllers/performance-snapshot.controller';
 import { MetricsController } from './controllers/metrics.controller';
+import { ElizaAgentModule } from '../leftcurve-agent/leftcurve-agent.module';
 
 @Module({
-  controllers: [KPIController, PerformanceSnapshotController, MetricsController],
+  imports: [ElizaAgentModule],
+  controllers: [
+    KPIController,
+    PerformanceSnapshotController,
+    MetricsController,
+  ],
   providers: [
     {
       provide: AccountBalanceTokens.AccountBalance,

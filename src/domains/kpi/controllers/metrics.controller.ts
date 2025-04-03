@@ -62,28 +62,23 @@ export class MetricsController {
     }
   }
 
-  @Get('global/tvl')
+  @Get('global/agent-count')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Get total TVL across all agents' })
+  @ApiOperation({ summary: 'Get total number of agents' })
   @ApiResponse({
     status: 200,
-    description: 'Total TVL retrieved successfully',
+    description: 'Agent count retrieved successfully',
   })
-  async getTotalTVL(): Promise<any> {
+  async getTotalAgentCount(): Promise<any> {
     try {
-      // Calculate total TVL by summing up TVL from all agents
-      const result = await this.prisma.latestMarketData.aggregate({
-        _sum: {
-          tvl: true,
-        },
-      });
+      const count = await this.prisma.elizaAgent.count();
 
       return {
-        totalTVL: result._sum.tvl || 0,
+        totalAgentCount: count,
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        `Failed to calculate total TVL: ${error.message}`,
+        `Failed to get agent count: ${error.message}`,
       );
     }
   }
@@ -114,23 +109,28 @@ export class MetricsController {
     }
   }
 
-  @Get('global/agent-count')
+  @Get('global/tvl')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Get total number of agents' })
+  @ApiOperation({ summary: 'Get total TVL across all agents' })
   @ApiResponse({
     status: 200,
-    description: 'Agent count retrieved successfully',
+    description: 'Total TVL retrieved successfully',
   })
-  async getTotalAgentCount(): Promise<any> {
+  async getTotalTVL(): Promise<any> {
     try {
-      const count = await this.prisma.elizaAgent.count();
-      
+      // Calculate total TVL by summing up TVL from all agents
+      const result = await this.prisma.latestMarketData.aggregate({
+        _sum: {
+          tvl: true,
+        },
+      });
+
       return {
-        totalAgentCount: count,
+        totalTVL: result._sum.tvl || 0,
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        `Failed to get agent count: ${error.message}`,
+        `Failed to calculate total TVL: ${error.message}`,
       );
     }
   }
@@ -147,22 +147,23 @@ export class MetricsController {
       // For each agent, get their latest balance
       const agents = await this.prisma.elizaAgent.findMany();
       let totalBalance = 0;
-      
+
       const extendedPrisma = this.prisma as ExtendedPrismaService;
-      
+
       for (const agent of agents) {
-        const latestBalance = await extendedPrisma.paradexAccountBalance.findFirst({
-          where: { agentId: agent.id },
-          orderBy: { createdAt: 'desc' },
-        });
-        
+        const latestBalance =
+          await extendedPrisma.paradexAccountBalance.findFirst({
+            where: { agentId: agent.id },
+            orderBy: { createdAt: 'desc' },
+          });
+
         if (latestBalance) {
           totalBalance += latestBalance.balanceInUSD;
         }
       }
-      
+
       return {
-        totalBalance: totalBalance,
+        totalBalance,
       };
     } catch (error) {
       throw new InternalServerErrorException(
@@ -170,4 +171,4 @@ export class MetricsController {
       );
     }
   }
-} 
+}

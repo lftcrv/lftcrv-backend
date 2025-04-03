@@ -57,6 +57,12 @@ import { MessageService } from 'src/message/message.service';
     },
     PrismaService,
   ],
+  exports: [
+    {
+      provide: ServiceTokens.ElizaAgentQuery,
+      useClass: ElizaAgentQueryService,
+    },
+  ],
 })
 export class ElizaAgentModule implements OnModuleInit {
   constructor(
