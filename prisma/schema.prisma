@@ -96,6 +96,8 @@ model LatestMarketData {
   pnl24h         Float         @default(0)
   tradeCount     Int           @default(0)
   tvl            Float         @default(0)
+  balanceInUSD   Float         @default(0)
+  pnlRank        Int?
   elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
 
   @@index([price])
@@ -103,6 +105,7 @@ model LatestMarketData {
   @@index([marketCap])
   @@index([tvl])
   @@index([pnl24h])
+  @@index([pnlRank])
   @@map("latest_market_data")
 }
 

@@ -6,6 +6,7 @@ import { PrismaModule } from '../shared/prisma/prisma.module';
 import { AgentTokenModule } from '../domains/agent-token/agent-token.module';
 import { BlockchainModule } from '../shared/blockchain/blockchain.module';
 import { KPIModule } from '../domains/kpi/kpi.module';
+import { SyncPerformanceMetricsTask } from './tasks/sync-performance-metrics.task';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { KPIModule } from '../domains/kpi/kpi.module';
     BlockchainModule,
     KPIModule,
   ],
-  providers: [TasksService],
+  providers: [TasksService, SyncPerformanceMetricsTask],
 })
 export class TasksModule {}
