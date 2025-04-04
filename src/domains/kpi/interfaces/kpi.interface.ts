@@ -10,4 +10,7 @@ export interface IAccountBalance {
 
   getAgentBalanceHistory(agentId: string): Promise<any>;
   getAgentCurrentBalance(agentId: string): Promise<any>;
+
+  // Get agent by database ID
+  getAgentById(agentId: string): Promise<any>;
 }

@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { IAccountBalance } from '../interfaces/kpi.interface';
 import { AccountBalanceDto, TokenBalanceDto } from '../dtos/kpi.dto';
+import { ElizaAgent } from '@prisma/client';
 
 // Type extension for PrismaService to handle models not in schema
 interface ExtendedPrismaModels {
@@ -503,5 +504,21 @@ export class KPIService implements IAccountBalance {
       currentBalance: actualBalanceInUSD,
       timestamp: latestBalance[0].createdAt,
     };
+  }
+
+  async getAgentById(agentId: string): Promise<ElizaAgent | null> {
+    this.logger.log(`Getting agent with ID: ${agentId}`);
+    try {
+      const agent = await this.prisma.elizaAgent.findUnique({
+        where: { id: agentId },
+      });
+
+      return agent;
+    } catch (error) {
+      this.logger.error(
+        `Error getting agent with ID ${agentId}: ${error.message}`,
+      );
+      return null;
+    }
   }
 }

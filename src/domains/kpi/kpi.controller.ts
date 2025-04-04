@@ -6,6 +6,7 @@ import {
   Post,
   Param,
   UseInterceptors,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
@@ -69,12 +70,12 @@ export class KPIController {
   async getBestPerformingAgent(): Promise<any> {
     return this.balanceAccountService.getBestPerformingAgent();
   }
-}
-
 
   @Get('portfolio/:runtimeAgentId')
   @RequireApiKey()
-  @ApiOperation({ summary: 'Get token portfolio data for a specific agent' })
+  @ApiOperation({
+    summary: 'Get token portfolio data for a specific agent by runtime ID',
+  })
   @ApiResponse({
     status: 200,
     description: 'Portfolio data retrieved successfully',
@@ -84,6 +85,29 @@ export class KPIController {
     @Param('runtimeAgentId') runtimeAgentId: string,
   ): Promise<any> {
     return this.balanceAccountService.getAgentPortfolio(runtimeAgentId);
+  }
+
+  @Get('agent-portfolio/:agentId')
+  @RequireApiKey()
+  @ApiOperation({
+    summary: 'Get token portfolio data for a specific agent by agent ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Portfolio data retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Agent not found' })
+  async getAgentPortfolioByAgentId(
+    @Param('agentId') agentId: string,
+  ): Promise<any> {
+    // Get the agent to find its runtimeAgentId
+    const agent = await this.balanceAccountService.getAgentById(agentId);
+    if (!agent || !agent.runtimeAgentId) {
+      throw new NotFoundException(
+        `Agent with ID ${agentId} not found or has no runtime ID`,
+      );
+    }
+    return this.balanceAccountService.getAgentPortfolio(agent.runtimeAgentId);
   }
 
   @Get('balance/:agentId')
