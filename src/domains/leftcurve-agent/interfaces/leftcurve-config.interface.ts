@@ -9,6 +9,12 @@ export interface ElizaConfig {
   // StarknetAgentKitServer
   agentServerApiKey: string;
 
+  agentPostgresUser: string;
+  agentPostgresPassword: string;
+  agentPostgresRootDb: string;
+  agentPostgresHost: string;
+  agentPostgresPort: string;
+
   // AI configuration
   aiProviderApiKey: string;
   aiModel: string;

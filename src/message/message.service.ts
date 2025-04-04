@@ -79,7 +79,7 @@ export class MessageService {
       throw new Error(`Agent not found or not ready: ${runtimeAgentId}`);
     }
 
-    const apiKey = process.env.AGENT_SERVER_API_KEY || 'secret-key';
+    const apiKey = process.env.SERVER_API_KEY || 'secret-key';
     const url = `http://localhost:${agent.port}/api/key/request`;
 
     try {

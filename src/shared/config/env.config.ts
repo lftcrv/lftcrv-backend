@@ -11,7 +11,7 @@ export const environmentConfig = () => ({
   ozAccountClassHash: process.env.OZ_ACCOUNT_CLASSHASH,
 
   // Agent Server Configuration
-  agentServerApiKey: process.env.AGENT_SERVER_API_KEY,
+  agentServerApiKey: process.env.SERVER_API_KEY,
 
   // AI Provider Configuration
   aiProviderApiKey: process.env.AI_PROVIDER_API_KEY,
@@ -27,7 +27,6 @@ export const environmentConfig = () => ({
 
   // Backend Configuration
   hostBackend: process.env.HOST_BACKEND,
-  localDevelopment: process.env.LOCAL_DEVELOPMENT === 'TRUE',
   backendApiKey: process.env.BACKEND_API_KEY,
 });
 
@@ -67,10 +66,32 @@ export const validationSchema = {
     message: 'OZ_ACCOUNT_CLASSHASH is required for agent deployment',
   },
   // Agent Server Configuration
-  AGENT_SERVER_API_KEY: {
+  SERVER_API_KEY: {
     required: true,
-    message: 'AGENT_SERVER_API_KEY is required for agent authentication',
+    message: 'SERVER_API_KEY is required for agent authentication',
   },
+
+  POSTGRES_USER: {
+    required: true,
+    message: 'POSTGRES_USER is required for agent database',
+  },
+  POSTGRES_PASSWORD: {
+    required: true,
+    message: 'POSTGRES_USER is required for agent database',
+  },
+  POSTGRES_ROOT_DB: {
+    required: true,
+    message: 'POSTGRES_USER is required for agent database',
+  },
+  POSTGRES_HOST: {
+    required: true,
+    message: 'POSTGRES_USER is required for agent database',
+  },
+  POSTGRES_PORT: {
+    required: true,
+    message: 'POSTGRES_USER is required for agent database',
+  },
+
   // AI Provider Configuration
   AI_PROVIDER_API_KEY: {
     required: true,
