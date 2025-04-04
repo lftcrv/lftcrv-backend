@@ -32,13 +32,24 @@ if [ ! -f .env ]; then
   echo "Please update the .env file with your local settings if necessary."
 fi
 source .env
-if ! docker ps | grep -q "lftcrv-postgres"; then
+
+if ! docker ps | grep -q "lftcrv-postgres-backend"; then
   echo "PostgreSQL is not running. Starting it now..."
   docker compose up -d postgres
   echo "PostgreSQL started!"
 else
   echo "PostgreSQL is already running."
 fi
+
+# 🔄 Ensure Postgres is connected to the agent network
+if ! docker network inspect leftcurve_network | grep -q "lftcrv-postgres-backend"; then
+  echo "Connecting lftcrv-postgres-backend to leftcurve_network..."
+  docker network connect leftcurve_network lftcrv-postgres-backend
+  echo "✅ Connected!"
+else
+  echo "Postgres is already connected to leftcurve_network."
+fi
+
 if [ "$CLEAN_DB" = true ]; then
   echo "Warning: You are about to delete the database $DATABASE_NAME. This action cannot be undone."
   read -p "Are you sure? (yes/no): " CONFIRM
