@@ -25,11 +25,7 @@ export class TasksService {
     private readonly configService: ConfigService,
     private readonly performanceSnapshotService: PerformanceSnapshotService,
   ) {
-    const isLocalDevelopment =
-      this.configService.get<string>('LOCAL_DEVELOPMENT') === 'TRUE';
-    const host = isLocalDevelopment
-      ? 'localhost'
-      : this.configService.get<string>('HOST_BACKEND');
+    const host = this.configService.get<string>('HOST_BACKEND');
     const port = this.configService.get<string>('BACKEND_PORT');
 
     this.apiUrl = `http://${host}:${port}`;

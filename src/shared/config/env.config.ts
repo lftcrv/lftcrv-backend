@@ -119,8 +119,4 @@ export const validationSchema = {
     required: true,
     message: 'HOST_BACKEND is required for backend connection',
   },
-  LOCAL_DEVELOPMENT: {
-    required: false,
-    message: 'LOCAL_DEVELOPMENT indicates if running in development mode',
-  },
 };
