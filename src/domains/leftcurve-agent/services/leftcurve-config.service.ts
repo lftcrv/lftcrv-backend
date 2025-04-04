@@ -15,7 +15,7 @@ export class ElizaConfigService implements IElizaConfigService {
       // Backend server configuration
       backendApiKey: this.configService.get<string>('BACKEND_API_KEY'),
       backendPort: this.configService.get<number>('BACKEND_PORT', 8080),
-      hostBackend: this.configService.get<string>('HOST_BACKEND', 'localhost'),
+      agentHostBackend: this.configService.get<string>('AGENT_HOST_BACKEND', 'localhost'),
 
       // StarknetAgentKit Server
       agentServerApiKey: this.configService.get<string>('SERVER_API_KEY'),
@@ -77,7 +77,7 @@ export class ElizaConfigService implements IElizaConfigService {
       // Backend server configuration
       `BACKEND_API_KEY=${this.config.backendApiKey}`,
       `BACKEND_PORT=${this.config.backendPort}`,
-      `HOST_BACKEND=${this.config.hostBackend}`,
+      `AGENT_HOST_BACKEND=${this.config.agentHostBackend}`,
 
       // StarknetAgentKit Server
       `AGENT_SERVER_PORT=8080`,

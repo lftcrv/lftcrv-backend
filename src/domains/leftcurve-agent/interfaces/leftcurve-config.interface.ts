@@ -4,7 +4,7 @@ export interface ElizaConfig {
   // Backend server configuration
   backendApiKey: string;
   backendPort: number;
-  hostBackend: string;
+  agentHostBackend: string;
 
   // StarknetAgentKitServer
   agentServerApiKey: string;

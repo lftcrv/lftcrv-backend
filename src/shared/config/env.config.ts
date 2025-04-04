@@ -91,6 +91,10 @@ export const validationSchema = {
     required: true,
     message: 'POSTGRES_USER is required for agent database',
   },
+  AGENT_HOST_BACKEND: {
+    required: true,
+    message: 'AGENT_HOST_BACKEND is required for agent to backend connection',
+  },
 
   // AI Provider Configuration
   AI_PROVIDER_API_KEY: {
