@@ -15,11 +15,15 @@ export class ElizaConfigService implements IElizaConfigService {
       // Backend server configuration
       backendApiKey: this.configService.get<string>('BACKEND_API_KEY'),
       backendPort: this.configService.get<number>('BACKEND_PORT', 8080),
-      hostBackend: this.configService.get<string>('HOST_BACKEND', 'localhost'),
-      localDevelopment: this.configService.get<string>('LOCAL_DEVELOPMENT'),
+      agentHostBackend: this.configService.get<string>('AGENT_HOST_BACKEND', 'localhost'),
 
       // StarknetAgentKit Server
-      agentServerApiKey: this.configService.get<string>('AGENT_SERVER_API_KEY'),
+      agentServerApiKey: this.configService.get<string>('SERVER_API_KEY'),
+      agentPostgresUser: this.configService.get<string>('POSTGRES_USER'),
+      agentPostgresPassword: this.configService.get<string>('POSTGRES_PASSWORD'),
+      agentPostgresRootDb: this.configService.get<string>('POSTGRES_ROOT_DB'),
+      agentPostgresHost: this.configService.get<string>('POSTGRES_HOST'),
+      agentPostgresPort: this.configService.get<string>('POSTGRES_PORT'),
 
       // AI configuration
       aiProviderApiKey: this.configService.get<string>('AI_PROVIDER_API_KEY'),
@@ -73,12 +77,16 @@ export class ElizaConfigService implements IElizaConfigService {
       // Backend server configuration
       `BACKEND_API_KEY=${this.config.backendApiKey}`,
       `BACKEND_PORT=${this.config.backendPort}`,
-      `HOST_BACKEND=${this.config.hostBackend}`,
-      `LOCAL_DEVELOPMENT=FALSE`,
+      `AGENT_HOST_BACKEND=${this.config.agentHostBackend}`,
 
       // StarknetAgentKit Server
       `AGENT_SERVER_PORT=8080`,
-      `AGENT_SERVER_API_KEY=${this.config.agentServerApiKey}`,
+      `SERVER_API_KEY=${this.config.agentServerApiKey}`,
+      `POSTGRES_USER=${this.config.agentPostgresUser}`,
+      `POSTGRES_PASSWORD=${this.config.agentPostgresPassword}`,
+      `POSTGRES_ROOT_DB=${this.config.agentPostgresRootDb}`,
+      `POSTGRES_HOST=${this.config.agentPostgresHost}`,
+      `POSTGRES_PORT=${this.config.agentPostgresPort}`,
 
       // AI configuration
       `AI_PROVIDER_API_KEY=${this.config.aiProviderApiKey}`,

@@ -4,11 +4,16 @@ export interface ElizaConfig {
   // Backend server configuration
   backendApiKey: string;
   backendPort: number;
-  hostBackend: string;
-  localDevelopment: string;
+  agentHostBackend: string;
 
   // StarknetAgentKitServer
   agentServerApiKey: string;
+
+  agentPostgresUser: string;
+  agentPostgresPassword: string;
+  agentPostgresRootDb: string;
+  agentPostgresHost: string;
+  agentPostgresPort: string;
 
   // AI configuration
   aiProviderApiKey: string;

@@ -135,6 +135,7 @@ export class DockerService implements IDockerService, OnModuleInit {
       name: containerName,
       Env: envVars,
       HostConfig: {
+        NetworkMode: 'leftcurve_network',
         Binds: [
           `${agentConfigFile}:/app/config/agents/default.agent.json`,
           `${agentEnvFile}:/app/.env`,

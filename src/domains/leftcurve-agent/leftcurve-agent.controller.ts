@@ -61,7 +61,7 @@ export class ElizaAgentController {
   @ApiResponse({
     status: 202,
     description: 'Agent creation initiated',
-    type: AgentCreationResponseDto
+    type: AgentCreationResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -101,6 +101,20 @@ export class ElizaAgentController {
 
         const characterConfig = dto.characterConfig;
 
+        let chatIdSuffix = '';
+        if (characterConfig.name) {
+          // from the character name
+          const nameHash = characterConfig.name
+            .split('')
+            .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+            .toString(16)
+            .slice(0, 8);
+          chatIdSuffix = nameHash;
+        } else {
+          // If no name, use timestamp to avoid collisions
+          chatIdSuffix = Date.now().toString(16).slice(-8);
+        }
+
         const agentConfig = {
           name: characterConfig.name || dto.name,
           bio: Array.isArray(characterConfig.bio)
@@ -112,9 +126,9 @@ export class ElizaAgentController {
             ? characterConfig.knowledge
             : [],
           interval: 30,
-          chat_id: 'test0',
+          chat_id: `chat-${chatIdSuffix}`,
           external_plugins: [],
-          internal_plugins: ['rpc', 'leftcurve', 'paradex'],
+          internal_plugins: ['leftcurve'],
         };
 
         if (
