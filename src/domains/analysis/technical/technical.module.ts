@@ -7,6 +7,7 @@ import { TechnicalService } from './technical.service';
 import { TechnicalController } from './technical.controller';
 import { PivotService } from './services/pivot.service';
 import { ADXService } from './services/adx.service';
+import { ATRService } from './services/atr.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { ParadexPriceService } from './services/price/paradex-price.service';
@@ -26,6 +27,7 @@ import { UnifiedPriceService } from './services/price/unified-price.service';
     CandlestickService,
     MomentumService,
     ADXService,
+    ATRService,
     IchimokuService,
     VolumeService,
     PivotService,

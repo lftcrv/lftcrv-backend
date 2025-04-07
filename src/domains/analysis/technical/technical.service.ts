@@ -12,6 +12,7 @@ import {
   AnalysisError,
 } from './types';
 import { ADXService } from './services/adx.service';
+import { ATRService } from './services/atr.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PivotService } from './services/pivot.service';
 import { VolumeService } from './services/volume.service';
@@ -35,6 +36,7 @@ export class TechnicalService {
     private readonly candlestickService: CandlestickService,
     private readonly momentumService: MomentumService,
     private readonly adxService: ADXService,
+    private readonly atrService: ATRService,
     private readonly ichimokuService: IchimokuService,
     private readonly volumeService: VolumeService,
     private readonly pivotService: PivotService,
