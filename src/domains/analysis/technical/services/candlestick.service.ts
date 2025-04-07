@@ -540,14 +540,16 @@ export class CandlestickService {
     const opensBelowPrevLow = current.open! < previous.low!;
     const closesAboveMidpoint =
       current.close! > (previous.open! + previous.close!) / 2;
-    const closesAboveOpen = current.close! > previous.open!;
+
+    // Current close should be below previous open (not above)
+    const closesBelowPreviousOpen = current.close! < previous.open!;
 
     return (
       isPreviousBearish &&
       isCurrentBullish &&
       opensBelowPrevLow &&
       closesAboveMidpoint &&
-      closesAboveOpen
+      closesBelowPreviousOpen
     );
   }
 
@@ -562,19 +564,10 @@ export class CandlestickService {
     // Third candle should be bullish (c1)
     const isThirdBullish = c1.close! > c1.open!;
 
-    // Second candle should gap down from first
-    const doesGapDown = Math.max(c2.open!, c2.close!) < c3.close!;
-
     // Third candle should close at least into the first candle
     const closesIntoFirst = c1.close! > (c3.open! + c3.close!) / 2;
 
-    return (
-      isFirstBearish &&
-      isSecondSmall &&
-      isThirdBullish &&
-      doesGapDown &&
-      closesIntoFirst
-    );
+    return isFirstBearish && isSecondSmall && isThirdBullish && closesIntoFirst;
   }
 
   private isEveningStar(c1: PriceDTO, c2: PriceDTO, c3: PriceDTO): boolean {
@@ -588,19 +581,10 @@ export class CandlestickService {
     // Third candle should be bearish (c1)
     const isThirdBearish = c1.close! < c1.open!;
 
-    // Second candle should gap up from first
-    const doesGapUp = Math.min(c2.open!, c2.close!) > c3.close!;
-
     // Third candle should close at least into the first candle
     const closesIntoFirst = c1.close! < (c3.open! + c3.close!) / 2;
 
-    return (
-      isFirstBullish &&
-      isSecondSmall &&
-      isThirdBearish &&
-      doesGapUp &&
-      closesIntoFirst
-    );
+    return isFirstBullish && isSecondSmall && isThirdBearish && closesIntoFirst;
   }
 
   private isThreeWhiteSoldiers(
@@ -612,12 +596,15 @@ export class CandlestickService {
     const allBullish =
       c1.close! > c1.open! && c2.close! > c2.open! && c3.close! > c3.open!;
 
-    // Each candle should open within the body of the previous candle
+    // Allow opens at or slightly above the previous close (within 1%)
+    const c3Range = c3.close! - c3.open!;
+    const c2Range = c2.close! - c2.open!;
+
     const properOpens =
       c2.open! > c3.open! &&
-      c2.open! < c3.close! &&
+      c2.open! <= c3.close! * 1.01 && // Allow 1% flexibility
       c1.open! > c2.open! &&
-      c1.open! < c2.close!;
+      c1.open! <= c2.close! * 1.01; // Allow 1% flexibility
 
     // Each candle should close higher than the previous
     const higherCloses = c2.close! > c3.close! && c1.close! > c2.close!;
@@ -636,12 +623,12 @@ export class CandlestickService {
     const allBearish =
       c1.close! < c1.open! && c2.close! < c2.open! && c3.close! < c3.open!;
 
-    // Each candle should open within the body of the previous candle
+    // Allow opens at or slightly below the previous close (within 1%)
     const properOpens =
       c2.open! < c3.open! &&
-      c2.open! > c3.close! &&
+      c2.open! >= c3.close! * 0.99 && // Allow 1% flexibility
       c1.open! < c2.open! &&
-      c1.open! > c2.close!;
+      c1.open! >= c2.close! * 0.99; // Allow 1% flexibility
 
     // Each candle should close lower than the previous
     const lowerCloses = c2.close! < c3.close! && c1.close! < c2.close!;
