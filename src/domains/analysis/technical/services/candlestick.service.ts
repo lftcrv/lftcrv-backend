@@ -344,17 +344,13 @@ export class CandlestickService {
     // Hammer has a small body at the top with a long lower shadow
     const bodySize = Math.abs(candle.close! - candle.open!);
     const candleRange = candle.high! - candle.low!;
-
     if (candleRange === 0) return false;
-
     const body = Math.min(candle.open!, candle.close!);
     const lowerShadow = body - candle.low!;
     const upperShadow = candle.high! - Math.max(candle.open!, candle.close!);
 
-    // Lower shadow should be at least 2x the body size
-    // Upper shadow should be small
     const isHammerShape =
-      lowerShadow >= 2 * bodySize && upperShadow <= 0.3 * bodySize;
+      lowerShadow >= 2 * bodySize && upperShadow <= 0.1 * candleRange;
 
     // Should appear in a downtrend
     const isInDowntrend = previous.close! < previous.open!;
@@ -375,12 +371,18 @@ export class CandlestickService {
     // Upper shadow should be at least 2x the body size
     // Lower shadow should be small
     const isShootingStarShape =
-      upperShadow >= 2 * bodySize && lowerShadow <= 0.3 * bodySize;
+      upperShadow >= 2 * bodySize &&
+      lowerShadow <= 0.3 * bodySize &&
+      bodySize < 0.3 * candleRange;
 
     // Should appear in an uptrend
     const isInUptrend = previous.close! > previous.open!;
 
-    return isShootingStarShape && isInUptrend;
+    // For a proper shooting star, it should be a bearish (red) candle
+    // This isn't always required, but makes the pattern more reliable
+    const isBearish = candle.close! < candle.open!;
+
+    return isShootingStarShape && isInUptrend && isBearish;
   }
 
   private isBullishMarubozu(candle: PriceDTO): boolean {
@@ -516,14 +518,14 @@ export class CandlestickService {
     const opensAbovePrevHigh = current.open! > previous.high!;
     const closesBelowMidpoint =
       current.close! < (previous.open! + previous.close!) / 2;
-    const closesBelowOpen = current.close! < previous.open!;
+    const closesBelowOrEqualToOpen = current.close! <= previous.open!; // Changed from < to <=
 
     return (
       isPreviousBullish &&
       isCurrentBearish &&
       opensAbovePrevHigh &&
       closesBelowMidpoint &&
-      closesBelowOpen
+      closesBelowOrEqualToOpen // Changed condition name to reflect the change
     );
   }
 

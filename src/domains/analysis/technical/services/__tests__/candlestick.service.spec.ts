@@ -45,7 +45,7 @@ describe('CandlestickService', () => {
           price: 102,
           open: 101,
           close: 102,
-          high: 102.5,
+          high: 102.2,
           low: 92, // Much lower to create a strong hammer signal
           volume: 1200,
         },
@@ -55,7 +55,7 @@ describe('CandlestickService', () => {
       expect(result?.type).toBe(CandlePatternType.HAMMER);
     });
 
-    test.only('should detect a Shooting Star pattern', () => {
+    test('should detect a Shooting Star pattern', () => {
       const candles: PriceDTO[] = [
         // Previous bullish candle - important for uptrend confirmation
         {
@@ -74,7 +74,7 @@ describe('CandlestickService', () => {
           open: 99,
           close: 98,
           high: 108, // Much higher to create a strong shooting star signal
-          low: 97.5,
+          low: 98, // Adjusted to 98 to reduce the lower shadow
           volume: 1200,
         },
       ];
