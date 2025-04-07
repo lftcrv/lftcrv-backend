@@ -14,6 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { MockWalletService } from './services/mock-wallet.service';
 import {
   ApiTags,
   ApiOperation,
@@ -48,6 +49,7 @@ export class ElizaAgentController {
     private readonly queryService: IElizaAgentQueryService,
     @Inject(ServiceTokens.ElizaAgentLifecycle)
     private readonly lifecycleService: IElizaAgentLifecycleService,
+    private readonly mockWalletService: MockWalletService,
     @Inject(OrchestrationServiceTokens.Orchestrator)
     private readonly orchestrator: IOrchestrator,
     private readonly fileUploadService: FileUploadService,
@@ -172,6 +174,22 @@ export class ElizaAgentController {
         orchestrationId,
         tempFileName,
       });
+
+      // Get the current orchestration status
+      const status =
+        await this.orchestrator.getOrchestrationStatus(orchestrationId);
+
+      // Generate mock wallet data
+      const mockWallet = this.mockWalletService.createMockWalletData();
+
+      // Update the orchestration status with wallet information
+      await this.orchestrator.updateOrchestrationStatus(orchestrationId, {
+        metadata: {
+          ...status.metadata,
+          wallet: mockWallet,
+        },
+      });
+
       return {
         status: 'success',
         data: {

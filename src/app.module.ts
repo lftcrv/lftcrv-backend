@@ -16,7 +16,7 @@ import { MessageModule } from './message/message.module';
 import { TradingInformationModule } from './domains/trading-information/trading-information.module';
 import { LeaderboardModule } from './domains/leaderboard/leaderboard.module';
 import { StarknetModule } from './domains/blockchain/starknet/starknet.module';
-import { AgentTokenModule } from './domains/agent-token/agent-token.module';
+// import { AgentTokenModule } from './domains/agent-token/agent-token.module';
 import { BlockchainModule } from './shared/blockchain/blockchain.module';
 import { TransactionModule } from './domains/transaction/transaction.module';
 import { TechnicalModule } from './domains/analysis/technical/technical.module';
@@ -69,7 +69,7 @@ import { KPIModule } from './domains/kpi/kpi.module';
     LeaderboardModule,
     StarknetModule,
     FundingModule,
-    AgentTokenModule,
+    // AgentTokenModule,
     TransactionModule,
     AnalysisSharedModule,
     TechnicalModule,
