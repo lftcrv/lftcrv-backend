@@ -41,6 +41,15 @@ else
   echo "PostgreSQL is already running."
 fi
 
+# ✅ Ensure leftcurve_network exists
+if ! docker network ls | grep -q "leftcurve_network"; then
+  echo "Docker network leftcurve_network doesn't exist. Creating it..."
+  docker network create leftcurve_network
+  echo "Docker network leftcurve_network created!"
+else
+  echo "Docker network leftcurve_network already exists."
+fi
+
 # 🔄 Ensure Postgres is connected to the agent network
 if ! docker network inspect leftcurve_network | grep -q "lftcrv-postgres-backend"; then
   echo "Connecting lftcrv-postgres-backend to leftcurve_network..."
