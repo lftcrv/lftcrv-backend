@@ -206,35 +206,37 @@ export class TasksService {
   async updateAgentPerformanceSnapshots() {
     const startTime = Date.now();
     this.logger.log('Starting agent performance snapshot updates');
-    
+
     try {
       const agents = await this.prisma.elizaAgent.findMany({
-        where: { status: AgentStatus.RUNNING }
+        where: { status: AgentStatus.RUNNING },
       });
-      
+
       let successCount = 0;
       let failureCount = 0;
-      
+
       for (const agent of agents) {
         try {
-          await this.performanceSnapshotService.createAgentPerformanceSnapshot(agent.id);
+          await this.performanceSnapshotService.createAgentPerformanceSnapshot(
+            agent.id,
+          );
           successCount++;
         } catch (error) {
           failureCount++;
           this.logger.error(
-            `Failed to create performance snapshot for agent ${agent.id}: ${error.message}`
+            `Failed to create performance snapshot for agent ${agent.id}: ${error.message}`,
           );
         }
       }
-      
+
       const duration = Date.now() - startTime;
       this.logger.log(
-        `Performance snapshot updates completed - Success: ${successCount}, Failed: ${failureCount}, Duration: ${duration}ms`
+        `Performance snapshot updates completed - Success: ${successCount}, Failed: ${failureCount}, Duration: ${duration}ms`,
       );
     } catch (error) {
       const duration = Date.now() - startTime;
       this.logger.error(
-        `Failed to update agent performance snapshots (${duration}ms): ${error.message}`
+        `Failed to update agent performance snapshots (${duration}ms): ${error.message}`,
       );
     }
   }
@@ -249,18 +251,19 @@ export class TasksService {
   async cleanupPerformanceData() {
     const startTime = Date.now();
     this.logger.log('Starting performance data cleanup');
-    
+
     try {
-      const result = await this.performanceSnapshotService.applyDataRetentionPolicy();
-      
+      const result =
+        await this.performanceSnapshotService.applyDataRetentionPolicy();
+
       const duration = Date.now() - startTime;
       this.logger.log(
-        `Performance data cleanup completed - Deleted ${result.deleted} records, Duration: ${duration}ms`
+        `Performance data cleanup completed - Deleted ${result.deleted} records, Duration: ${duration}ms`,
       );
     } catch (error) {
       const duration = Date.now() - startTime;
       this.logger.error(
-        `Failed to clean up performance data (${duration}ms): ${error.message}`
+        `Failed to clean up performance data (${duration}ms): ${error.message}`,
       );
     }
   }
