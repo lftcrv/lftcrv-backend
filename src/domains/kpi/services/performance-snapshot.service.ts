@@ -90,7 +90,10 @@ export class PerformanceSnapshotService {
       // Update existing record
       await this.prisma.latestMarketData.update({
         where: { elizaAgentId: agent.id },
-        data: { pnl24h },
+        data: {
+          pnl24h,
+          balanceInUSD: pnlData.latestBalance || 0,
+        },
       });
     } else {
       // Create new record
@@ -98,6 +101,7 @@ export class PerformanceSnapshotService {
         data: {
           elizaAgentId: agent.id,
           pnl24h,
+          balanceInUSD: pnlData.latestBalance || 0,
           price: 0,
           priceChange24h: 0,
           holders: 0,
@@ -110,6 +114,9 @@ export class PerformanceSnapshotService {
         },
       });
     }
+
+    // Calculate and update pnlRank for all agents
+    await this.updateAgentRankings();
 
     this.logger.log(`Created performance snapshot for agent ${agentId}`);
 
@@ -127,6 +134,37 @@ export class PerformanceSnapshotService {
       price: agent.LatestMarketData?.price || 0,
       marketCap: agent.LatestMarketData?.marketCap || 0,
     };
+  }
+
+  /**
+   * Updates the pnlRank for all agents based on their pnlCycle values
+   */
+  private async updateAgentRankings(): Promise<void> {
+    this.logger.log('Updating agent rankings based on pnlCycle');
+
+    // Get all active agents with their latest market data, ordered by pnlCycle desc
+    const agentsWithRanking = await this.prisma.latestMarketData.findMany({
+      select: {
+        id: true,
+        elizaAgentId: true,
+        pnlCycle: true,
+      },
+      orderBy: {
+        pnlCycle: 'desc',
+      },
+    });
+
+    // Update rank for each agent
+    let currentRank = 1;
+    for (const agent of agentsWithRanking) {
+      await this.prisma.latestMarketData.update({
+        where: { id: agent.id },
+        data: { pnlRank: currentRank },
+      });
+      currentRank++;
+    }
+
+    this.logger.log(`Updated rankings for ${agentsWithRanking.length} agents`);
   }
 
   /**
