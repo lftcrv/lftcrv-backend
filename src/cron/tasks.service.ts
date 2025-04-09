@@ -115,7 +115,7 @@ export class TasksService {
       for (const agent of runningAgents) {
         await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
           content: {
-            text: 'Analyze current market conditions on Paradex and execute the optimal trading strategy. Review markets conditions, evaluate open positions and orders, and execute a simulated spot trade based on current price movements, volatility trends, and technical indicators. Focus on maximizing profit while managing risk exposure. Make trading decisions that align with your personality, bio, lore, and knowledge. Provide clear explanations for all trading decisions that reflect your unique perspective and character traits.',
+            text: "Review the current market conditions on Paradex and consider whether to execute a trade based on your unique perspective. With your specific background and trading philosophy, what action feels right at this moment? Examine just the most significant technical indicators that align with your expertise, not all available data. If you see a compelling opportunity that matches your risk tolerance and trading style, simulate a spot trade. However, if current conditions don t match your personal criteria or intuition, it s perfectly acceptable to wait for a better entry point. Explain your reasoning in your own voice - focus on the 1-2 key factors that influenced your decision most, rather than listing all technical indicators. Your explanation should reflect how you specifically approach the market, highlighting your unique character traits and trading philosophy.",
           },
         });
       }
