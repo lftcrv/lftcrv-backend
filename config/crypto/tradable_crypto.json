@@ -1,0 +1,740 @@
+[
+  {
+    "Cryptocurrency": "AAVE",
+    "Summary": "Decentralized lending platform enabling users to earn interest or borrow crypto assets.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Strong DeFi protocol with real utility, governance, and institutional partnerships.",
+    "Launched": "2017",
+    "Market Cap": "$1.4 billion",
+    "Left vs. Right (1-100)": 80
+  },
+  {
+    "Cryptocurrency": "ADA",
+    "Summary": "Blockchain platform focused on academic research and formal methods, powering Cardano.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Solid tech ambition, but criticized for delays and lack of dApp traction.",
+    "Launched": "2017",
+    "Market Cap": "$16.4 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "ARB",
+    "Summary": "Ethereum layer-2 scaling solution using optimistic rollups by Arbitrum Foundation.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Widely used L2 with growing ecosystem; important in Ethereum scaling roadmap.",
+    "Launched": "2021",
+    "Market Cap": "$2.1 billion",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "AVAX",
+    "Summary": "Layer-1 blockchain known for fast finality and subnet architecture.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Popular L1 with active developer ecosystem, though L2 competitors gaining share.",
+    "Launched": "2020",
+    "Market Cap": "$5.9 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "CRV",
+    "Summary": "Token powering Curve Finance, a decentralized exchange optimized for stablecoins.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Influential DeFi protocol but facing governance, incentive, and security challenges.",
+    "Launched": "2020",
+    "Market Cap": "$400 million",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "DOT",
+    "Summary": "Native token of Polkadot, a blockchain interoperability and parachain ecosystem.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Ambitious infrastructure play, still developing meaningful network effects.",
+    "Launched": "2020",
+    "Market Cap": "$11.5 billion",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "DYDX",
+    "Summary": "Decentralized derivatives trading platform offering perpetual futures.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "One of the top DeFi derivatives platforms with active trading volume.",
+    "Launched": "2021",
+    "Market Cap": "$700 million",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "FIL",
+    "Summary": "Filecoin enables decentralized storage through a token-incentivized network.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Longstanding Web3 infrastructure project, adoption is steady but fragmented.",
+    "Launched": "2020",
+    "Market Cap": "$3.2 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "INJ",
+    "Summary": "Injective Protocol enables cross-chain decentralized derivatives and DeFi apps.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Niche adoption but strong developer focus and cross-chain potential.",
+    "Launched": "2020",
+    "Market Cap": "$1.1 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "JUP",
+    "Summary": "Token behind Jupiter, a major swap aggregator on Solana.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Dominant liquidity tool in Solana ecosystem; usage-based relevance.",
+    "Launched": "2023",
+    "Market Cap": "$1.5 billion",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "LDO",
+    "Summary": "Governance token of Lido, the largest liquid staking platform for Ethereum.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Critical staking infrastructure with systemic DeFi importance.",
+    "Launched": "2021",
+    "Market Cap": "$1.6 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "LINK",
+    "Summary": "Chainlink provides decentralized oracles to feed real-world data into blockchains.",
+    "Seriousness (1-5)": 5,
+    "Rationale": "Essential infrastructure with wide integration and growing institutional adoption.",
+    "Launched": "2017",
+    "Market Cap": "$10.2 billion",
+    "Left vs. Right (1-100)": 75
+  },
+  {
+    "Cryptocurrency": "MKR",
+    "Summary": "Governance token of MakerDAO, responsible for the DAI stablecoin system.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Legacy DeFi protocol with central role in stablecoin innovation.",
+    "Launched": "2017",
+    "Market Cap": "$2.3 billion",
+    "Left vs. Right (1-100)": 75
+  },
+  {
+    "Cryptocurrency": "NEAR",
+    "Summary": "Layer-1 smart contract platform with sharding and developer-friendly UX.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Technically strong L1 with real usage growth and VC backing.",
+    "Launched": "2020",
+    "Market Cap": "$5.1 billion",
+    "Left vs. Right (1-100)": 75
+  },
+  {
+    "Cryptocurrency": "OP",
+    "Summary": "Governance token of Optimism, an Ethereum Layer-2 scaling solution.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Core L2 with deep Ethereum alignment and usage-based funding model.",
+    "Launched": "2022",
+    "Market Cap": "$3.2 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "UNI",
+    "Summary": "Governance token of Uniswap, the largest decentralized exchange by volume.",
+    "Seriousness (1-5)": 5,
+    "Rationale": "Market-defining DEX; protocol has shown staying power despite forks.",
+    "Launched": "2020",
+    "Market Cap": "$5.5 billion",
+    "Left vs. Right (1-100)": 75
+  },
+  {
+    "Cryptocurrency": "XMR",
+    "Summary": "Monero is a privacy-focused cryptocurrency with untraceable transactions.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Strong ideological support, but delisted from several exchanges due to regulations.",
+    "Launched": "2014",
+    "Market Cap": "$2.1 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "AEVO",
+    "Summary": "Decentralized derivatives exchange focused on options and perpetuals.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Innovative DeFi platform with niche focus and early traction, though high competition.",
+    "Launched": "2024",
+    "Market Cap": "$300 million",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "APT",
+    "Summary": "Layer-1 blockchain built by former Meta engineers focused on safety and scalability.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Backed by strong team and funding; real adoption remains in progress.",
+    "Launched": "2022",
+    "Market Cap": "$3.1 billion",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "BNB ",
+    "Summary": "Utility token of Binance ecosystem, powering BNB Chain and exchange fees.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Extremely high usage but centralized and regulatory risks.",
+    "Launched": "2017",
+    "Market Cap": "$85 billion",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "BOME ",
+    "Summary": "Meme coin on Solana ecosystem that gained rapid traction in early 2024.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Popular meme coin with speculative appeal; no intrinsic utility.",
+    "Launched": "2024",
+    "Market Cap": "$1.3 billion",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "BTC",
+    "Summary": "First decentralized digital currency, often referred to as digital gold.",
+    "Seriousness (1-5)": 5,
+    "Rationale": "Pioneering cryptocurrency with widespread adoption and institutional interest.",
+    "Launched": "2009",
+    "Market Cap": "$1.3 trillion",
+    "Left vs. Right (1-100)": 90
+  },
+  {
+    "Cryptocurrency": "DOGE",
+    "Summary": "Meme-inspired cryptocurrency originally started as a joke.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Strong community and support from influencers but lacks technical purpose.",
+    "Launched": "2013",
+    "Market Cap": "$22 billion",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "EIGEN",
+    "Summary": "Restaking protocol that extends Ethereum security to other apps and chains.",
+    "Seriousness (1-5)": 5,
+    "Rationale": "Highly anticipated protocol redefining staking in Ethereum; deep ecosystem integrations.",
+    "Launched": "2024",
+    "Market Cap": "TBD",
+    "Left vs. Right (1-100)": 75
+  },
+  {
+    "Cryptocurrency": "ENA",
+    "Summary": "Token associated with Ethena Labs and synthetic dollar protocol (USDe).",
+    "Seriousness (1-5)": 4,
+    "Rationale": "New but promising approach to stablecoins via synthetic architecture.",
+    "Launched": "2024",
+    "Market Cap": "$1.5 billion",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "ETH",
+    "Summary": "Leading smart contract platform enabling decentralized applications.",
+    "Seriousness (1-5)": 5,
+    "Rationale": "Backbone of DeFi, NFTs, and L2s with strong network effects.",
+    "Launched": "2015",
+    "Market Cap": "$400 billion",
+    "Left vs. Right (1-100)": 85
+  },
+  {
+    "Cryptocurrency": "FLOW",
+    "Summary": "Layer-1 blockchain designed for NFTs and games by Dapper Labs.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Strong early partnerships (NBA TopShot), but ecosystem stalled in 2023.",
+    "Launched": "2020",
+    "Market Cap": "$1 billion",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "JTO ",
+    "Summary": "Governance token for Jito, a liquid staking protocol on Solana.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Important player in Solana DeFi with strong traction in MEV-optimized staking.",
+    "Launched": "2023",
+    "Market Cap": "$400 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "LTC",
+    "Summary": "Bitcoin fork with faster block times and lower fees; known as digital silver.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Early project with legacy value, but minimal innovation in recent years.",
+    "Launched": "2011",
+    "Market Cap": "$6 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "MORPHO ",
+    "Summary": "Protocol enhancing lending efficiency by combining peer-to-peer and pool models.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Technically solid innovation in DeFi lending space with growing interest.",
+    "Launched": "2023",
+    "Market Cap": "$250 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "ONDO ",
+    "Summary": "Token tied to real-world assets protocol offering tokenized treasuries and bonds.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Strong narrative in tokenized RWAs; adoption still early but promising.",
+    "Launched": "2023",
+    "Market Cap": "$1 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "ORDI",
+    "Summary": "First token launched using the Bitcoin Ordinals protocol for NFTs and metadata.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Speculative but innovative use case for Bitcoin ecosystem expansion.",
+    "Launched": "2023",
+    "Market Cap": "$900 million",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "PENDLE",
+    "Summary": "Protocol allowing tokenization and trading of future yield on DeFi assets.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Rapidly growing protocol with strong product-market fit and TVL momentum.",
+    "Launched": "2021",
+    "Market Cap": "$900 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "PYTH",
+    "Summary": "Decentralized oracle network providing real-time data feeds across chains.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Rival to Chainlink with high-speed feeds and growing cross-chain traction.",
+    "Launched": "2023",
+    "Market Cap": "$1.2 billion",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "RAY",
+    "Summary": "Utility token of Raydium, a Solana-based DEX and AMM platform.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Pillar of Solana DeFi, though impacted by ecosystem volatility.",
+    "Launched": "2021",
+    "Market Cap": "$200 million",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "RUNE",
+    "Summary": "Thorchain token enabling native cross-chain swaps without wrapped assets.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Unique cross-chain liquidity protocol with real utility and risk.",
+    "Launched": "2019",
+    "Market Cap": "$1.2 billion",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "S",
+    "Summary": "Native token of the Synthetix protocol for trading synthetic assets.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Core DeFi primitive though struggling with sustainable tokenomics.",
+    "Launched": "2018",
+    "Market Cap": "$500 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "SAND",
+    "Summary": "Metaverse token for The Sandbox, enabling virtual land and asset trading.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "High-profile partnerships but metaverse hype has cooled since 2021.",
+    "Launched": "2020",
+    "Market Cap": "$1 billion",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "SEI",
+    "Summary": "Layer-1 blockchain optimized for trading applications with low latency.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Emerging infrastructure with potential, still building ecosystem.",
+    "Launched": "2023",
+    "Market Cap": "$800 million",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "SOL",
+    "Summary": "High-throughput Layer-1 blockchain known for speed and low fees.",
+    "Seriousness (1-5)": 5,
+    "Rationale": "One of the top smart contract platforms with strong ecosystem rebound.",
+    "Launched": "2020",
+    "Market Cap": "$60 billion",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "STRK",
+    "Summary": "Native token of Starknet, a zk-rollup Layer-2 for Ethereum scalability.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Deep technical team and serious scalability promise; adoption still growing.",
+    "Launched": "2024",
+    "Market Cap": "$1.1 billion",
+    "Left vs. Right (1-100)": 75
+  },
+  {
+    "Cryptocurrency": "SUI",
+    "Summary": "Layer-1 blockchain with object-oriented architecture from ex-Meta team.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Innovative tech and solid backing; early adoption remains niche.",
+    "Launched": "2023",
+    "Market Cap": "$1.6 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "TAO",
+    "Summary": "Token of Bittensor, a decentralized machine learning network.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Novel concept at the intersection of AI and crypto; gaining mindshare.",
+    "Launched": "2023",
+    "Market Cap": "$3.5 billion",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "TIA",
+    "Summary": "Celestia's token for modular blockchain data availability layer.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Leading modular blockchain thesis; highly anticipated tech stack.",
+    "Launched": "2023",
+    "Market Cap": "$2.5 billion",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "TON",
+    "Summary": "Layer-1 blockchain originally designed by Telegram; now community-driven.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Backed by Telegram integration and active devs; growing retail use case.",
+    "Launched": "2020",
+    "Market Cap": "$20 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "TRB",
+    "Summary": "Token of Tellor, a decentralized oracle network providing secure data feeds.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Niche Chainlink competitor with committed community.",
+    "Launched": "2019",
+    "Market Cap": "$250 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "TRUMP",
+    "Summary": "Meme-inspired token tied to political speculation and social sentiment.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Purely speculative meme coin without technical utility.",
+    "Launched": "2024",
+    "Market Cap": "$300 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "TRX",
+    "Summary": "Token of the Tron network focused on content sharing and stablecoin settlements.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Long-running project with real usage in USDT transfers, but centralized.",
+    "Launched": "2017",
+    "Market Cap": "$10 billion",
+    "Left vs. Right (1-100)": 30
+  },
+  {
+    "Cryptocurrency": "WIF",
+    "Summary": "Meme coin on Solana branded 'dogwifhat', rose rapidly in 2024.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Pure meme coin with strong community; no tech base.",
+    "Launched": "2023",
+    "Market Cap": "$2.5 billion",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "WLD",
+    "Summary": "Worldcoin's token linked to biometric identity verification.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Controversial but ambitious project with unique approach to digital identity.",
+    "Launched": "2023",
+    "Market Cap": "$1.2 billion",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "XLM",
+    "Summary": "Token of Stellar network enabling fast, low-cost international transfers.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Early cross-border payments protocol, but lagging behind newer solutions.",
+    "Launched": "2014",
+    "Market Cap": "$3.5 billion",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "XRP",
+    "Summary": "Utilized by Ripple Labs to facilitate international financial transfers.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Established player in cross-border payments; still facing legal overhang.",
+    "Launched": "2012",
+    "Market Cap": "$29 billion",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "ZRO",
+    "Summary": "Token of LayerZero, a cross-chain messaging protocol.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "High-potential infrastructure layer with growing ecosystem traction.",
+    "Launched": "2024",
+    "Market Cap": "$260 million",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "AIXBT",
+    "Summary": "AI-driven crypto market intelligence platform analyzing trends on X (Twitter).",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Rapid user growth and innovative functionality, though early-stage.",
+    "Launched": "2024",
+    "Market Cap": "$36.5 million",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "BERA",
+    "Summary": "Berachain is an EVM-compatible L1 using Proof of Liquidity consensus.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Novel consensus and strong dev interest, still in early growth phase.",
+    "Launched": "2024",
+    "Market Cap": "$380 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "BMT ",
+    "Summary": "Token of Bubblemaps, a visual blockchain data analytics platform.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Promising tool, but token volatility and low liquidity present risks.",
+    "Launched": "2024",
+    "Market Cap": "$33.5 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "CHILLGUY",
+    "Summary": "Meme coin on Solana inspired by a relaxed cartoon character.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Pure meme value, driven by community sentiment and virality.",
+    "Launched": "2024",
+    "Market Cap": "$22 million",
+    "Left vs. Right (1-100)": 30
+  },
+  {
+    "Cryptocurrency": "ELX ",
+    "Summary": "Protocol bringing real-world assets (RWAs) to DeFi with validator security.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Addresses meaningful DeFi-RWA gap, needs more adoption validation.",
+    "Launched": "2024",
+    "Market Cap": "$25 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "FARTCOIN",
+    "Summary": "Solana-based meme coin gaining attention for humor and virality.",
+    "Seriousness (1-5)": 1,
+    "Rationale": "High community activity, no intrinsic value or utility.",
+    "Launched": "2024",
+    "Market Cap": "$551,6 million",
+    "Left vs. Right (1-100)": 30
+  },
+  {
+    "Cryptocurrency": "GOAT",
+    "Summary": "Solana memecoin promoted by AI bots; rapid early growth.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Heavily driven by hype and virality; no clear intrinsic utility.",
+    "Launched": "2024",
+    "Market Cap": "$800 million",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "GRASS ",
+    "Summary": "AI-powered blockchain project for decentralized data sharing.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Innovative in AI/data sharing, but early-stage and under-validated.",
+    "Launched": "2023",
+    "Market Cap": "$420 million",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "HYPE",
+    "Summary": "Native token of HyperLiquid DEX and execution engine HyperEVM.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Strong momentum and user growth; product is technically solid.",
+    "Launched": "2024",
+    "Market Cap": "$4.46 billion",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "IP",
+    "Summary": "Story Protocol's token for tokenized intellectual property on-chain.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Strong concept with real-world application; ambitious but early.",
+    "Launched": "2025",
+    "Market Cap": "$456 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "KAITO",
+    "Summary": "AI-powered Web3 platform enhancing content creation and search.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "AI + crypto angle is promising, but adoption remains limited.",
+    "Launched": "2025",
+    "Market Cap": "$218 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "LAYER",
+    "Summary": "Solana-native restaking protocol extending smart contract coverage.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Restaking narrative is strong, but still unproven at scale.",
+    "Launched": "2025",
+    "Market Cap": "$291 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "MELANIA",
+    "Summary": "Memecoin linked to Melania Trump, no stated utility.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Celebrity-driven memecoin with speculative intent.",
+    "Launched": "2025",
+    "Market Cap": "$460 million",
+    "Left vs. Right (1-100)": 30
+  },
+  {
+    "Cryptocurrency": "MOODENG",
+    "Summary": "Solana-based memecoin inspired by viral humor.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Pure meme token; driven by trend and community.",
+    "Launched": "2024",
+    "Market Cap": "$26.5 million",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "MOVE",
+    "Summary": "Multi-asset staking crypto project recently listed on Binance.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Recent CEX listing shows traction, but early days.",
+    "Launched": "2024",
+    "Market Cap": "$780 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "NEIRO",
+    "Summary": "Charity-linked token with community donation model.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Positive mission but limited technical or adoption data.",
+    "Launched": "2024",
+    "Market Cap": "$333 million",
+    "Left vs. Right (1-100)": 60
+  },
+  {
+    "Cryptocurrency": "NIL",
+    "Summary": "Privacy-preserving data layer using blind computation.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Backed by serious cryptography, selected for Launchpool.",
+    "Launched": "2025",
+    "Market Cap": "$78 million",
+    "Left vs. Right (1-100)": 70
+  },
+  {
+    "Cryptocurrency": "OM",
+    "Summary": "Layer-1 DeFi and RWA platform with regulatory compliance.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Bridges RWA and DeFi with institutional potential.",
+    "Launched": "2024",
+    "Market Cap": "$6 billion",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "PENGU",
+    "Summary": "Token of Pudgy Penguins NFT brand to expand Solana ecosystem.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Strong brand identity, but speculative and ecosystem-dependent.",
+    "Launched": "2024",
+    "Market Cap": "$250 million",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "PLUME",
+    "Summary": "RWA-focused EVM chain offering tokenization and compliance stack.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Strong value proposition for RWA; adoption data still early.",
+    "Launched": "2025",
+    "Market Cap": "$330 million",
+    "Left vs. Right (1-100)": 55
+  },
+  {
+    "Cryptocurrency": "PNUT",
+    "Summary": "Memecoin named after euthanized squirrel; driven by outrage online.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Community-powered meme; lacks technical or product merit.",
+    "Launched": "2024",
+    "Market Cap": "$131 million",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "POPCAT",
+    "Summary": "Solana-based memecoin inspired by the viral Popcat meme.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Purely trend-based; lacks sustainable utility or roadmap.",
+    "Launched": "2023",
+    "Market Cap": "$133 million",
+    "Left vs. Right (1-100)": 35
+  },
+  {
+    "Cryptocurrency": "RED",
+    "Summary": "Entertainment token rooted in Japanese gaming culture expansion.",
+    "Seriousness (1-5)": 3,
+    "Rationale": "Clear narrative but limited evidence of traction or tech.",
+    "Launched": "2025",
+    "Market Cap": "$100 million",
+    "Left vs. Right (1-100)": 50
+  },
+  {
+    "Cryptocurrency": "SCR",
+    "Summary": "Layer 2 Ethereum scaling solution aiming to cut costs and boost speed.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Addresses real problem in Ethereum ecosystem; solid tech.",
+    "Launched": "2024",
+    "Market Cap": "$47 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "TST",
+    "Summary": "BNB Smart Chain token with limited visibility and use case.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Generic name and unclear purpose; lacks credibility.",
+    "Launched": "2025",
+    "Market Cap": "$70 million",
+    "Left vs. Right (1-100)": 30
+  },
+  {
+    "Cryptocurrency": "USUAL",
+    "Summary": "Decentralized fiat stablecoin issuer focusing on governance and equity.",
+    "Seriousness (1-5)": 4,
+    "Rationale": "Clear mission with institutional ambitions; still early.",
+    "Launched": "2024",
+    "Market Cap": "$101 million",
+    "Left vs. Right (1-100)": 65
+  },
+  {
+    "Cryptocurrency": "VINE ",
+    "Summary": "Memecoin on Solana themed around grapevine aesthetics and culture.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Minimal utility, mostly community-driven and meme-fueled.",
+    "Launched": "2024",
+    "Market Cap": "$28 million",
+    "Left vs. Right (1-100)": 40
+  },
+  {
+    "Cryptocurrency": "VIRTUAL",
+    "Summary": "Token linked to digital identity/metaverse play, with little clear info.",
+    "Seriousness (1-5)": 2,
+    "Rationale": "Conceptually interesting but little concrete product detail available.",
+    "Launched": "2024",
+    "Market Cap": "$303 million",
+    "Left vs. Right (1-100)": 45
+  },
+  {
+    "Cryptocurrency": "VVV",
+    "Summary": "VVV is a low-cap token with unclear goals, often grouped with meme-like assets.",
+    "Seriousness (1-5)": 1,
+    "Rationale": "Extremely speculative and opaque project.",
+    "Launched": "2025",
+    "Market Cap": "$12 million",
+    "Left vs. Right (1-100)": 25
+  }
+]

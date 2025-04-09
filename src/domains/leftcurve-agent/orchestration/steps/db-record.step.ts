@@ -12,6 +12,7 @@ import {
   BlockchainTokens,
   IProviderService,
 } from '../../../../shared/blockchain/interfaces';
+import { CryptoSelectionService } from '../../utils/crypto_selection';
 
 const POLLING_INTERVAL_MS = 5000; // 5 seconds
 const MAX_POLLING_ATTEMPTS = 60; // 5 minutes total
@@ -27,6 +28,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
     private readonly prisma: PrismaService,
     @Inject(BlockchainTokens.Provider)
     private readonly providerService: IProviderService,
+    private readonly cryptoSelectionService: CryptoSelectionService,
   ) {
     super({
       stepId: 'create-db-record',
@@ -188,6 +190,24 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         );
       }
 
+      let selectedCryptos: string[] = [];
+      try {
+        if (config) {
+          console.log(
+            '🚀 Selecting cryptocurrencies based on agent biography...',
+          );
+          selectedCryptos =
+            await this.cryptoSelectionService.selectCryptosForAgent(config);
+          console.log('✅ Selected cryptocurrencies:', selectedCryptos);
+        } else {
+          console.log('⚠️ No biography found, using default cryptocurrencies');
+          selectedCryptos = ['BTC', 'ETH']; // Default selection
+        }
+      } catch (error) {
+        console.error('❌ Error selecting cryptocurrencies:', error.message);
+        selectedCryptos = ['BTC', 'ETH']; // Fallback to defaults
+      }
+
       // Create agent first
       const createInput = {
         name: dto.name,
@@ -199,6 +219,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         degenScore: 0,
         winScore: 0,
         forkedFromId: dto.forkedFromId, // Add the forkedFromId if provided
+        selectedCryptos: selectedCryptos.join(','),
         LatestMarketData: {
           create: {
             price: 0,
@@ -220,6 +241,7 @@ export class CreateDbRecordStep extends BaseStepExecutor {
 
       console.log('🔐 Payment TX status verified:', dto.transactionHash);
       console.log('📝 Agent created with ID:', agent.id);
+      console.log('💰 Selected cryptos for trading:', selectedCryptos);
 
       // If there's a profile picture, move it and set the path
       if (dto.profilePicture?.startsWith('temp_')) {
@@ -244,7 +266,10 @@ export class CreateDbRecordStep extends BaseStepExecutor {
         }
       }
 
-      return this.success(agent, { agentId: agent.id });
+      return this.success(agent, {
+        agentId: agent.id,
+        selectedCryptos: selectedCryptos,
+      });
     } catch (error) {
       console.error('❌ Agent creation failed:', {
         error: error.message,
