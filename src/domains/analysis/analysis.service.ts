@@ -228,7 +228,45 @@ export class AnalysisService {
       // Get latest analysis for each crypto
       const analyses = await this.getLatestAnalyses(selectedCryptos, platform);
 
-      return analyses;
+      // Extract analysisPeriod from agent's configuration
+      let analysisPeriod = 2; // Default to a balanced approach if not specified
+      try {
+        if (agent.characterConfig) {
+          const config =
+          typeof agent.characterConfig === 'string'
+          ? JSON.parse(agent.characterConfig)
+          : agent.characterConfig;
+          
+          if (config && typeof config.analysis_period === 'number') {
+            analysisPeriod = Math.min(Math.max(config.analysis_period, 0), 5);
+          }
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not parse agent's characterConfig: ${error.message}`,
+        );
+      }
+
+      return analyses.map((analysis) => {
+        const filteredAnalysis = { ...analysis };
+
+        if (
+          filteredAnalysis.technical &&
+          filteredAnalysis.technical.keySignals
+        ) {
+          delete filteredAnalysis.technical.keySignals.longTerm;
+
+          // Select signals based on analysisPeriod
+          const signals = this.selectSignalsByPreference(
+            filteredAnalysis.technical.keySignals,
+            analysisPeriod,
+          );
+
+          filteredAnalysis.technical.keySignals = signals;
+        }
+
+        return filteredAnalysis;
+      });
     } catch (error) {
       this.logger.error(
         `Failed to get analysis for agent ${runtimeAgentId}: ${error.message}`,
@@ -237,5 +275,150 @@ export class AnalysisService {
         `Failed to get analysis for agent: ${error.message}`,
       );
     }
+  }
+
+  /**
+   * Helper method to select the most relevant signals based on the agent's analysis period preference
+   * @param keySignals The original key signals from the analysis
+   * @param analysisPeriod The agent's preference (0-5) where 0 = short-term, 5 = medium-term
+   * @returns Filtered key signals with maximum 5 most relevant indicators
+   */
+  private selectSignalsByPreference(
+    keySignals: any,
+    analysisPeriod: number,
+  ): any {
+    const result: any = {};
+
+    // Lower analysisPeriod favors short-term signals, higher favors medium-term
+    const shortTermWeight = Math.max(0, 5 - analysisPeriod) / 5;
+    const mediumTermWeight = Math.min(1, analysisPeriod / 5);
+
+    const signalCandidates = [];
+
+    // Add short-term signals with appropriate weighting
+    if (keySignals.shortTerm) {
+      if (keySignals.shortTerm.momentum?.rsi) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'rsi',
+          weight: shortTermWeight * 1.0,
+          data: keySignals.shortTerm.momentum.rsi,
+        });
+      }
+
+      if (keySignals.shortTerm.momentum?.macd) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'macd',
+          weight: shortTermWeight * 0.9,
+          data: keySignals.shortTerm.momentum.macd,
+        });
+      }
+
+      if (keySignals.shortTerm.momentum?.stochastic) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'stochastic',
+          weight: shortTermWeight * 0.8,
+          data: keySignals.shortTerm.momentum.stochastic,
+        });
+      }
+
+      if (
+        keySignals.shortTerm.patterns?.recent &&
+        keySignals.shortTerm.patterns.recent.length > 0
+      ) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'patterns',
+          weight: shortTermWeight * 0.7,
+          data: keySignals.shortTerm.patterns.recent,
+        });
+      }
+    }
+
+    // Add medium-term signals with appropriate weighting
+    if (keySignals.mediumTerm) {
+      if (keySignals.mediumTerm.trend?.primary) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'trend',
+          weight: mediumTermWeight * 1.0,
+          data: keySignals.mediumTerm.trend.primary,
+        });
+      }
+
+      if (keySignals.mediumTerm.technicals?.ichimoku) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'ichimoku',
+          weight: mediumTermWeight * 0.9,
+          data: keySignals.mediumTerm.technicals.ichimoku,
+        });
+      }
+
+      if (keySignals.mediumTerm.technicals?.momentum?.adx) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'adx',
+          weight: mediumTermWeight * 0.8,
+          data: keySignals.mediumTerm.technicals.momentum.adx,
+        });
+      }
+
+      if (keySignals.mediumTerm.technicals?.keltnerChannel) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'keltnerChannel',
+          weight: mediumTermWeight * 0.7,
+          data: keySignals.mediumTerm.technicals.keltnerChannel,
+        });
+      }
+
+      if (keySignals.mediumTerm.trend?.price?.volatility?.atr) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'atr',
+          weight: mediumTermWeight * 0.6,
+          data: keySignals.mediumTerm.trend.price.volatility.atr,
+        });
+      }
+    }
+
+    // Sort by weight, and take top 5
+    const selectedSignals = signalCandidates
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5);
+
+    result.shortTerm = { momentum: {}, patterns: { recent: [] } };
+    result.mediumTerm = {
+      trend: { primary: {}, price: { volatility: {} } },
+      technicals: { momentum: {}, ichimoku: {}, keltnerChannel: {} },
+    };
+
+    selectedSignals.forEach((signal) => {
+      if (signal.type === 'shortTerm') {
+        if (signal.category === 'patterns') {
+          result.shortTerm.patterns.recent = signal.data;
+        } else {
+          result.shortTerm.momentum[signal.category] = signal.data;
+        }
+      } else if (signal.type === 'mediumTerm') {
+        if (signal.category === 'trend') {
+          result.mediumTerm.trend.primary = signal.data;
+        } else if (signal.category === 'atr') {
+          result.mediumTerm.trend.price.volatility.atr = signal.data;
+        } else if (
+          signal.category === 'ichimoku' ||
+          signal.category === 'keltnerChannel'
+        ) {
+          result.mediumTerm.technicals[signal.category] = signal.data;
+        } else {
+          result.mediumTerm.technicals.momentum[signal.category] = signal.data;
+        }
+      }
+    });
+
+    return result;
   }
 }
