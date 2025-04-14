@@ -163,6 +163,10 @@ interface MediumTermTrend {
     volatility: {
       bbWidth: number;
       state: 'expanding' | 'contracting' | 'stable';
+      atr: {
+        value: number;
+        signal: 'high' | 'normal' | 'low';
+      };
     };
   };
 }
@@ -188,6 +192,12 @@ interface MediumTermTechnicals {
       base: number;
       priceDistance: number;
     };
+  };
+  keltnerChannel: {
+    upper: number;
+    middle: number;
+    lower: number;
+    signal: 'overbought' | 'oversold' | 'neutral';
   };
   levels: {
     pivots: {

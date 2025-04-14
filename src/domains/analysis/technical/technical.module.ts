@@ -13,6 +13,7 @@ import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { ParadexPriceService } from './services/price/paradex-price.service';
 import { AvnuPriceService } from './services/price/avnu-price.service';
 import { UnifiedPriceService } from './services/price/unified-price.service';
+import { KeltnerChannelService } from './services/keltnerChannel.service';
 
 @Module({
   imports: [],
@@ -31,6 +32,8 @@ import { UnifiedPriceService } from './services/price/unified-price.service';
     IchimokuService,
     VolumeService,
     PivotService,
+    ATRService,
+    KeltnerChannelService
   ],
   exports: [TechnicalService],
 })
