@@ -38,7 +38,7 @@ export interface CombinedAssetAnalysis {
   assetId: string;
   timestamp: number;
   technical: MarketAnalysis['analyses'][string];
-  social: SocialAnalysis | null;
+  social?: SocialAnalysis | null;
   metadata?: AnalysisMetadata;
 }
 

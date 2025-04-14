@@ -45,11 +45,11 @@ export class AnalysisService {
         assetId,
         timestamp: Date.now(),
         technical: assetTechnical,
-        social: socialAnalysis,
+        // social: socialAnalysis,
         metadata: {
           generatedAt: new Date().toISOString(),
           processingTimeMs: Date.now() - startTime,
-          platform,
+          // platform,
           dataSource: platform === 'paradex' ? 'Paradex' : 'AVNU',
         },
       };
