@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { TechnicalService } from './technical/technical.service';
 import {
@@ -189,5 +189,53 @@ export class AnalysisService {
     return analyses.filter(
       (analysis): analysis is CombinedAssetAnalysis => analysis !== null,
     );
+  }
+
+  async getLatestAnalysisForAgent(
+    runtimeAgentId: string,
+    platform: Platform = 'paradex',
+  ): Promise<CombinedAssetAnalysis[]> {
+    try {
+      // Find the agent by runtimeAgentId
+      const agent = await this.prisma.elizaAgent.findFirst({
+        where: {
+          runtimeAgentId,
+        },
+      });
+
+      if (!agent) {
+        throw new BadRequestException(
+          `Agent with runtime ID ${runtimeAgentId} not found`,
+        );
+      }
+
+      // Get the agent's selected cryptocurrencies
+      if (!agent.selectedCryptos) {
+        throw new BadRequestException(
+          `Agent ${agent.name} has no selected cryptocurrencies`,
+        );
+      }
+
+      // Split the comma-separated string into an array
+      const selectedCryptos = agent.selectedCryptos.split(',');
+
+      if (selectedCryptos.length === 0) {
+        throw new BadRequestException(
+          `Agent ${agent.name} has no selected cryptocurrencies`,
+        );
+      }
+
+      // Get latest analysis for each crypto
+      const analyses = await this.getLatestAnalyses(selectedCryptos, platform);
+
+      return analyses;
+    } catch (error) {
+      this.logger.error(
+        `Failed to get analysis for agent ${runtimeAgentId}: ${error.message}`,
+      );
+      throw new BadRequestException(
+        `Failed to get analysis for agent: ${error.message}`,
+      );
+    }
   }
 }
