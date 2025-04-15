@@ -49,11 +49,14 @@ export function isCombinedAssetAnalysis(
   if (!value || typeof value !== 'object') return false;
 
   const analysis = value as any;
+
   return (
     typeof analysis.assetId === 'string' &&
     typeof analysis.timestamp === 'number' &&
     typeof analysis.technical === 'object' &&
-    (analysis.social === null || typeof analysis.social === 'object') &&
+    (analysis.social === undefined ||
+      analysis.social === null ||
+      typeof analysis.social === 'object') &&
     (!analysis.metadata || typeof analysis.metadata === 'object')
   );
 }

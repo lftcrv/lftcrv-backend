@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CryptoSelectionService {
@@ -17,80 +19,48 @@ export class CryptoSelectionService {
   }
 
   /**
-   * Load cryptocurrency data from a static source or database
-   * This could be replaced with a database query or an API call
+   * Load cryptocurrency data from the tradable_crypto.json file
    */
   private async getCryptoCurrencyList(): Promise<any[]> {
-    // This is a sample list - in production, you'd fetch this from a database or API
-    return [
-      {
-        Cryptocurrency: 'AAVE',
-        Summary:
-          'Decentralized lending platform enabling users to earn interest or borrow crypto assets.',
-        'Seriousness (1-5)': 4,
-        Rationale:
-          'Strong DeFi protocol with real utility, governance, and institutional partnerships.',
-        Launched: '2017',
-        'Market Cap': '$1.4 billion',
-        'Left vs. Right (1-100)': 80,
-      },
-      {
-        Cryptocurrency: 'ADA',
-        Summary:
-          'Blockchain platform focused on academic research and formal methods, powering Cardano.',
-        'Seriousness (1-5)': 3,
-        Rationale:
-          'Solid tech ambition, but criticized for delays and lack of dApp traction.',
-        Launched: '2017',
-        'Market Cap': '$16.4 billion',
-        'Left vs. Right (1-100)': 70,
-      },
-      {
-        Cryptocurrency: 'ARB',
-        Summary:
-          'Ethereum layer-2 scaling solution using optimistic rollups by Arbitrum Foundation.',
-        'Seriousness (1-5)': 4,
-        Rationale:
-          'Widely used L2 with growing ecosystem; important in Ethereum scaling roadmap.',
-        Launched: '2021',
-        'Market Cap': '$2.1 billion',
-        'Left vs. Right (1-100)': 65,
-      },
-      {
-        Cryptocurrency: 'AVAX',
-        Summary:
-          'Layer-1 blockchain known for fast finality and subnet architecture.',
-        'Seriousness (1-5)': 4,
-        Rationale:
-          'Popular L1 with active developer ecosystem, though L2 competitors gaining share.',
-        Launched: '2020',
-        'Market Cap': '$5.9 billion',
-        'Left vs. Right (1-100)': 70,
-      },
-      {
-        Cryptocurrency: 'BTC',
-        Summary:
-          'The original cryptocurrency, designed as a decentralized digital currency.',
-        'Seriousness (1-5)': 5,
-        Rationale:
-          'The most established cryptocurrency with largest market cap and institutional adoption.',
-        Launched: '2009',
-        'Market Cap': '$870 billion',
-        'Left vs. Right (1-100)': 60,
-      },
-      {
-        Cryptocurrency: 'ETH',
-        Summary:
-          'Programmable blockchain enabling smart contracts and decentralized applications.',
-        'Seriousness (1-5)': 5,
-        Rationale:
-          'Foundational platform for DeFi, NFTs, and blockchain innovation.',
-        Launched: '2015',
-        'Market Cap': '$310 billion',
-        'Left vs. Right (1-100)': 65,
-      },
-      // Add more cryptocurrencies as needed
-    ];
+    try {
+      const filePath = path.resolve('config/crypto/tradable_crypto.json');
+      const fileData = fs.readFileSync(filePath, 'utf8');
+      const cryptoList = JSON.parse(fileData);
+      this.logger.log(
+        `Loaded ${cryptoList.length} cryptocurrencies from tradable_crypto.json`,
+      );
+
+      return cryptoList;
+    } catch (error) {
+      this.logger.error(`Error loading cryptocurrency list: ${error.message}`);
+
+      // Return a fallback list in case of failure
+      this.logger.warn('Using fallback cryptocurrency list');
+      return [
+        {
+          Cryptocurrency: 'BTC',
+          Summary:
+            'The original cryptocurrency, designed as a decentralized digital currency.',
+          'Seriousness (1-5)': 5,
+          Rationale:
+            'The most established cryptocurrency with largest market cap and institutional adoption.',
+          Launched: '2009',
+          'Market Cap': '$870 billion',
+          'Left vs. Right (1-100)': 60,
+        },
+        {
+          Cryptocurrency: 'ETH',
+          Summary:
+            'Programmable blockchain enabling smart contracts and decentralized applications.',
+          'Seriousness (1-5)': 5,
+          Rationale:
+            'Foundational platform for DeFi, NFTs, and blockchain innovation.',
+          Launched: '2015',
+          'Market Cap': '$310 billion',
+          'Left vs. Right (1-100)': 65,
+        },
+      ];
+    }
   }
 
   /**
