@@ -39,7 +39,7 @@ export async function getAllSymbols(prisma: PrismaService): Promise<string[]> {
     },
   });
 
-  return markets.map((market) => market.symbol);
+  return markets.map((market) => market.symbol.trim());
 }
 
 /**
