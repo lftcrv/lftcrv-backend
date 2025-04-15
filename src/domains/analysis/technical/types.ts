@@ -21,10 +21,19 @@ export enum IndicatorType {
 export enum CandlePatternType {
   DOJI = 'DOJI',
   HAMMER = 'HAMMER',
+  SHOOTING_STAR = 'SHOOTING_STAR',
+  MARUBOZU_BULLISH = 'MARUBOZU_BULLISH',
+  MARUBOZU_BEARISH = 'MARUBOZU_BEARISH',
   ENGULFING_BULLISH = 'ENGULFING_BULLISH',
   ENGULFING_BEARISH = 'ENGULFING_BEARISH',
+  HARAMI_BULLISH = 'HARAMI_BULLISH',
+  HARAMI_BEARISH = 'HARAMI_BEARISH',
+  DARK_CLOUD_COVER = 'DARK_CLOUD_COVER',
+  PIERCING_LINE = 'PIERCING_LINE',
   MORNING_STAR = 'MORNING_STAR',
+  EVENING_STAR = 'EVENING_STAR',
   THREE_WHITE_SOLDIERS = 'THREE_WHITE_SOLDIERS',
+  THREE_BLACK_CROWS = 'THREE_BLACK_CROWS',
 }
 
 // ===============================
@@ -154,6 +163,10 @@ interface MediumTermTrend {
     volatility: {
       bbWidth: number;
       state: 'expanding' | 'contracting' | 'stable';
+      atr: {
+        value: number;
+        signal: 'high' | 'normal' | 'low';
+      };
     };
   };
 }
@@ -179,6 +192,12 @@ interface MediumTermTechnicals {
       base: number;
       priceDistance: number;
     };
+  };
+  keltnerChannel: {
+    upper: number;
+    middle: number;
+    lower: number;
+    signal: 'overbought' | 'oversold' | 'neutral';
   };
   levels: {
     pivots: {

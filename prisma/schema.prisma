@@ -180,6 +180,7 @@ model ElizaAgent {
   profilePicture       String?
   degenScore           Float?                     @default(0)
   winScore             Float?                     @default(0)
+  selectedCryptos      String?                    @map("selected_cryptos")
   createdAt            DateTime                   @default(now())
   updatedAt            DateTime                   @updatedAt
   accessCodeId         String?

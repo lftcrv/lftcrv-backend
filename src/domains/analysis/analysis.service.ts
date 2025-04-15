@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
 import { TechnicalService } from './technical/technical.service';
 import {
@@ -45,11 +45,11 @@ export class AnalysisService {
         assetId,
         timestamp: Date.now(),
         technical: assetTechnical,
-        social: socialAnalysis,
+        // social: socialAnalysis,
         metadata: {
           generatedAt: new Date().toISOString(),
           processingTimeMs: Date.now() - startTime,
-          platform,
+          // platform,
           dataSource: platform === 'paradex' ? 'Paradex' : 'AVNU',
         },
       };
@@ -189,5 +189,261 @@ export class AnalysisService {
     return analyses.filter(
       (analysis): analysis is CombinedAssetAnalysis => analysis !== null,
     );
+  }
+
+  async getLatestAnalysisForAgent(
+    runtimeAgentId: string,
+    platform: Platform = 'paradex',
+  ): Promise<CombinedAssetAnalysis[]> {
+    try {
+      // Find the agent by runtimeAgentId
+      const agent = await this.prisma.elizaAgent.findFirst({
+        where: {
+          runtimeAgentId,
+        },
+      });
+
+      if (!agent) {
+        throw new BadRequestException(
+          `Agent with runtime ID ${runtimeAgentId} not found`,
+        );
+      }
+
+      // Get the agent's selected cryptocurrencies
+      if (!agent.selectedCryptos) {
+        throw new BadRequestException(
+          `Agent ${agent.name} has no selected cryptocurrencies`,
+        );
+      }
+
+      // Split the comma-separated string into an array
+      const selectedCryptos = agent.selectedCryptos.split(',');
+
+      if (selectedCryptos.length === 0) {
+        throw new BadRequestException(
+          `Agent ${agent.name} has no selected cryptocurrencies`,
+        );
+      }
+
+      // Get latest analysis for each crypto
+      const analyses = await this.getLatestAnalyses(selectedCryptos, platform);
+
+      // Extract analysisPeriod from agent's configuration
+      let analysisPeriod = 2; // Default to a balanced approach if not specified
+      try {
+        if (agent.characterConfig) {
+          const config =
+            typeof agent.characterConfig === 'string'
+              ? JSON.parse(agent.characterConfig)
+              : agent.characterConfig;
+
+          if (config && typeof config.analysis_period === 'number') {
+            analysisPeriod = Math.min(Math.max(config.analysis_period, 0), 5);
+          }
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Could not parse agent's characterConfig: ${error.message}`,
+        );
+      }
+
+      const processedAnalyses = analyses.map((analysis, index) => {
+        const filteredAnalysis = { ...analysis };
+
+        if (index === 0) {
+          if (!filteredAnalysis.metadata) {
+            filteredAnalysis.metadata = {
+              generatedAt: new Date().toISOString(),
+              processingTimeMs: 0,
+            };
+          }
+
+          filteredAnalysis.metadata = {
+            ...filteredAnalysis.metadata,
+            tradingContext: `Important: You are a unique trading personality with your own voice and perspective. Always speak directly in first person, expressing your thoughts and trading decisions as "I think" or "I believe" rather than referring to yourself as "a trading agent."
+  
+  When considering trades:
+  1. You can always sell any cryptocurrency for USDC (stablecoin)
+  2. USDC is a stable asset with minimal volatility (fixed at $1)
+  3. Selling into USDC is a valid risk management strategy
+  4. Explain your reasoning based on your unique trading philosophy and character traits
+  5. Focus only on the most relevant technical indicators that match your expertise`,
+          };
+        }
+
+        // Filter signals based on analysisPeriod
+        if (
+          filteredAnalysis.technical &&
+          filteredAnalysis.technical.keySignals
+        ) {
+          // Always remove long term signals
+          delete filteredAnalysis.technical.keySignals.longTerm;
+
+          // Select signals based on analysisPeriod
+          const signals = this.selectSignalsByPreference(
+            filteredAnalysis.technical.keySignals,
+            analysisPeriod,
+          );
+
+          filteredAnalysis.technical.keySignals = signals;
+        }
+
+        return filteredAnalysis;
+      });
+
+      return processedAnalyses;
+    } catch (error) {
+      this.logger.error(
+        `Failed to get analysis for agent ${runtimeAgentId}: ${error.message}`,
+      );
+      throw new BadRequestException(
+        `Failed to get analysis for agent: ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Helper method to select the most relevant signals based on the agent's analysis period preference
+   * @param keySignals The original key signals from the analysis
+   * @param analysisPeriod The agent's preference (0-5) where 0 = short-term, 5 = medium-term
+   * @returns Filtered key signals with maximum 5 most relevant indicators
+   */
+  private selectSignalsByPreference(
+    keySignals: any,
+    analysisPeriod: number,
+  ): any {
+    const result: any = {};
+
+    // Lower analysisPeriod favors short-term signals, higher favors medium-term
+    const shortTermWeight = Math.max(0, 5 - analysisPeriod) / 5;
+    const mediumTermWeight = Math.min(1, analysisPeriod / 5);
+
+    const signalCandidates = [];
+
+    // Add short-term signals with appropriate weighting
+    if (keySignals.shortTerm) {
+      if (keySignals.shortTerm.momentum?.rsi) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'rsi',
+          weight: shortTermWeight * 1.0,
+          data: keySignals.shortTerm.momentum.rsi,
+        });
+      }
+
+      if (keySignals.shortTerm.momentum?.macd) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'macd',
+          weight: shortTermWeight * 0.9,
+          data: keySignals.shortTerm.momentum.macd,
+        });
+      }
+
+      if (keySignals.shortTerm.momentum?.stochastic) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'stochastic',
+          weight: shortTermWeight * 0.8,
+          data: keySignals.shortTerm.momentum.stochastic,
+        });
+      }
+
+      if (
+        keySignals.shortTerm.patterns?.recent &&
+        keySignals.shortTerm.patterns.recent.length > 0
+      ) {
+        signalCandidates.push({
+          type: 'shortTerm',
+          category: 'patterns',
+          weight: shortTermWeight * 0.7,
+          data: keySignals.shortTerm.patterns.recent,
+        });
+      }
+    }
+
+    // Add medium-term signals with appropriate weighting
+    if (keySignals.mediumTerm) {
+      if (keySignals.mediumTerm.trend?.primary) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'trend',
+          weight: mediumTermWeight * 1.0,
+          data: keySignals.mediumTerm.trend.primary,
+        });
+      }
+
+      if (keySignals.mediumTerm.technicals?.ichimoku) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'ichimoku',
+          weight: mediumTermWeight * 0.9,
+          data: keySignals.mediumTerm.technicals.ichimoku,
+        });
+      }
+
+      if (keySignals.mediumTerm.technicals?.momentum?.adx) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'adx',
+          weight: mediumTermWeight * 0.8,
+          data: keySignals.mediumTerm.technicals.momentum.adx,
+        });
+      }
+
+      if (keySignals.mediumTerm.technicals?.keltnerChannel) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'keltnerChannel',
+          weight: mediumTermWeight * 0.7,
+          data: keySignals.mediumTerm.technicals.keltnerChannel,
+        });
+      }
+
+      if (keySignals.mediumTerm.trend?.price?.volatility?.atr) {
+        signalCandidates.push({
+          type: 'mediumTerm',
+          category: 'atr',
+          weight: mediumTermWeight * 0.6,
+          data: keySignals.mediumTerm.trend.price.volatility.atr,
+        });
+      }
+    }
+
+    // Sort by weight, and take top 5
+    const selectedSignals = signalCandidates
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 5);
+
+    result.shortTerm = { momentum: {}, patterns: { recent: [] } };
+    result.mediumTerm = {
+      trend: { primary: {}, price: { volatility: {} } },
+      technicals: { momentum: {}, ichimoku: {}, keltnerChannel: {} },
+    };
+
+    selectedSignals.forEach((signal) => {
+      if (signal.type === 'shortTerm') {
+        if (signal.category === 'patterns') {
+          result.shortTerm.patterns.recent = signal.data;
+        } else {
+          result.shortTerm.momentum[signal.category] = signal.data;
+        }
+      } else if (signal.type === 'mediumTerm') {
+        if (signal.category === 'trend') {
+          result.mediumTerm.trend.primary = signal.data;
+        } else if (signal.category === 'atr') {
+          result.mediumTerm.trend.price.volatility.atr = signal.data;
+        } else if (
+          signal.category === 'ichimoku' ||
+          signal.category === 'keltnerChannel'
+        ) {
+          result.mediumTerm.technicals[signal.category] = signal.data;
+        } else {
+          result.mediumTerm.technicals.momentum[signal.category] = signal.data;
+        }
+      }
+    });
+
+    return result;
   }
 }

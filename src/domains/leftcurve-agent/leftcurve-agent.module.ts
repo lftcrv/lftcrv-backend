@@ -19,9 +19,11 @@ import { OrchestrationModule } from '../orchestration/orchestration.module';
 import { ElizaConfigService } from './services/leftcurve-config.service';
 import { MessageService } from 'src/message/message.service';
 import { MockWalletService } from './services/mock-wallet.service';
+import { ConfigModule } from '@nestjs/config';
+import { CryptoSelectionService } from './utils/crypto_selection';
 
 @Module({
-  imports: [OrchestrationModule],
+  imports: [OrchestrationModule, ConfigModule],
   controllers: [ElizaAgentController],
   providers: [
     CreateDbRecordStep,
@@ -30,6 +32,7 @@ import { MockWalletService } from './services/mock-wallet.service';
     FileUploadService,
     MessageService,
     MockWalletService,
+    CryptoSelectionService,
     {
       provide: ServiceTokens.ElizaAgentQuery,
       useClass: ElizaAgentQueryService,

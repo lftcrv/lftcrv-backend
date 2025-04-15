@@ -1,0 +1,84 @@
+Cryptocurrency	Summary	Seriousness (1-5)	Rationale	Launched	Market Cap	Left vs. Right (1-100)
+AAVE	Decentralized lending platform enabling users to earn interest or borrow crypto assets.	4	Strong DeFi protocol with real utility, governance, and institutional partnerships.	2017	$1.4 billion	80
+ADA	Blockchain platform focused on academic research and formal methods, powering Cardano.	3	Solid tech ambition, but criticized for delays and lack of dApp traction.	2017	$16.4 billion	70
+ARB	Ethereum layer-2 scaling solution using optimistic rollups by Arbitrum Foundation.	4	Widely used L2 with growing ecosystem; important in Ethereum scaling roadmap.	2021	$2.1 billion	65
+AVAX	Layer-1 blockchain known for fast finality and subnet architecture.	4	Popular L1 with active developer ecosystem, though L2 competitors gaining share.	2020	$5.9 billion	70
+CRV	Token powering Curve Finance, a decentralized exchange optimized for stablecoins.	3	Influential DeFi protocol but facing governance, incentive, and security challenges.	2020	$400 million	60
+DOT	Native token of Polkadot, a blockchain interoperability and parachain ecosystem.	3	Ambitious infrastructure play, still developing meaningful network effects.	2020	$11.5 billion	65
+DYDX	Decentralized derivatives trading platform offering perpetual futures.	4	One of the top DeFi derivatives platforms with active trading volume.	2021	$700 million	70
+FIL	Filecoin enables decentralized storage through a token-incentivized network.	3	Longstanding Web3 infrastructure project, adoption is steady but fragmented.	2020	$3.2 billion	70
+INJ	Injective Protocol enables cross-chain decentralized derivatives and DeFi apps.	3	Niche adoption but strong developer focus and cross-chain potential.	2020	$1.1 billion	70
+JUP	Token behind Jupiter, a major swap aggregator on Solana.	3	Dominant liquidity tool in Solana ecosystem; usage-based relevance.	2023	$1.5 billion	60
+LDO	Governance token of Lido, the largest liquid staking platform for Ethereum.	4	Critical staking infrastructure with systemic DeFi importance.	2021	$1.6 billion	70
+LINK	Chainlink provides decentralized oracles to feed real-world data into blockchains.	5	Essential infrastructure with wide integration and growing institutional adoption.	2017	$10.2 billion	75
+MKR	Governance token of MakerDAO, responsible for the DAI stablecoin system.	4	Legacy DeFi protocol with central role in stablecoin innovation.	2017	$2.3 billion	75
+NEAR	Layer-1 smart contract platform with sharding and developer-friendly UX.	4	Technically strong L1 with real usage growth and VC backing.	2020	$5.1 billion	75
+OP	Governance token of Optimism, an Ethereum Layer-2 scaling solution.	4	Core L2 with deep Ethereum alignment and usage-based funding model.	2022	$3.2 billion	70
+UNI	Governance token of Uniswap, the largest decentralized exchange by volume.	5	Market-defining DEX; protocol has shown staying power despite forks.	2020	$5.5 billion	75
+XMR	Monero is a privacy-focused cryptocurrency with untraceable transactions.	3	Strong ideological support, but delisted from several exchanges due to regulations.	2014	$2.1 billion	70
+AEVO	Decentralized derivatives exchange focused on options and perpetuals.	3	Innovative DeFi platform with niche focus and early traction, though high competition.	2024	$300 million	60
+APT	Layer-1 blockchain built by former Meta engineers focused on safety and scalability.	4	Backed by strong team and funding; real adoption remains in progress.	2022	$3.1 billion	55
+BNB 	Utility token of Binance ecosystem, powering BNB Chain and exchange fees.	4	Extremely high usage but centralized and regulatory risks.	2017	$85 billion	65
+BOME 	Meme coin on Solana ecosystem that gained rapid traction in early 2024.	2	Popular meme coin with speculative appeal; no intrinsic utility.	2024	$1.3 billion	40
+BTC	First decentralized digital currency, often referred to as digital gold.	5	Pioneering cryptocurrency with widespread adoption and institutional interest.	2009	$1.3 trillion	90
+DOGE	Meme-inspired cryptocurrency originally started as a joke.	3	Strong community and support from influencers but lacks technical purpose.	2013	$22 billion	40
+EIGEN	Restaking protocol that extends Ethereum security to other apps and chains.	5	Highly anticipated protocol redefining staking in Ethereum; deep ecosystem integrations.	2024	TBD	75
+ENA	Token associated with Ethena Labs and synthetic dollar protocol (USDe).	4	New but promising approach to stablecoins via synthetic architecture.	2024	$1.5 billion	60
+ETH	Leading smart contract platform enabling decentralized applications.	5	Backbone of DeFi, NFTs, and L2s with strong network effects.	2015	$400 billion	85
+FLOW	Layer-1 blockchain designed for NFTs and games by Dapper Labs.	3	Strong early partnerships (NBA TopShot), but ecosystem stalled in 2023.	2020	$1 billion	55
+JTO 	Governance token for Jito, a liquid staking protocol on Solana.	4	Important player in Solana DeFi with strong traction in MEV-optimized staking.	2023	$400 million	55
+LTC	Bitcoin fork with faster block times and lower fees; known as digital silver.	3	Early project with legacy value, but minimal innovation in recent years.	2011	$6 billion	70
+MORPHO 	Protocol enhancing lending efficiency by combining peer-to-peer and pool models.	4	Technically solid innovation in DeFi lending space with growing interest.	2023	$250 million	65
+ONDO 	Token tied to real-world assets protocol offering tokenized treasuries and bonds.	4	Strong narrative in tokenized RWAs; adoption still early but promising.	2023	$1 billion	70
+ORDI	First token launched using the Bitcoin Ordinals protocol for NFTs and metadata.	3	Speculative but innovative use case for Bitcoin ecosystem expansion.	2023	$900 million	50
+PENDLE	Protocol allowing tokenization and trading of future yield on DeFi assets.	4	Rapidly growing protocol with strong product-market fit and TVL momentum.	2021	$900 million	65
+PYTH	Decentralized oracle network providing real-time data feeds across chains.	4	Rival to Chainlink with high-speed feeds and growing cross-chain traction.	2023	$1.2 billion	60
+RAY	Utility token of Raydium, a Solana-based DEX and AMM platform.	3	Pillar of Solana DeFi, though impacted by ecosystem volatility.	2021	$200 million	50
+RUNE	Thorchain token enabling native cross-chain swaps without wrapped assets.	4	Unique cross-chain liquidity protocol with real utility and risk.	2019	$1.2 billion	60
+S	Native token of the Synthetix protocol for trading synthetic assets.	3	Core DeFi primitive though struggling with sustainable tokenomics.	2018	$500 million	55
+SAND	Metaverse token for The Sandbox, enabling virtual land and asset trading.	3	High-profile partnerships but metaverse hype has cooled since 2021.	2020	$1 billion	50
+SEI	Layer-1 blockchain optimized for trading applications with low latency.	3	Emerging infrastructure with potential, still building ecosystem.	2023	$800 million	50
+SOL	High-throughput Layer-1 blockchain known for speed and low fees.	5	One of the top smart contract platforms with strong ecosystem rebound.	2020	$60 billion	55
+STRK	Native token of Starknet, a zk-rollup Layer-2 for Ethereum scalability.	4	Deep technical team and serious scalability promise; adoption still growing.	2024	$1.1 billion	75
+SUI	Layer-1 blockchain with object-oriented architecture from ex-Meta team.	4	Innovative tech and solid backing; early adoption remains niche.	2023	$1.6 billion	70
+TAO	Token of Bittensor, a decentralized machine learning network.	4	Novel concept at the intersection of AI and crypto; gaining mindshare.	2023	$3.5 billion	55
+TIA	Celestia's token for modular blockchain data availability layer.	4	Leading modular blockchain thesis; highly anticipated tech stack.	2023	$2.5 billion	65
+TON	Layer-1 blockchain originally designed by Telegram; now community-driven.	4	Backed by Telegram integration and active devs; growing retail use case.	2020	$20 billion	70
+TRB	Token of Tellor, a decentralized oracle network providing secure data feeds.	3	Niche Chainlink competitor with committed community.	2019	$250 million	65
+TRUMP	Meme-inspired token tied to political speculation and social sentiment.	2	Purely speculative meme coin without technical utility.	2024	$300 million	55
+TRX	Token of the Tron network focused on content sharing and stablecoin settlements.	3	Long-running project with real usage in USDT transfers, but centralized.	2017	$10 billion	30
+WIF	Meme coin on Solana branded 'dogwifhat', rose rapidly in 2024.	2	Pure meme coin with strong community; no tech base.	2023	$2.5 billion	60
+WLD	Worldcoin's token linked to biometric identity verification.	3	Controversial but ambitious project with unique approach to digital identity.	2023	$1.2 billion	40
+XLM	Token of Stellar network enabling fast, low-cost international transfers.	3	Early cross-border payments protocol, but lagging behind newer solutions.	2014	$3.5 billion	50
+XRP	Utilized by Ripple Labs to facilitate international financial transfers.	4	Established player in cross-border payments; still facing legal overhang.	2012	$29 billion	50
+ZRO	Token of LayerZero, a cross-chain messaging protocol.	4	High-potential infrastructure layer with growing ecosystem traction.	2024	$260 million	50
+AIXBT	AI-driven crypto market intelligence platform analyzing trends on X (Twitter).	4	Rapid user growth and innovative functionality, though early-stage.	2024	$36.5 million	60
+BERA	Berachain is an EVM-compatible L1 using Proof of Liquidity consensus.	4	Novel consensus and strong dev interest, still in early growth phase.	2024	$380 million	65
+BMT 	Token of Bubblemaps, a visual blockchain data analytics platform.	3	Promising tool, but token volatility and low liquidity present risks.	2024	$33.5 million	55
+CHILLGUY	Meme coin on Solana inspired by a relaxed cartoon character.	2	Pure meme value, driven by community sentiment and virality.	2024	$22 million	30
+ELX 	Protocol bringing real-world assets (RWAs) to DeFi with validator security.	4	Addresses meaningful DeFi-RWA gap, needs more adoption validation.	2024	$25 million	65
+FARTCOIN	Solana-based meme coin gaining attention for humor and virality.	1	High community activity, no intrinsic value or utility.	2024	$551,6 million	30
+GOAT	Solana memecoin promoted by AI bots; rapid early growth.	2	Heavily driven by hype and virality; no clear intrinsic utility.	2024	$800 million	40
+GRASS 	AI-powered blockchain project for decentralized data sharing.	3	Innovative in AI/data sharing, but early-stage and under-validated.	2023	$420 million	60
+HYPE	Native token of HyperLiquid DEX and execution engine HyperEVM.	4	Strong momentum and user growth; product is technically solid.	2024	$4.46 billion	70
+IP	Story Protocol's token for tokenized intellectual property on-chain.	4	Strong concept with real-world application; ambitious but early.	2025	$456 million	65
+KAITO	AI-powered Web3 platform enhancing content creation and search.	3	AI + crypto angle is promising, but adoption remains limited.	2025	$218 million	55
+LAYER	Solana-native restaking protocol extending smart contract coverage.	3	Restaking narrative is strong, but still unproven at scale.	2025	$291 million	55
+MELANIA	Memecoin linked to Melania Trump, no stated utility.	2	Celebrity-driven memecoin with speculative intent.	2025	$460 million	30
+MOODENG	Solana-based memecoin inspired by viral humor.	2	Pure meme token; driven by trend and community.	2024	$26.5 million	40
+MOVE	Multi-asset staking crypto project recently listed on Binance.	3	Recent CEX listing shows traction, but early days.	2024	$780 million	55
+NEIRO	Charity-linked token with community donation model.	3	Positive mission but limited technical or adoption data.	2024	$333 million	60
+NIL	Privacy-preserving data layer using blind computation.	4	Backed by serious cryptography, selected for Launchpool.	2025	$78 million	70
+OM	Layer-1 DeFi and RWA platform with regulatory compliance.	4	Bridges RWA and DeFi with institutional potential.	2024	$6 billion	65
+PENGU	Token of Pudgy Penguins NFT brand to expand Solana ecosystem.	3	Strong brand identity, but speculative and ecosystem-dependent.	2024	$250 million	50
+PLUME	RWA-focused EVM chain offering tokenization and compliance stack.	3	Strong value proposition for RWA; adoption data still early.	2025	$330 million	55
+PNUT	Memecoin named after euthanized squirrel; driven by outrage online.	2	Community-powered meme; lacks technical or product merit.	2024	$131 million	40
+POPCAT	Solana-based memecoin inspired by the viral Popcat meme.	2	Purely trend-based; lacks sustainable utility or roadmap.	2023	$133 million	35
+RED	Entertainment token rooted in Japanese gaming culture expansion.	3	Clear narrative but limited evidence of traction or tech.	2025	$100 million	50
+SCR	Layer 2 Ethereum scaling solution aiming to cut costs and boost speed.	4	Addresses real problem in Ethereum ecosystem; solid tech.	2024	$47 million	65
+TST	BNB Smart Chain token with limited visibility and use case.	2	Generic name and unclear purpose; lacks credibility.	2025	$70 million	30
+USUAL	Decentralized fiat stablecoin issuer focusing on governance and equity.	4	Clear mission with institutional ambitions; still early.	2024	$101 million	65
+VINE 	Memecoin on Solana themed around grapevine aesthetics and culture.	2	Minimal utility, mostly community-driven and meme-fueled.	2024	$28 million	40
+VIRTUAL	Token linked to digital identity/metaverse play, with little clear info.	2	Conceptually interesting but little concrete product detail available.	2024	$303 million	45
+VVV	VVV is a low-cap token with unclear goals, often grouped with meme-like assets.	1	Extremely speculative and opaque project.	2025	$12 million	25
+WAL	Community memecoin launched with stealth marketing and humorous branding.	2	No real value proposition beyond community hype.	2024	$538 million	35

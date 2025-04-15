@@ -12,11 +12,13 @@ import {
   AnalysisError,
 } from './types';
 import { ADXService } from './services/adx.service';
+import { ATRService } from './services/atr.service';
 import { IchimokuService } from './services/ichimoku.service';
 import { PivotService } from './services/pivot.service';
 import { VolumeService } from './services/volume.service';
 import { getAllSymbols } from '../shared/utils';
 import { PrismaService } from 'src/shared/prisma/prisma.service';
+import { KeltnerChannelService } from './services/keltnerChannel.service';
 
 /**
  * Configuration for market analysis
@@ -35,9 +37,11 @@ export class TechnicalService {
     private readonly candlestickService: CandlestickService,
     private readonly momentumService: MomentumService,
     private readonly adxService: ADXService,
+    private readonly atrService: ATRService,
     private readonly ichimokuService: IchimokuService,
     private readonly volumeService: VolumeService,
     private readonly pivotService: PivotService,
+    private readonly keltnerChannelService: KeltnerChannelService,
   ) {}
 
   private formatSymbol(asset: string, platform: 'paradex' | 'avnu'): string {
@@ -311,6 +315,30 @@ export class TechnicalService {
     const lastEma12 = ema12[ema12.length - 1];
     const lastEma26 = ema26[ema26.length - 1];
 
+    // Calculate ATR for volatility measurement
+    const atr = this.atrService.calculateATR(prices);
+    const normalizedATR = this.atrService.calculateNormalizedATR(prices);
+    const lastATR = normalizedATR[normalizedATR.length - 1];
+    const atrSignal = this.atrService.getVolatilitySignal(
+      lastATR,
+      normalizedATR.reduce((sum, val) => sum + val, 0) / normalizedATR.length,
+    );
+
+    // Calculate Keltner Channels
+    const keltnerChannels =
+      this.keltnerChannelService.calculateKeltnerChannels(prices);
+    const lastUpperKeltner =
+      keltnerChannels.upper[keltnerChannels.upper.length - 1];
+    const lastLowerKeltner =
+      keltnerChannels.lower[keltnerChannels.lower.length - 1];
+    const lastMiddleKeltner =
+      keltnerChannels.middle[keltnerChannels.middle.length - 1];
+    const keltnerSignal = this.keltnerChannelService.getChannelSignal(
+      prices[prices.length - 1].close!,
+      lastUpperKeltner,
+      lastLowerKeltner,
+    );
+
     const trendDirection =
       lastEma12 > lastEma26
         ? 'uptrend'
@@ -362,6 +390,10 @@ export class TechnicalService {
                 : lastBBWidth < prevBBWidth * 0.95
                   ? 'contracting'
                   : 'stable',
+            atr: {
+              value: lastATR,
+              signal: atrSignal,
+            },
           },
         },
       },
@@ -379,6 +411,12 @@ export class TechnicalService {
           },
         },
         ichimoku: ichimokuResult,
+        keltnerChannel: {
+          upper: lastUpperKeltner,
+          lower: lastLowerKeltner,
+          middle: lastMiddleKeltner,
+          signal: keltnerSignal,
+        },
         levels: {
           // volumeBased removed as support-resistance service is not implemented
           pivots: {
@@ -436,6 +474,10 @@ export class TechnicalService {
           volatility: {
             bbWidth: 0,
             state: 'stable',
+            atr: {
+              value: 0,
+              signal: 'normal',
+            },
           },
         },
       },
@@ -461,8 +503,13 @@ export class TechnicalService {
             priceDistance: 0,
           },
         },
+        keltnerChannel: {
+          upper: 0,
+          lower: 0,
+          middle: 0,
+          signal: 'neutral',
+        },
         levels: {
-          // volumeBased removed as support-resistance service is not implemented
           pivots: {
             pivot: 0,
             r1: 0,

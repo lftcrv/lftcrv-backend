@@ -4,8 +4,9 @@ import {
   Post,
   Query,
   BadRequestException,
+  Param,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { AnalysisService } from './analysis.service';
 import { CombinedAssetAnalysis, BatchAnalysisResult } from './analysis.types';
 import { RequireApiKey } from 'src/shared/auth/decorators/require-api-key.decorator';
@@ -79,5 +80,39 @@ export class AnalysisController {
 
     const assets = assetsQuery.split(',');
     return this.analysisService.getLatestAnalyses(assets, platform);
+  }
+
+  @Get('agent/:runtimeAgentId')
+  @RequireApiKey()
+  @ApiOperation({
+    summary: 'Get latest analysis for an agent',
+    description:
+      'Retrieves the most recent analysis for cryptos selected by the agent',
+  })
+  @ApiParam({
+    name: 'runtimeAgentId',
+    required: true,
+    description: 'Runtime ID of the agent',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'platform',
+    required: false,
+    description: 'Trading platform to use (paradex or avnu)',
+    enum: ['paradex', 'avnu'],
+    default: 'paradex',
+  })
+  async getLatestAnalysisForAgent(
+    @Param('runtimeAgentId') runtimeAgentId: string,
+    @Query('platform') platform: Platform = 'paradex',
+  ): Promise<CombinedAssetAnalysis[]> {
+    if (!runtimeAgentId) {
+      throw new BadRequestException('Agent runtime ID is required');
+    }
+
+    return this.analysisService.getLatestAnalysisForAgent(
+      runtimeAgentId,
+      platform,
+    );
   }
 }

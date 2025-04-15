@@ -12,6 +12,7 @@ import {
   UploadedFile,
   HttpCode,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MockWalletService } from './services/mock-wallet.service';
@@ -44,6 +45,8 @@ import { PrismaService } from '../../shared/prisma/prisma.service';
 @Controller('api/eliza-agent')
 @UseInterceptors(LoggingInterceptor)
 export class ElizaAgentController {
+  private readonly logger = new Logger(ElizaAgentController.name);
+
   constructor(
     @Inject(ServiceTokens.ElizaAgentQuery)
     private readonly queryService: IElizaAgentQueryService,
@@ -97,7 +100,7 @@ export class ElizaAgentController {
 
     try {
       if (dto.characterConfig && !dto.agentConfig) {
-        console.log(
+        this.logger.log(
           '🔄 Converting legacy characterConfig to new agentConfig format',
         );
 
@@ -107,10 +110,10 @@ export class ElizaAgentController {
         if (characterConfig.name) {
           // from the character name
           const nameHash = characterConfig.name
-            .split('')
-            .reduce((acc, char) => acc + char.charCodeAt(0), 0)
-            .toString(16)
-            .slice(0, 8);
+          .split('')
+          .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+          .toString(16)
+          .slice(0, 8);
           chatIdSuffix = nameHash;
         } else {
           // If no name, use timestamp to avoid collisions
@@ -128,6 +131,7 @@ export class ElizaAgentController {
             ? characterConfig.knowledge
             : [],
           interval: 30,
+          analysisPeriod: characterConfig.analysisPeriod,
           chat_id: `chat-${chatIdSuffix}`,
           external_plugins: [],
           internal_plugins: ['leftcurve'],
