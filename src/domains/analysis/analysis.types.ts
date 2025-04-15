@@ -5,6 +5,7 @@ export interface AnalysisMetadata {
   processingTimeMs: number;
   dataSource?: string;
   platform?: 'paradex' | 'avnu';
+  tradingContext?: string;
 }
 
 export interface SocialAnalysis {

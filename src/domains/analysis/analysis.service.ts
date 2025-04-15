@@ -233,10 +233,10 @@ export class AnalysisService {
       try {
         if (agent.characterConfig) {
           const config =
-          typeof agent.characterConfig === 'string'
-          ? JSON.parse(agent.characterConfig)
-          : agent.characterConfig;
-          
+            typeof agent.characterConfig === 'string'
+              ? JSON.parse(agent.characterConfig)
+              : agent.characterConfig;
+
           if (config && typeof config.analysis_period === 'number') {
             analysisPeriod = Math.min(Math.max(config.analysis_period, 0), 5);
           }
@@ -247,13 +247,36 @@ export class AnalysisService {
         );
       }
 
-      return analyses.map((analysis) => {
+      const processedAnalyses = analyses.map((analysis, index) => {
         const filteredAnalysis = { ...analysis };
 
+        if (index === 0) {
+          if (!filteredAnalysis.metadata) {
+            filteredAnalysis.metadata = {
+              generatedAt: new Date().toISOString(),
+              processingTimeMs: 0,
+            };
+          }
+
+          filteredAnalysis.metadata = {
+            ...filteredAnalysis.metadata,
+            tradingContext: `Important: You are a unique trading personality with your own voice and perspective. Always speak directly in first person, expressing your thoughts and trading decisions as "I think" or "I believe" rather than referring to yourself as "a trading agent."
+  
+  When considering trades:
+  1. You can always sell any cryptocurrency for USDC (stablecoin)
+  2. USDC is a stable asset with minimal volatility (fixed at $1)
+  3. Selling into USDC is a valid risk management strategy
+  4. Explain your reasoning based on your unique trading philosophy and character traits
+  5. Focus only on the most relevant technical indicators that match your expertise`,
+          };
+        }
+
+        // Filter signals based on analysisPeriod
         if (
           filteredAnalysis.technical &&
           filteredAnalysis.technical.keySignals
         ) {
+          // Always remove long term signals
           delete filteredAnalysis.technical.keySignals.longTerm;
 
           // Select signals based on analysisPeriod
@@ -267,6 +290,8 @@ export class AnalysisService {
 
         return filteredAnalysis;
       });
+
+      return processedAnalyses;
     } catch (error) {
       this.logger.error(
         `Failed to get analysis for agent ${runtimeAgentId}: ${error.message}`,
