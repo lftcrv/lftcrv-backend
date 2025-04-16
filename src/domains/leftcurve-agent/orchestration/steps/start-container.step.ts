@@ -9,6 +9,7 @@ import {
   StepExecutionContext,
   StepExecutionResult,
 } from '../../../../domains/orchestration/interfaces';
+import { PerformanceSnapshotService } from 'src/domains/kpi/services/performance-snapshot.service';
 
 @Injectable()
 export class StartContainerStep extends BaseStepExecutor {
@@ -17,6 +18,7 @@ export class StartContainerStep extends BaseStepExecutor {
     private readonly dockerService: IDockerService,
     private readonly prisma: PrismaService,
     private readonly messageService: MessageService,
+    private readonly performanceSnapshotService: PerformanceSnapshotService,
   ) {
     super({
       stepId: 'start-container',
@@ -44,6 +46,16 @@ export class StartContainerStep extends BaseStepExecutor {
           status: AgentStatus.RUNNING,
         },
       });
+
+      await this.messageService.sendMessageToAgent(runtimeAgentId, {
+        content: {
+          text: 'execute send_portfolio_balance',
+        },
+      });
+
+      await this.performanceSnapshotService.createAgentPerformanceSnapshot(
+        agentId,
+      );
 
       return this.success(updatedAgent, {
         runtimeAgentId,

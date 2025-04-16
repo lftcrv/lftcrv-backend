@@ -1,14 +1,17 @@
 #!/bin/bash
 set -e
+
 show_help() {
   echo "Development environment setup script"
   echo ""
   echo "Options:"
-  echo " -h, --help Display this help"
-  echo " -c, --clean Completely erase the database and recreate it"
+  echo "  -h, --help   Display this help"
+  echo "  -c, --clean  Completely erase the database and recreate it"
   echo ""
 }
+
 CLEAN_DB=false
+
 while [ "$1" != "" ]; do
   case $1 in
   -c | --clean)
@@ -25,12 +28,15 @@ while [ "$1" != "" ]; do
   esac
   shift
 done
+
 echo "Setting up the development environment..."
+
 if [ ! -f .env ]; then
   echo "Creating .env file..."
   cp .env.example .env
   echo "Please update the .env file with your local settings if necessary."
 fi
+
 source .env
 
 if ! docker ps | grep -q "lftcrv-postgres-backend"; then
@@ -66,16 +72,31 @@ if [ "$CLEAN_DB" = true ]; then
     echo "Database deletion aborted."
     exit 1
   fi
+
   read -p "Are you absolutely sure? This will erase all data. (yes/no): " CONFIRM
   if [ "$CONFIRM" != "yes" ]; then
     echo "Database deletion aborted."
     exit 1
   fi
-  echo "Clean option enabled: removing database $DATABASE_NAME..."
+
+  echo "Clean option enabled: terminating all connections to database $DATABASE_NAME..."
+
+  # First terminate all connections to the database
+  PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -t -c "
+  SELECT pg_terminate_backend(pid) 
+  FROM pg_stat_activity 
+  WHERE datname = '$DATABASE_NAME' 
+    AND pid <> pg_backend_pid();" >/dev/null
+
+  echo "All connections terminated!"
+
+  echo "Removing database $DATABASE_NAME..."
   PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -c "DROP DATABASE IF EXISTS \"$DATABASE_NAME\";"
   echo "Database deleted!"
 fi
+
 DB_EXISTS=$(PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DATABASE_NAME';")
+
 if [ "$DB_EXISTS" != "1" ]; then
   echo "Creating database $DATABASE_NAME..."
   PGPASSWORD=$DATABASE_PASSWORD psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_USER -d postgres -c "CREATE DATABASE \"$DATABASE_NAME\";"
@@ -83,8 +104,11 @@ if [ "$DB_EXISTS" != "1" ]; then
 else
   echo "Database already exists. Skipping creation."
 fi
+
 echo "Running Prisma migrations..."
 npx prisma migrate dev --name init
+
 echo "Generating Prisma client..."
 npx prisma generate
+
 echo "Setup complete! You can now run the application with: npm run start:dev"
