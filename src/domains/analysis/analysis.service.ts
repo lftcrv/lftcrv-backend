@@ -196,18 +196,30 @@ export class AnalysisService {
     platform: Platform = 'paradex',
   ): Promise<CombinedAssetAnalysis[]> {
     try {
+      // Log for debugging in different environments (Docker, local, etc.)
+      this.logger.debug(`Fetching analysis for agent with ID: ${runtimeAgentId} on platform: ${platform}`);
+
+      // Ensure runtimeAgentId is properly formatted before query
+      const sanitizedAgentId = runtimeAgentId.trim();
+      if (!sanitizedAgentId) {
+        throw new BadRequestException('Agent runtime ID cannot be empty');
+      }
+
       // Find the agent by runtimeAgentId
+      // Using startsWith instead of strict equality to handle Docker container ID differences
+      // This ensures compatibility between containerized and non-containerized environments
       const agent = await this.prisma.elizaAgent.findFirst({
         where: {
           runtimeAgentId: {
-            startsWith: runtimeAgentId,
+            startsWith: sanitizedAgentId,
           },
         },
       });
 
       if (!agent) {
+        this.logger.warn(`No agent found with runtime ID starting with: ${sanitizedAgentId}`);
         throw new BadRequestException(
-          `Agent with runtime ID ${runtimeAgentId} not found`,
+          `Agent with runtime ID ${sanitizedAgentId} not found`,
         );
       }
 

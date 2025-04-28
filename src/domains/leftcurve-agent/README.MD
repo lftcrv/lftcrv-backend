@@ -13,9 +13,9 @@ Service to manage Eliza agents in Docker containers, providing API endpoints to 
 1. Pull Eliza image:
 
 ```bash
-docker pull julienbrs/eliza:latest
+docker pull sbaki/eliza:latest
 if on mac m1/m2/m3:
-docker pull --platform linux/amd64 julienbrs/eliza:latest
+docker pull --platform linux/amd64 sbaki/eliza:latest
 ```
 
 2. Setup environment file in `docker/eliza/.env` with required configurations. If using Twitter client, include Twitter credentials:
@@ -154,10 +154,10 @@ Wait 20 minutes since Docker is slow. In the end, a newly created image named el
 Tag the image:
 `docker tag image_id dockerhub_username/eliza:latest`
 For example:
-`docker tag sha256:2c3fdd2fc7520b89e95d043a3b3445ca8ce3155b1a2cc1eb4d21d8f7a3299f34 julienbrs/eliza:latest`
+`docker tag sha256:2c3fdd2fc7520b89e95d043a3b3445ca8ce3155b1a2cc1eb4d21d8f7a3299f34 sbaki/eliza:latest`
 
 Then, go to the lftcrv-backend repository and do the following:
 
-    Temporarily replace all occurrences of julienbrs/eliza:latest with dockerhub_username/eliza:latest.
+    Temporarily replace all occurrences of sbaki/eliza:latest with dockerhub_username/eliza:latest.
     Run ./scripts/setup.sh.
     Execute pnpm run start:dev.
