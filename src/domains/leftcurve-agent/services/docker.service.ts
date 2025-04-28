@@ -122,7 +122,7 @@ export class DockerService implements IDockerService, OnModuleInit {
     console.log('📝 Written environment variables to:', agentEnvFile);
 
     console.log('🔄 Creating Docker container with configuration:');
-    console.log('  Image:', 'julienbrs/starknet-agent-kit:latest');
+    console.log('  Image:', 'sbaki/starknet-agent-kit:latest');
     console.log('  Name:', `agent-${config.name}`);
     console.log('  Port mapping:', `${port}:8080`);
     console.log('  Mounted volumes:');
