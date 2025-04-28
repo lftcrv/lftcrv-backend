@@ -199,7 +199,9 @@ export class AnalysisService {
       // Find the agent by runtimeAgentId
       const agent = await this.prisma.elizaAgent.findFirst({
         where: {
-          runtimeAgentId,
+          runtimeAgentId: {
+            startsWith: runtimeAgentId,
+          },
         },
       });
 

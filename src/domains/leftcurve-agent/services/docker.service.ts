@@ -63,7 +63,7 @@ export class DockerService implements IDockerService, OnModuleInit {
     // Verify Docker image exists
     const images = await this.docker.listImages();
     const baseImage = images.find((img) =>
-      img.RepoTags?.includes('julienbrs/starknet-agent-kit:latest'),
+      img.RepoTags?.includes('sbaki/starknet-agent-kit:latest'),
     );
 
     if (!baseImage) {
@@ -131,7 +131,7 @@ export class DockerService implements IDockerService, OnModuleInit {
     console.log(`    - ${agentEnvFile} -> /app/.env`);
 
     const container = await this.docker.createContainer({
-      Image: 'julienbrs/starknet-agent-kit:latest',
+      Image: 'sbaki/starknet-agent-kit:latest',
       name: containerName,
       Env: envVars,
       HostConfig: {
