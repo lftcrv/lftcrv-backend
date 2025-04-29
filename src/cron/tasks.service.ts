@@ -224,7 +224,7 @@ export class TasksService {
   //   }
   // }
 
-  @Cron('0 */6 * * *')
+  @Cron('0 */3 * * *')
   async sendTradeSimulation() {
     const startTime = Date.now();
     this.logger.log('Sending trading simulation order to active agents');
