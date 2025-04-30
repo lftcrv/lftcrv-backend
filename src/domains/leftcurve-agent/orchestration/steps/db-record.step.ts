@@ -196,8 +196,30 @@ export class CreateDbRecordStep extends BaseStepExecutor {
           console.log(
             '🚀 Selecting cryptocurrencies based on agent biography...',
           );
+          
+          // Extract risk profile from objectives if available
+          let riskProfile: number | undefined;
+          if (config.objectives) {
+            for (const objective of config.objectives) {
+              const match = objective.match(/Risk profile: (\d+)\/100/);
+              if (match && match[1]) {
+                riskProfile = parseInt(match[1], 10);
+                break;
+              }
+            }
+          }
+          
+          console.log('🎭 Agent parameters:', { 
+            curveSide: dto.curveSide,
+            riskProfile: riskProfile ? `${riskProfile}/100` : 'undefined'
+          });
+
           selectedCryptos =
-            await this.cryptoSelectionService.selectCryptosForAgent(config);
+            await this.cryptoSelectionService.selectCryptosForAgent(
+              config.bio || config, // Parfois config.bio, parfois juste config
+              dto.curveSide,
+              riskProfile
+            );
           console.log('✅ Selected cryptocurrencies:', selectedCryptos);
         } else {
           console.log('⚠️ No biography found, using default cryptocurrencies');
