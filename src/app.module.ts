@@ -28,6 +28,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import { UserModule } from './domains/user/user.module';
 import { FundingModule } from './domains/blockchain/funding/funding.module';
 import { KPIModule } from './domains/kpi/kpi.module';
+import { CreatorsModule } from './domains/creators/creators.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { KPIModule } from './domains/kpi/kpi.module';
     AnalysisModule,
     OrchestrationModule,
     UserModule,
+    CreatorsModule,
     ScheduleModule.forRoot(),
     TerminusModule,
   ],

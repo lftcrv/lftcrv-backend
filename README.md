@@ -91,7 +91,7 @@ Service to manage Eliza agents in Docker containers, providing API endpoints to 
 ```bash
 docker pull sbaki/eliza:latest
 if on mac m1/m2/m3:
-docker pull --platform linux/amd64 sbaki/eliza:latest
+docker pull sbaki/starknet-agent-kit:latest
 ```
 
 2. Setup environment file in `docker/eliza/.env` with required configurations. If using Twitter client, include Twitter credentials:
