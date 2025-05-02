@@ -12,7 +12,6 @@ import { ServiceTokens } from './interfaces';
       provide: ServiceTokens.CreatorsService,
       useClass: CreatorsService,
     },
-    CreatorsService,
   ],
   exports: [
     {
