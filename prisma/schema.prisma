@@ -196,6 +196,7 @@ model ElizaAgent {
   PerformanceSnapshots AgentPerformanceSnapshot[]
   AccountBalances      ParadexAccountBalance[]
 
+  @@index([creatorWallet])
   @@map("eliza_agents")
 }
 
