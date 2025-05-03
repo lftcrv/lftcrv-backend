@@ -160,7 +160,7 @@ export class CreatorsService implements ICreatorsService {
       totalTradeCount: 0,
     };
     let runningAgents = 0;
-    let bestPnl = -Infinity;
+    let bestAgentPnlCycle = -Infinity;
     let bestAgentDto: CreatorPerformanceAgentDetailDto | null = null;
     let latestUpdateTimestamp: Date | null = null;
 
@@ -192,8 +192,8 @@ export class CreatorsService implements ICreatorsService {
         aggregators = this._updateAggregators(aggregators, marketData);
 
         // Update best performing agent based on pnlCycle
-        if ((marketData.pnlCycle ?? -Infinity) > bestPnl) {
-          bestPnl = marketData.pnlCycle ?? -Infinity;
+        if ((marketData.pnlCycle ?? -Infinity) > bestAgentPnlCycle) {
+          bestAgentPnlCycle = marketData.pnlCycle ?? -Infinity;
           bestAgentDto = agentDetailDto; // Store the DTO itself
         }
 
@@ -235,7 +235,7 @@ export class CreatorsService implements ICreatorsService {
     response.totalPnl24h = aggregators.totalPnl24h;
     response.totalTradeCount = aggregators.totalTradeCount;
     response.bestPerformingAgentPnlCycle =
-      bestPnl > -Infinity ? bestAgentDto : null;
+      bestAgentPnlCycle > -Infinity ? bestAgentDto : null;
     response.agentDetails = agentDetails;
     response.lastUpdated = latestUpdateTimestamp;
 
