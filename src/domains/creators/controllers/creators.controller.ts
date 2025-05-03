@@ -14,6 +14,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiNotFoundResponse,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { LoggingInterceptor } from '../../../shared/interceptors/logging.interceptor';
 import { ICreatorsService, ServiceTokens } from '../interfaces';
@@ -22,6 +23,7 @@ import {
   PaginatedResponseDto,
   CreatorDto,
   AgentSummaryDto,
+  CreatorPerformanceSummaryDto,
 } from '../dtos';
 import { RequireApiKey } from '../../../shared/auth/decorators/require-api-key.decorator';
 
@@ -89,5 +91,30 @@ export class CreatorsController {
     @Query(ValidationPipe) query: PageQueryDto,
   ): Promise<PaginatedResponseDto<AgentSummaryDto>> {
     return this.creatorsService.findAgentsByCreatorId(creatorId, query);
+  }
+
+  @Get(':creatorId/performance')
+  @RequireApiKey()
+  @ApiOperation({
+    summary: 'Get aggregated performance summary for a specific creator',
+  })
+  @ApiParam({
+    name: 'creatorId',
+    description: 'The creator ID (wallet address)',
+    example: '0x123abc...',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Creator performance summary retrieved successfully',
+    type: CreatorPerformanceSummaryDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Creator not found (no agents associated with this ID)',
+  })
+  @ApiUnauthorizedResponse({ description: 'API key is missing or invalid' })
+  async getCreatorPerformance(
+    @Param('creatorId') creatorId: string,
+  ): Promise<CreatorPerformanceSummaryDto> {
+    return this.creatorsService.getCreatorPerformance(creatorId);
   }
 }

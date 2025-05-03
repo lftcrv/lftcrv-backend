@@ -4,6 +4,7 @@ import {
   CreatorDto,
   AgentSummaryDto,
 } from '../dtos';
+import { CreatorPerformanceSummaryDto } from '../dtos/creator-performance-summary.dto';
 
 export interface ICreatorsService {
   /**
@@ -25,4 +26,11 @@ export interface ICreatorsService {
     creatorId: string,
     query: PageQueryDto,
   ): Promise<PaginatedResponseDto<AgentSummaryDto>>;
+
+  /**
+   * Get aggregated performance summary for a specific creator
+   */
+  getCreatorPerformance(
+    creatorId: string,
+  ): Promise<CreatorPerformanceSummaryDto>;
 }

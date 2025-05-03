@@ -1,18 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { ICreatorsService } from '../interfaces';
-import { 
-  PageQueryDto, 
-  PaginatedResponseDto, 
-  CreatorDto, 
-  AgentSummaryDto 
+import {
+  PageQueryDto,
+  PaginatedResponseDto,
+  CreatorDto,
+  AgentSummaryDto,
+  CreatorPerformanceAgentDetailDto,
+  CreatorPerformanceSummaryDto,
 } from '../dtos';
+import { AgentStatus } from '@prisma/client';
 
 @Injectable()
 export class CreatorsService implements ICreatorsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAllCreators(query: PageQueryDto): Promise<PaginatedResponseDto<CreatorDto>> {
+  async findAllCreators(
+    query: PageQueryDto,
+  ): Promise<PaginatedResponseDto<CreatorDto>> {
     const { page, limit } = query;
     const skip = (page - 1) * limit;
     const take = limit;
@@ -51,7 +56,7 @@ export class CreatorsService implements ICreatorsService {
     response.total = total;
     response.page = page;
     response.limit = limit;
-    
+
     return response;
   }
 
@@ -124,7 +129,118 @@ export class CreatorsService implements ICreatorsService {
     response.total = total;
     response.page = page;
     response.limit = limit;
-    
+
     return response;
   }
-} 
+
+  async getCreatorPerformance(
+    creatorId: string,
+  ): Promise<CreatorPerformanceSummaryDto> {
+    // 1. Fetch agents with latest market data
+    const agentsWithData = await this.prisma.elizaAgent.findMany({
+      where: {
+        creatorWallet: creatorId,
+      },
+      include: {
+        LatestMarketData: true, // Eager load latest data
+      },
+    });
+
+    // 2. Handle not found case
+    if (agentsWithData.length === 0) {
+      throw new NotFoundException(`Creator with ID ${creatorId} not found`);
+    }
+
+    // 3. Initialize aggregators
+    let totalTvl = 0;
+    let totalBalanceInUSD = 0;
+    let totalPnlCycle = 0;
+    let totalPnl24h = 0;
+    let totalTradeCount = 0;
+    let runningAgents = 0;
+    let bestPnl = -Infinity;
+    let bestAgentDto: CreatorPerformanceAgentDetailDto | null = null;
+    let latestUpdateTimestamp: Date | null = null;
+
+    // 4. Process agents
+    const agentDetails: CreatorPerformanceAgentDetailDto[] = [];
+
+    for (const agent of agentsWithData) {
+      // Create agent detail DTO
+      const agentDetailDto = new CreatorPerformanceAgentDetailDto();
+      agentDetailDto.id = agent.id;
+      agentDetailDto.name = agent.name;
+      agentDetailDto.status = agent.status;
+      agentDetailDto.profilePicture = agent.profilePicture || undefined;
+      agentDetailDto.createdAt = agent.createdAt;
+
+      // Check if agent has market data
+      if (agent.LatestMarketData) {
+        const marketData = agent.LatestMarketData;
+
+        // Map LatestMarketData fields
+        agentDetailDto.balanceInUSD = marketData.balanceInUSD;
+        agentDetailDto.tvl = marketData.tvl;
+        agentDetailDto.pnlCycle = marketData.pnlCycle;
+        agentDetailDto.pnl24h = marketData.pnl24h;
+        agentDetailDto.tradeCount = marketData.tradeCount;
+        agentDetailDto.marketCap = marketData.marketCap;
+
+        // Update aggregators
+        totalTvl += marketData.tvl ?? 0;
+        totalBalanceInUSD += marketData.balanceInUSD ?? 0;
+        totalPnlCycle += marketData.pnlCycle ?? 0;
+        totalPnl24h += marketData.pnl24h ?? 0;
+        totalTradeCount += marketData.tradeCount ?? 0;
+
+        // Update best performing agent based on pnlCycle
+        if ((marketData.pnlCycle ?? -Infinity) > bestPnl) {
+          bestPnl = marketData.pnlCycle ?? -Infinity;
+          bestAgentDto = agentDetailDto;
+        }
+
+        // Update latest timestamp
+        if (
+          marketData.updatedAt &&
+          (!latestUpdateTimestamp ||
+            marketData.updatedAt > latestUpdateTimestamp)
+        ) {
+          latestUpdateTimestamp = marketData.updatedAt;
+        }
+      } else {
+        // Set defaults for agents without market data
+        agentDetailDto.balanceInUSD = null;
+        agentDetailDto.tvl = null;
+        agentDetailDto.pnlCycle = null;
+        agentDetailDto.pnl24h = null;
+        agentDetailDto.tradeCount = null;
+        agentDetailDto.marketCap = null;
+      }
+
+      // Count running agents
+      if (agent.status === AgentStatus.RUNNING) {
+        runningAgents++;
+      }
+
+      // Add to agent details array
+      agentDetails.push(agentDetailDto);
+    }
+
+    // 5. Construct response
+    const response = new CreatorPerformanceSummaryDto();
+    response.creatorId = creatorId;
+    response.totalAgents = agentsWithData.length;
+    response.runningAgents = runningAgents;
+    response.totalTvl = totalTvl;
+    response.totalBalanceInUSD = totalBalanceInUSD;
+    response.totalPnlCycle = totalPnlCycle;
+    response.totalPnl24h = totalPnl24h;
+    response.totalTradeCount = totalTradeCount;
+    response.bestPerformingAgentPnlCycle =
+      bestPnl > -Infinity ? bestAgentDto : null;
+    response.agentDetails = agentDetails;
+    response.lastUpdated = latestUpdateTimestamp;
+
+    return response;
+  }
+}
