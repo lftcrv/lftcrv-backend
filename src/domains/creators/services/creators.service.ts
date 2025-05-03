@@ -9,7 +9,7 @@ import {
   CreatorPerformanceAgentDetailDto,
   CreatorPerformanceSummaryDto,
 } from '../dtos';
-import { AgentStatus } from '@prisma/client';
+import { AgentStatus, LatestMarketData } from '@prisma/client';
 
 @Injectable()
 export class CreatorsService implements ICreatorsService {
@@ -152,11 +152,13 @@ export class CreatorsService implements ICreatorsService {
     }
 
     // 3. Initialize aggregators
-    let totalTvl = 0;
-    let totalBalanceInUSD = 0;
-    let totalPnlCycle = 0;
-    let totalPnl24h = 0;
-    let totalTradeCount = 0;
+    let aggregators = {
+      totalTvl: 0,
+      totalBalanceInUSD: 0,
+      totalPnlCycle: 0,
+      totalPnl24h: 0,
+      totalTradeCount: 0,
+    };
     let runningAgents = 0;
     let bestPnl = -Infinity;
     let bestAgentDto: CreatorPerformanceAgentDetailDto | null = null;
@@ -186,17 +188,13 @@ export class CreatorsService implements ICreatorsService {
         agentDetailDto.tradeCount = marketData.tradeCount;
         agentDetailDto.marketCap = marketData.marketCap;
 
-        // Update aggregators
-        totalTvl += marketData.tvl ?? 0;
-        totalBalanceInUSD += marketData.balanceInUSD ?? 0;
-        totalPnlCycle += marketData.pnlCycle ?? 0;
-        totalPnl24h += marketData.pnl24h ?? 0;
-        totalTradeCount += marketData.tradeCount ?? 0;
+        // Update aggregators using helper method
+        aggregators = this._updateAggregators(aggregators, marketData);
 
         // Update best performing agent based on pnlCycle
         if ((marketData.pnlCycle ?? -Infinity) > bestPnl) {
           bestPnl = marketData.pnlCycle ?? -Infinity;
-          bestAgentDto = agentDetailDto;
+          bestAgentDto = agentDetailDto; // Store the DTO itself
         }
 
         // Update latest timestamp
@@ -231,16 +229,47 @@ export class CreatorsService implements ICreatorsService {
     response.creatorId = creatorId;
     response.totalAgents = agentsWithData.length;
     response.runningAgents = runningAgents;
-    response.totalTvl = totalTvl;
-    response.totalBalanceInUSD = totalBalanceInUSD;
-    response.totalPnlCycle = totalPnlCycle;
-    response.totalPnl24h = totalPnl24h;
-    response.totalTradeCount = totalTradeCount;
+    response.totalTvl = aggregators.totalTvl;
+    response.totalBalanceInUSD = aggregators.totalBalanceInUSD;
+    response.totalPnlCycle = aggregators.totalPnlCycle;
+    response.totalPnl24h = aggregators.totalPnl24h;
+    response.totalTradeCount = aggregators.totalTradeCount;
     response.bestPerformingAgentPnlCycle =
       bestPnl > -Infinity ? bestAgentDto : null;
     response.agentDetails = agentDetails;
     response.lastUpdated = latestUpdateTimestamp;
 
     return response;
+  }
+
+  /**
+   * Private helper to update aggregate performance metrics.
+   */
+  private _updateAggregators(
+    currentAggregates: {
+      totalTvl: number;
+      totalBalanceInUSD: number;
+      totalPnlCycle: number;
+      totalPnl24h: number;
+      totalTradeCount: number;
+    },
+    marketData: LatestMarketData,
+  ): {
+    totalTvl: number;
+    totalBalanceInUSD: number;
+    totalPnlCycle: number;
+    totalPnl24h: number;
+    totalTradeCount: number;
+  } {
+    return {
+      totalTvl: currentAggregates.totalTvl + (marketData.tvl ?? 0),
+      totalBalanceInUSD:
+        currentAggregates.totalBalanceInUSD + (marketData.balanceInUSD ?? 0),
+      totalPnlCycle:
+        currentAggregates.totalPnlCycle + (marketData.pnlCycle ?? 0),
+      totalPnl24h: currentAggregates.totalPnl24h + (marketData.pnl24h ?? 0),
+      totalTradeCount:
+        currentAggregates.totalTradeCount + (marketData.tradeCount ?? 0),
+    };
   }
 }
