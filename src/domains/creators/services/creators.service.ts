@@ -413,8 +413,8 @@ export class CreatorsService implements ICreatorsService {
             aggregatedPnl24h += marketData.pnl24h || 0;
 
             // Update best agent if this one has better PnL cycle
-            if ((marketData.pnlCycle || -Infinity) > bestAgentPnlCycle) {
-              bestAgentPnlCycle = marketData.pnlCycle || -Infinity;
+            if ((marketData.pnlCycle ?? -Infinity) > bestAgentPnlCycle) {
+              bestAgentPnlCycle = marketData.pnlCycle ?? -Infinity;
               bestAgentId = agent.id;
             }
           }
