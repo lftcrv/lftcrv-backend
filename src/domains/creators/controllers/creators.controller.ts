@@ -24,6 +24,8 @@ import {
   CreatorDto,
   AgentSummaryDto,
   CreatorPerformanceSummaryDto,
+  LeaderboardQueryDto,
+  CreatorLeaderboardEntryDto,
 } from '../dtos';
 import { RequireApiKey } from '../../../shared/auth/decorators/require-api-key.decorator';
 
@@ -49,6 +51,24 @@ export class CreatorsController {
     @Query(ValidationPipe) query: PageQueryDto,
   ): Promise<PaginatedResponseDto<CreatorDto>> {
     return this.creatorsService.findAllCreators(query);
+  }
+
+  @Get('leaderboard')
+  @RequireApiKey()
+  @ApiOperation({
+    summary: 'Get creator leaderboard ranked by performance metrics',
+  })
+  @ApiQuery({ type: LeaderboardQueryDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Sorted list of creators with their performance metrics',
+    type: () => PaginatedResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'API key is missing or invalid' })
+  async getCreatorLeaderboard(
+    @Query(ValidationPipe) query: LeaderboardQueryDto,
+  ): Promise<PaginatedResponseDto<CreatorLeaderboardEntryDto>> {
+    return this.creatorsService.getCreatorLeaderboard(query);
   }
 
   @Get(':creatorId')

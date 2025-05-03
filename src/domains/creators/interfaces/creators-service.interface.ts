@@ -3,6 +3,8 @@ import {
   PaginatedResponseDto,
   CreatorDto,
   AgentSummaryDto,
+  LeaderboardQueryDto,
+  CreatorLeaderboardEntryDto,
 } from '../dtos';
 import { CreatorPerformanceSummaryDto } from '../dtos/creator-performance-summary.dto';
 
@@ -33,4 +35,17 @@ export interface ICreatorsService {
   getCreatorPerformance(
     creatorId: string,
   ): Promise<CreatorPerformanceSummaryDto>;
+
+  /**
+   * Get leaderboard of creators sorted by performance metrics
+   */
+  getCreatorLeaderboard(
+    query: LeaderboardQueryDto,
+  ): Promise<PaginatedResponseDto<CreatorLeaderboardEntryDto>>;
+
+  /**
+   * Calculate and store leaderboard data for all creators
+   * (Used by cron job)
+   */
+  calculateAndStoreLeaderboard(): Promise<void>;
 }

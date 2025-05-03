@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { ICreatorsService } from '../interfaces';
 import {
@@ -8,11 +8,16 @@ import {
   AgentSummaryDto,
   CreatorPerformanceAgentDetailDto,
   CreatorPerformanceSummaryDto,
+  LeaderboardQueryDto,
+  LeaderboardSortField,
+  CreatorLeaderboardEntryDto,
 } from '../dtos';
 import { AgentStatus, LatestMarketData } from '@prisma/client';
 
 @Injectable()
 export class CreatorsService implements ICreatorsService {
+  private readonly logger = new Logger(CreatorsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findAllCreators(
@@ -271,5 +276,168 @@ export class CreatorsService implements ICreatorsService {
       totalTradeCount:
         currentAggregates.totalTradeCount + (marketData.tradeCount ?? 0),
     };
+  }
+
+  async getCreatorLeaderboard(
+    query: LeaderboardQueryDto,
+  ): Promise<PaginatedResponseDto<CreatorLeaderboardEntryDto>> {
+    const { page, limit, sortBy } = query;
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    // Determine sort order and field based on the query parameter
+    const orderBy: Record<string, 'asc' | 'desc'> = {};
+    switch (sortBy) {
+      case LeaderboardSortField.BALANCE:
+        orderBy.totalBalanceInUSD = 'desc';
+        break;
+      case LeaderboardSortField.PNL_CYCLE:
+        orderBy.aggregatedPnlCycle = 'desc';
+        break;
+      case LeaderboardSortField.PNL_24H:
+        orderBy.aggregatedPnl24h = 'desc';
+        break;
+      case LeaderboardSortField.RUNNING_AGENTS:
+        orderBy.runningAgents = 'desc';
+        break;
+      default:
+        orderBy.aggregatedPnlCycle = 'desc'; // Default sort
+    }
+
+    // Get leaderboard entries with pagination
+    // Using type assertion to handle potential Prisma client typing issues
+    const prismaAny = this.prisma as any;
+    const leaderboardEntries = await prismaAny.creatorLeaderboardData.findMany({
+      skip,
+      take,
+      orderBy,
+    });
+
+    // Get total count
+    const total = await prismaAny.creatorLeaderboardData.count();
+
+    // Map to DTOs
+    const leaderboardDtos = leaderboardEntries.map((entry) => ({
+      creatorId: entry.creatorWallet,
+      totalAgents: entry.totalAgents,
+      runningAgents: entry.runningAgents,
+      totalBalanceInUSD: entry.totalBalanceInUSD,
+      aggregatedPnlCycle: entry.aggregatedPnlCycle,
+      aggregatedPnl24h: entry.aggregatedPnl24h,
+      bestAgentId: entry.bestAgentId || undefined,
+      bestAgentPnlCycle: entry.bestAgentPnlCycle || undefined,
+      updatedAt: entry.updatedAt,
+    }));
+
+    // Create paginated response
+    const response = new PaginatedResponseDto<CreatorLeaderboardEntryDto>();
+    response.data = leaderboardDtos;
+    response.total = total;
+    response.page = page;
+    response.limit = limit;
+
+    return response;
+  }
+
+  async calculateAndStoreLeaderboard(): Promise<void> {
+    this.logger.log('Starting leaderboard calculation for all creators');
+    const startTime = Date.now();
+
+    try {
+      // 1. Get all unique creator wallets
+      const uniqueCreators = await this.prisma.elizaAgent.groupBy({
+        by: ['creatorWallet'],
+      });
+
+      this.logger.debug(`Processing ${uniqueCreators.length} unique creators`);
+
+      // 2. Process each creator
+      for (const creator of uniqueCreators) {
+        const creatorWallet = creator.creatorWallet;
+
+        // For each creator, fetch all their agents with latest market data
+        const agentsWithData = await this.prisma.elizaAgent.findMany({
+          where: {
+            creatorWallet,
+          },
+          include: {
+            LatestMarketData: true,
+          },
+        });
+
+        // Initialize aggregators
+        const totalAgents = agentsWithData.length;
+        let runningAgents = 0;
+        let totalBalanceInUSD = 0;
+        let aggregatedPnlCycle = 0;
+        let aggregatedPnl24h = 0;
+        let bestAgentId: string | null = null;
+        let bestAgentPnlCycle = -Infinity;
+
+        // Process each agent
+        for (const agent of agentsWithData) {
+          // Count running agents
+          if (agent.status === AgentStatus.RUNNING) {
+            runningAgents++;
+          }
+
+          // Process market data if available
+          if (agent.LatestMarketData) {
+            const marketData = agent.LatestMarketData;
+
+            // Aggregate values
+            totalBalanceInUSD += marketData.balanceInUSD || 0;
+            aggregatedPnlCycle += marketData.pnlCycle || 0;
+            aggregatedPnl24h += marketData.pnl24h || 0;
+
+            // Update best agent if this one has better PnL cycle
+            if ((marketData.pnlCycle || -Infinity) > bestAgentPnlCycle) {
+              bestAgentPnlCycle = marketData.pnlCycle || -Infinity;
+              bestAgentId = agent.id;
+            }
+          }
+        }
+
+        // Update or create leaderboard entry using type assertion
+        const prismaAny = this.prisma as any;
+        await prismaAny.creatorLeaderboardData.upsert({
+          where: {
+            creatorWallet,
+          },
+          update: {
+            totalAgents,
+            runningAgents,
+            totalBalanceInUSD,
+            aggregatedPnlCycle,
+            aggregatedPnl24h,
+            bestAgentId,
+            bestAgentPnlCycle:
+              bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
+          },
+          create: {
+            creatorWallet,
+            totalAgents,
+            runningAgents,
+            totalBalanceInUSD,
+            aggregatedPnlCycle,
+            aggregatedPnl24h,
+            bestAgentId,
+            bestAgentPnlCycle:
+              bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
+          },
+        });
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Completed leaderboard calculation and storage in ${duration}ms`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to calculate leaderboard (${duration}ms): ${error.message}`,
+      );
+      throw error;
+    }
   }
 }
