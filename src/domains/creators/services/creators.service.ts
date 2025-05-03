@@ -305,16 +305,15 @@ export class CreatorsService implements ICreatorsService {
     }
 
     // Get leaderboard entries with pagination
-    // Using type assertion to handle potential Prisma client typing issues
-    const prismaAny = this.prisma as any;
-    const leaderboardEntries = await prismaAny.creatorLeaderboardData.findMany({
-      skip,
-      take,
-      orderBy,
-    });
+    const leaderboardEntries =
+      await this.prisma.creatorLeaderboardData.findMany({
+        skip,
+        take,
+        orderBy,
+      });
 
     // Get total count
-    const total = await prismaAny.creatorLeaderboardData.count();
+    const total = await this.prisma.creatorLeaderboardData.count();
 
     // Map to DTOs
     const leaderboardDtos = leaderboardEntries.map((entry) => ({
@@ -349,21 +348,44 @@ export class CreatorsService implements ICreatorsService {
         by: ['creatorWallet'],
       });
 
+      if (uniqueCreators.length === 0) {
+        this.logger.log('No creators found to calculate leaderboard for.');
+        return;
+      }
+
       this.logger.debug(`Processing ${uniqueCreators.length} unique creators`);
 
-      // 2. Process each creator
+      // 2. Fetch all agents with latest market data for all creators in a single query
+      const allAgentsWithData = await this.prisma.elizaAgent.findMany({
+        where: {
+          creatorWallet: {
+            in: uniqueCreators.map((creator) => creator.creatorWallet),
+          },
+        },
+        include: {
+          LatestMarketData: true,
+        },
+      });
+
+      // 3. Group agents by creatorWallet in memory
+      const agentsGroupedByCreator = allAgentsWithData.reduce(
+        (acc, agent) => {
+          if (!acc[agent.creatorWallet]) {
+            acc[agent.creatorWallet] = [];
+          }
+          acc[agent.creatorWallet].push(agent);
+          return acc;
+        },
+        {} as Record<
+          string,
+          (typeof allAgentsWithData)[0][] // Type: { creatorWallet: AgentWithMarketData[] }
+        >,
+      );
+
+      // 4. Process each creator using the in-memory data
       for (const creator of uniqueCreators) {
         const creatorWallet = creator.creatorWallet;
-
-        // For each creator, fetch all their agents with latest market data
-        const agentsWithData = await this.prisma.elizaAgent.findMany({
-          where: {
-            creatorWallet,
-          },
-          include: {
-            LatestMarketData: true,
-          },
-        });
+        const agentsWithData = agentsGroupedByCreator[creatorWallet] || [];
 
         // Initialize aggregators
         const totalAgents = agentsWithData.length;
@@ -374,7 +396,7 @@ export class CreatorsService implements ICreatorsService {
         let bestAgentId: string | null = null;
         let bestAgentPnlCycle = -Infinity;
 
-        // Process each agent
+        // Process each agent for this creator
         for (const agent of agentsWithData) {
           // Count running agents
           if (agent.status === AgentStatus.RUNNING) {
@@ -398,9 +420,8 @@ export class CreatorsService implements ICreatorsService {
           }
         }
 
-        // Update or create leaderboard entry using type assertion
-        const prismaAny = this.prisma as any;
-        await prismaAny.creatorLeaderboardData.upsert({
+        // 5. Update or create leaderboard entry
+        await this.prisma.creatorLeaderboardData.upsert({
           where: {
             creatorWallet,
           },
