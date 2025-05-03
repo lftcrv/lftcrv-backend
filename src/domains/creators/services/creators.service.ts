@@ -383,6 +383,7 @@ export class CreatorsService implements ICreatorsService {
       );
 
       // 4. Process each creator using the in-memory data
+      const leaderboardUpserts = []; // Initialize array to hold upsert operations
       for (const creator of uniqueCreators) {
         const creatorWallet = creator.creatorWallet;
         const agentsWithData = agentsGroupedByCreator[creatorWallet] || [];
@@ -420,8 +421,8 @@ export class CreatorsService implements ICreatorsService {
           }
         }
 
-        // 5. Update or create leaderboard entry
-        await this.prisma.creatorLeaderboardData.upsert({
+        // 5. Prepare upsert operation and add it to the batch array
+        const upsertOperation = this.prisma.creatorLeaderboardData.upsert({
           where: {
             creatorWallet,
           },
@@ -447,6 +448,17 @@ export class CreatorsService implements ICreatorsService {
               bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
           },
         });
+        leaderboardUpserts.push(upsertOperation);
+      }
+
+      // 6. Execute all upsert operations in a single transaction
+      if (leaderboardUpserts.length > 0) {
+        await this.prisma.$transaction(leaderboardUpserts);
+        this.logger.debug(
+          `Batched ${leaderboardUpserts.length} leaderboard upserts.`,
+        );
+      } else {
+        this.logger.debug('No leaderboard upserts to batch.');
       }
 
       const duration = Date.now() - startTime;
