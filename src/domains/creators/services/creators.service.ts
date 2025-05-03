@@ -317,6 +317,7 @@ export class CreatorsService implements ICreatorsService {
 
     // Map to DTOs
     const leaderboardDtos = leaderboardEntries.map((entry) => ({
+      // Map the creator's wallet address to creatorId. The wallet address serves as the unique identifier for the creator.
       creatorId: entry.creatorWallet,
       totalAgents: entry.totalAgents,
       runningAgents: entry.runningAgents,
@@ -395,6 +396,7 @@ export class CreatorsService implements ICreatorsService {
         let aggregatedPnlCycle = 0;
         let aggregatedPnl24h = 0;
         let bestAgentId: string | null = null;
+        // Initialize best PnL to the lowest possible value to ensure any valid PnL becomes the initial best
         let bestAgentPnlCycle = -Infinity;
 
         // Process each agent for this creator
