@@ -339,6 +339,25 @@ model User {
   @@map("users")
 }
 
+model CreatorLeaderboardData {
+  id                    String   @id @default(uuid())
+  creatorWallet         String   @unique
+  totalAgents           Int      @default(0)
+  runningAgents         Int      @default(0)
+  totalBalanceInUSD     Float    @default(0)
+  aggregatedPnlCycle    Float    @default(0)
+  aggregatedPnl24h      Float    @default(0)
+  bestAgentId           String?
+  bestAgentPnlCycle     Float?
+  updatedAt             DateTime @updatedAt
+  createdAt             DateTime @default(now())
+
+  @@index([aggregatedPnlCycle])
+  @@index([totalBalanceInUSD])
+  @@index([runningAgents])
+  @@map("creator_leaderboard_data")
+}
+
 model ReferralCode {
   id           String    @id @default(cuid())
   code         String    @unique

@@ -26,3 +26,4 @@ export class PageQueryDto {
   @Type(() => Number)
   limit: number = 10;
 }
+ 

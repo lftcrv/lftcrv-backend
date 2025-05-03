@@ -10,6 +10,8 @@ import { ElizaAgent, AgentStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PerformanceSnapshotService } from '../domains/kpi/services/performance-snapshot.service';
+import { ServiceTokens as CreatorsServiceTokens } from '../domains/creators/interfaces';
+import { ICreatorsService } from '../domains/creators/interfaces/creators-service.interface';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -31,6 +33,8 @@ export class TasksService {
     private readonly configService: ConfigService,
     private readonly performanceSnapshotService: PerformanceSnapshotService,
     private readonly schedulerRegistry: SchedulerRegistry,
+    @Inject(CreatorsServiceTokens.CreatorsService)
+    private readonly creatorsService: ICreatorsService,
   ) {
     const host = this.configService.get<string>('HOST_BACKEND');
     const port = this.configService.get<string>('BACKEND_PORT');
@@ -304,6 +308,26 @@ export class TasksService {
       const duration = Date.now() - startTime;
       this.logger.error(
         `Failed to update agent performance snapshots (${duration}ms): ${error.message}`,
+      );
+    }
+  }
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async updateCreatorLeaderboard() {
+    const startTime = Date.now();
+    this.logger.log('Starting creator leaderboard update');
+
+    try {
+      await this.creatorsService.calculateAndStoreLeaderboard();
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Successfully updated creator leaderboard (${duration}ms)`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to update creator leaderboard (${duration}ms): ${error.message}`,
       );
     }
   }

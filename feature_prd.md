@@ -223,3 +223,237 @@ async getCreatorPerformance(@Param('creatorId') creatorId: string): Promise<Crea
 -   Real-time calculations (relies on cron job updates).
 -   UI implementation for displaying this data.
 -   Database-level aggregation performance optimizations (unless proven necessary).
+
+---
+
+# Feature: Creator Leaderboard Endpoint (#91)
+
+**Related GitHub Issue:** [https://github.com/lftcrv/lftcrv-backend/issues/91](https://github.com/lftcrv/lftcrv-backend/issues/91)
+**Parent Feature:** Creator Management & Performance Tracking (#88)
+
+## 1. Goal
+
+Implement a RESTful API endpoint (`GET /api/creators/leaderboard`) that returns a paginated and ranked list of creators based on their aggregated agent performance. This provides a way to identify top-performing creators within the platform.
+
+## 2. Approach Decision: Pre-calculation for Performance
+
+Calculating leaderboard rankings across potentially thousands of creators and agents on-the-fly for every API request is highly inefficient and unlikely to scale. Therefore, the chosen approach is **periodic pre-calculation**:
+
+*   A **new database table** (`creator_leaderboard_data`) will store the aggregated KPIs and calculated rank for each creator.
+*   A **cron job** will run periodically (e.g., hourly) to:
+    *   Aggregate performance data for all creators from `LatestMarketData`.
+    *   Calculate the rank based on the primary KPI.
+    *   Update the `creator_leaderboard_data` table.
+*   The API endpoint will **query this pre-calculated table directly**, making reads fast and efficient.
+
+## 3. Defining Ranking KPIs
+
+*   **Primary Ranking KPI:** `aggregatedPnlCycle` (Sum of `pnlCycle` from `LatestMarketData` for all agents belonging to a creator). This aligns with the individual summary (#90) and provides a clear measure of overall profit generation.
+*   **Supporting KPIs (for context in the response):**
+    *   `aggregatedBalanceInUSD`
+    *   `aggregatedTvl`
+    *   `totalAgentCount`
+    *   `runningAgentCount`
+    *   `calculatedAt` (Timestamp of the cron job run)
+
+## 4. New Database Model (`prisma/schema.prisma`)
+
+```prisma
+model CreatorLeaderboardData {
+  id                     String    @id @default(uuid())
+  creatorId              String    @unique @map("creator_id") // Corresponds to ElizaAgent.creatorWallet
+  rank                   Int       // Calculated rank based on primary KPI
+  aggregatedPnlCycle     Float     @default(0) @map("aggregated_pnl_cycle")
+  aggregatedBalanceInUSD Float     @default(0) @map("aggregated_balance_in_usd")
+  aggregatedTvl          Float     @default(0) @map("aggregated_tvl")
+  totalAgentCount        Int       @default(0) @map("total_agent_count")
+  runningAgentCount      Int       @default(0) @map("running_agent_count")
+  calculatedAt           DateTime  @map("calculated_at") // Timestamp of the last calculation run
+
+  @@index([rank])
+  @@index([aggregatedPnlCycle])
+  @@index([calculatedAt])
+  @@map("creator_leaderboard_data")
+}
+```
+*(**Action:** This model needs to be added to `prisma/schema.prisma` and migrations generated/run).*
+
+## 5. DTO Definitions (`src/domains/creators/dtos/`)
+
+*(**Action:** Create these files and update `src/domains/creators/dtos/index.ts`)*
+
+**5.1. `CreatorLeaderboardEntryDto.dto.ts`**
+
+```typescript
+import { ApiProperty } from '@nestjs/swagger';
+
+export class CreatorLeaderboardEntryDto {
+  @ApiProperty({ description: 'Calculated rank of the creator based on the primary KPI', example: 1 })
+  rank: number;
+
+  @ApiProperty({ description: 'Creator ID (Wallet Address)', example: '0x123abc...' })
+  creatorId: string;
+
+  @ApiProperty({ description: 'Aggregated PnL (Cycle/Total) across all agents', example: 1250.75, type: Number })
+  aggregatedPnlCycle: number;
+
+  @ApiProperty({ description: 'Aggregated Balance in USD across all agents', example: 35000.00, type: Number })
+  aggregatedBalanceInUSD: number;
+
+  @ApiProperty({ description: 'Aggregated Total Value Locked (TVL) across all agents', example: 50000.00, type: Number })
+  aggregatedTvl: number;
+
+  @ApiProperty({ description: 'Total number of agents managed by the creator', example: 10 })
+  totalAgentCount: number;
+
+  @ApiProperty({ description: 'Number of currently RUNNING agents', example: 8 })
+  runningAgentCount: number;
+
+  @ApiProperty({ description: 'Timestamp when this leaderboard data was calculated' })
+  calculatedAt: Date;
+
+  // Future consideration: Add creator profile info (name, picture) if/when available
+}
+```
+
+**5.2. `LeaderboardQueryDto.dto.ts`**
+
+```typescript
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsEnum, IsIn } from 'class-validator';
+import { PageQueryDto } from './page-query.dto'; // Reuse base pagination
+
+// Define enums in the DTO file or import if defined centrally
+export enum LeaderboardSortBy {
+  RANK = 'rank',
+  PNL_CYCLE = 'aggregatedPnlCycle',
+  TVL = 'aggregatedTvl',
+  BALANCE = 'aggregatedBalanceInUSD',
+  AGENT_COUNT = 'totalAgentCount',
+}
+
+export enum SortOrder {
+ ASC = 'asc',
+ DESC = 'desc',
+}
+
+
+export class LeaderboardQueryDto extends PageQueryDto {
+  @ApiPropertyOptional({
+    description: 'Field to sort the leaderboard by',
+    enum: LeaderboardSortBy,
+    default: LeaderboardSortBy.RANK,
+  })
+  @IsOptional()
+  @IsEnum(LeaderboardSortBy)
+  sortBy?: LeaderboardSortBy = LeaderboardSortBy.RANK;
+
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: SortOrder,
+    default: SortOrder.ASC, // Default to ASC for Rank (1, 2, 3...)
+  })
+  @IsOptional()
+  @IsIn([SortOrder.ASC, SortOrder.DESC])
+  sortOrder?: SortOrder = SortOrder.ASC;
+}
+```
+
+## 6. Service Logic
+
+*(**Action:** Implement the following logic)*
+
+*   **Modify `CronTasksService` (`src/cron/tasks.service.ts`):**
+    *   Inject `CreatorsService` (or preferably create a new `LeaderboardService`).
+    *   Add a new `@Cron()` schedule (e.g., `'0 * * * *'` for hourly).
+    *   Create a method `updateCreatorLeaderboard()` decorated with `@Cron(...)`.
+    *   This method should call the main leaderboard calculation logic (e.g., `this.leaderboardService.calculateAndStoreLeaderboard()`).
+
+*   **Create `LeaderboardService` (`src/domains/leaderboard/services/leaderboard.service.ts`) (Recommended):**
+    *   *(Alternatively, add to `CreatorsService`)*
+    *   **`calculateAndStoreLeaderboard()` (Called by Cron):**
+        1.  **Aggregate Data:** Use Prisma `groupBy` on `ElizaAgent` to get `creatorWallet` and agent counts (`totalAgentCount`, `runningAgentCount`). Separately, use `groupBy` on `LatestMarketData` (linked via `ElizaAgent`) to aggregate performance KPIs (`pnlCycle`, `balanceInUSD`, `tvl`) per `creatorWallet`. Join these results in memory.
+            *   *Consideration:* This might require careful query construction or multiple steps to efficiently get all needed data grouped by creator. Raw SQL might be more efficient if Prisma's ORM proves limiting for this complex aggregation.
+        2.  **Rank Calculation:** Sort the combined aggregated results (descending by `aggregatedPnlCycle`). Assign ranks (1, 2, 3...). Handle ties based on database default ordering for now.
+        3.  **Data Upsert:** Loop through the ranked creator data. Use `prisma.creatorLeaderboardData.upsert()` for each creator within a `$transaction` to atomically insert/update their entry in the `creator_leaderboard_data` table with the calculated KPIs, rank, and the current timestamp (`calculatedAt`).
+    *   **`getLeaderboard(query: LeaderboardQueryDto)` (Called by API):**
+        1.  **Parse Query:** Extract `page`, `limit`, `sortBy`, `sortOrder`.
+        2.  **Database Query:** Execute `prisma.creatorLeaderboardData.findMany()` with `skip`, `take`, and `orderBy: { [sortBy]: sortOrder }`.
+        3.  **Get Total Count:** Execute `prisma.creatorLeaderboardData.count()` for pagination metadata.
+        4.  **Map to DTO:** Map the database results to `CreatorLeaderboardEntryDto`.
+        5.  **Return `PaginatedResponseDto`:** Construct and return the standard paginated response.
+
+*   **Create `ILeaderboardService` Interface (`src/domains/leaderboard/interfaces/leaderboard-service.interface.ts`):** Define method signatures (`calculateAndStoreLeaderboard`, `getLeaderboard`).
+*   **Update `CreatorsService` Interface (if logic added there):** Add `getLeaderboard` method signature.
+
+## 7. Controller Logic (`CreatorsController`)
+
+*(**Action:** Implement the following endpoint)*
+
+*   Add a new GET endpoint method:
+    ```typescript
+    @Get('leaderboard')
+    @RequireApiKey() // Or potentially make public depending on requirements
+    @ApiOperation({ summary: 'Get the ranked list of creators based on performance' })
+    @ApiQuery({ type: LeaderboardQueryDto })
+    @ApiResponse({
+      status: 200,
+      description: 'Paginated list of creators ranked by performance',
+      type: PaginatedResponseDto<CreatorLeaderboardEntryDto>, // Specify generic type for Swagger
+    })
+    @ApiUnauthorizedResponse({ description: 'API key is missing or invalid' }) // If @RequireApiKey is used
+    async getLeaderboard(
+      @Query(ValidationPipe) query: LeaderboardQueryDto,
+    ): Promise<PaginatedResponseDto<CreatorLeaderboardEntryDto>> {
+      // Inject and call LeaderboardService or CreatorsService
+      return this.leaderboardService.getLeaderboard(query);
+    }
+    ```
+*   Need to adjust imports and potentially the `PaginatedResponseDto` swagger type definition if it wasn't set up generically.
+
+## 8. Challenging Questions & Considerations
+
+*   **Choice of Primary KPI (`aggregatedPnlCycle`):**
+    *   *Challenge:* Does summing PnL favor creators who run many mediocre agents over those with a few highly profitable ones? Could average PnL per agent or a risk-adjusted metric be fairer?
+    *   *Decision:* Start with `aggregatedPnlCycle` for simplicity and alignment with issue #90. Acknowledge this limitation. Future iterations could introduce alternative ranking methods or allow sorting by different calculated metrics.
+*   **Performance of Pre-calculation:**
+    *   *Challenge:* How long will the aggregation query take as the number of agents/creators grows? Could it impact database performance?
+    *   *Mitigation:* Ensure efficient database query (use `EXPLAIN ANALYZE`), proper indexing on relevant columns (`creatorWallet`, `status` in `ElizaAgent`; FK in `LatestMarketData`). Monitor cron job execution time. If it becomes too slow (> minutes), investigate more advanced techniques (materialized views, dedicated data warehousing/ETL).
+*   **Data Freshness vs. Cost:**
+    *   *Challenge:* Is hourly fresh enough for a leaderboard? What's the business need?
+    *   *Decision:* Hourly is a reasonable starting point balancing freshness and DB load. Adjustable based on feedback.
+*   **Tie-breaking:**
+    *   *Challenge:* How are creators with the exact same `aggregatedPnlCycle` ranked?
+    *   *Decision:* Relies on database default sort order for ties when sorting by the primary KPI (`rank`, which is based on `aggregatedPnlCycle`). If specific tie-breaking is needed (e.g., secondary sort by TVL), the ranking logic in the cron job and potentially the `getLeaderboard` query `orderBy` needs modification.
+*   **New Creators/Agents:**
+    *   *Challenge:* A new creator/agent won't appear on the leaderboard until the next cron job run calculates their stats.
+    *   *Decision:* Acceptable trade-off for performance.
+*   **"Originality" KPI:**
+    *   *Challenge:* How would it be measured? (Similarity of agent configurations? Unique trading pairs? Deviation from common strategies?)
+    *   *Decision:* Out of scope. Requires significant definition and likely complex analysis, unsuitable for simple aggregation.
+
+## 9. Consistency Check
+
+*   Uses existing decorators (`@RequireApiKey`, `@ApiOperation`, etc.).
+*   Reuses `PaginatedResponseDto`.
+*   Leverages `LatestMarketData` as the performance source, consistent with #90.
+*   Proposes a new, focused table (`creator_leaderboard_data`) and potentially a new service (`LeaderboardService`) for separation of concerns.
+*   Uses standard NestJS cron scheduling (`@Cron`).
+
+## 10. Testing Requirements
+
+*   **Cron Job:**
+    *   Verify the cron job runs at the expected interval.
+    *   Verify `creator_leaderboard_data` table is populated/updated correctly after the job runs.
+    *   Test calculation accuracy with sample agent/market data.
+    *   Test edge cases (no agents, agents with no market data, new creators appearing after a run).
+*   **API Endpoint (`GET /api/creators/leaderboard`):**
+    *   Manually test with `curl` (or similar) after cron job has run.
+    *   Verify pagination (`page`, `limit`).
+    *   Verify sorting (`sortBy`, `sortOrder`) against the data in `creator_leaderboard_data`.
+    *   Verify response structure matches `PaginatedResponseDto<CreatorLeaderboardEntryDto>`.
+    *   Verify 401 if API key is required and missing.
+*   **Automated Testing (Future):**
+    *   Unit tests for the aggregation and ranking logic within the service (mocking Prisma).
+    *   Integration tests for the cron job execution and database updates.
+    *   Integration tests for the controller endpoint (mocking service or using a test database).

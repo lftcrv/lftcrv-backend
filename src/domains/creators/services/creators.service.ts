@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { ICreatorsService } from '../interfaces';
 import {
@@ -8,11 +8,16 @@ import {
   AgentSummaryDto,
   CreatorPerformanceAgentDetailDto,
   CreatorPerformanceSummaryDto,
+  LeaderboardQueryDto,
+  LeaderboardSortField,
+  CreatorLeaderboardEntryDto,
 } from '../dtos';
 import { AgentStatus, LatestMarketData } from '@prisma/client';
 
 @Injectable()
 export class CreatorsService implements ICreatorsService {
+  private readonly logger = new Logger(CreatorsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findAllCreators(
@@ -271,5 +276,203 @@ export class CreatorsService implements ICreatorsService {
       totalTradeCount:
         currentAggregates.totalTradeCount + (marketData.tradeCount ?? 0),
     };
+  }
+
+  async getCreatorLeaderboard(
+    query: LeaderboardQueryDto,
+  ): Promise<PaginatedResponseDto<CreatorLeaderboardEntryDto>> {
+    const { page, limit, sortBy } = query;
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    // Determine sort order and field based on the query parameter
+    const orderBy: Record<string, 'asc' | 'desc'> = {};
+    switch (sortBy) {
+      case LeaderboardSortField.BALANCE:
+        orderBy.totalBalanceInUSD = 'desc';
+        break;
+      case LeaderboardSortField.PNL_CYCLE:
+        orderBy.aggregatedPnlCycle = 'desc';
+        break;
+      case LeaderboardSortField.PNL_24H:
+        orderBy.aggregatedPnl24h = 'desc';
+        break;
+      case LeaderboardSortField.RUNNING_AGENTS:
+        orderBy.runningAgents = 'desc';
+        break;
+      default:
+        orderBy.aggregatedPnlCycle = 'desc'; // Default sort
+    }
+
+    // Get leaderboard entries with pagination
+    const leaderboardEntries =
+      await this.prisma.creatorLeaderboardData.findMany({
+        skip,
+        take,
+        orderBy,
+      });
+
+    // Get total count
+    const total = await this.prisma.creatorLeaderboardData.count();
+
+    // Map to DTOs
+    const leaderboardDtos = leaderboardEntries.map((entry) => ({
+      // Map the creator's wallet address to creatorId. The wallet address serves as the unique identifier for the creator.
+      creatorId: entry.creatorWallet,
+      totalAgents: entry.totalAgents,
+      runningAgents: entry.runningAgents,
+      totalBalanceInUSD: entry.totalBalanceInUSD,
+      aggregatedPnlCycle: entry.aggregatedPnlCycle,
+      aggregatedPnl24h: entry.aggregatedPnl24h,
+      bestAgentId: entry.bestAgentId || undefined,
+      bestAgentPnlCycle: entry.bestAgentPnlCycle || undefined,
+      updatedAt: entry.updatedAt,
+    }));
+
+    // Create paginated response
+    const response = new PaginatedResponseDto<CreatorLeaderboardEntryDto>();
+    response.data = leaderboardDtos;
+    response.total = total;
+    response.page = page;
+    response.limit = limit;
+
+    return response;
+  }
+
+  async calculateAndStoreLeaderboard(): Promise<void> {
+    this.logger.log('Starting leaderboard calculation for all creators');
+    const startTime = Date.now();
+
+    try {
+      // 1. Get all unique creator wallets
+      const uniqueCreators = await this.prisma.elizaAgent.groupBy({
+        by: ['creatorWallet'],
+      });
+
+      if (uniqueCreators.length === 0) {
+        this.logger.log('No creators found to calculate leaderboard for.');
+        return;
+      }
+
+      this.logger.debug(`Processing ${uniqueCreators.length} unique creators`);
+
+      // 2. Fetch all agents with latest market data for all creators in a single query
+      const allAgentsWithData = await this.prisma.elizaAgent.findMany({
+        where: {
+          creatorWallet: {
+            in: uniqueCreators.map((creator) => creator.creatorWallet),
+          },
+        },
+        include: {
+          LatestMarketData: true,
+        },
+      });
+
+      // 3. Group agents by creatorWallet in memory
+      const agentsGroupedByCreator = allAgentsWithData.reduce(
+        (acc, agent) => {
+          if (!acc[agent.creatorWallet]) {
+            acc[agent.creatorWallet] = [];
+          }
+          acc[agent.creatorWallet].push(agent);
+          return acc;
+        },
+        {} as Record<
+          string,
+          (typeof allAgentsWithData)[0][] // Type: { creatorWallet: AgentWithMarketData[] }
+        >,
+      );
+
+      // 4. Process each creator using the in-memory data
+      const leaderboardUpserts = []; // Initialize array to hold upsert operations
+      for (const creator of uniqueCreators) {
+        const creatorWallet = creator.creatorWallet;
+        const agentsWithData = agentsGroupedByCreator[creatorWallet] || [];
+
+        // Initialize aggregators
+        const totalAgents = agentsWithData.length;
+        let runningAgents = 0;
+        let totalBalanceInUSD = 0;
+        let aggregatedPnlCycle = 0;
+        let aggregatedPnl24h = 0;
+        let bestAgentId: string | null = null;
+        // Initialize best PnL to the lowest possible value to ensure any valid PnL becomes the initial best
+        let bestAgentPnlCycle = -Infinity;
+
+        // Process each agent for this creator
+        for (const agent of agentsWithData) {
+          // Count running agents
+          if (agent.status === AgentStatus.RUNNING) {
+            runningAgents++;
+          }
+
+          // Process market data if available
+          if (agent.LatestMarketData) {
+            const marketData = agent.LatestMarketData;
+
+            // Aggregate values
+            totalBalanceInUSD += marketData.balanceInUSD || 0;
+            aggregatedPnlCycle += marketData.pnlCycle || 0;
+            aggregatedPnl24h += marketData.pnl24h || 0;
+
+            // Update best agent if this one has better PnL cycle
+            if ((marketData.pnlCycle ?? -Infinity) > bestAgentPnlCycle) {
+              bestAgentPnlCycle = marketData.pnlCycle ?? -Infinity;
+              bestAgentId = agent.id;
+            }
+          }
+        }
+
+        // 5. Prepare upsert operation and add it to the batch array
+        const upsertOperation = this.prisma.creatorLeaderboardData.upsert({
+          where: {
+            creatorWallet,
+          },
+          update: {
+            totalAgents,
+            runningAgents,
+            totalBalanceInUSD,
+            aggregatedPnlCycle,
+            aggregatedPnl24h,
+            bestAgentId,
+            bestAgentPnlCycle:
+              bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
+          },
+          create: {
+            creatorWallet,
+            totalAgents,
+            runningAgents,
+            totalBalanceInUSD,
+            aggregatedPnlCycle,
+            aggregatedPnl24h,
+            bestAgentId,
+            bestAgentPnlCycle:
+              bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
+          },
+        });
+        leaderboardUpserts.push(upsertOperation);
+      }
+
+      // 6. Execute all upsert operations in a single transaction
+      if (leaderboardUpserts.length > 0) {
+        await this.prisma.$transaction(leaderboardUpserts);
+        this.logger.debug(
+          `Batched ${leaderboardUpserts.length} leaderboard upserts.`,
+        );
+      } else {
+        this.logger.debug('No leaderboard upserts to batch.');
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Completed leaderboard calculation and storage in ${duration}ms`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to calculate leaderboard (${duration}ms): ${error.message}`,
+      );
+      throw error;
+    }
   }
 }
