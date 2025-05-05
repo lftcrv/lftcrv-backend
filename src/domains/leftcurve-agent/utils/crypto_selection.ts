@@ -76,88 +76,118 @@ export class CryptoSelectionService {
     riskProfile?: number
   ): Promise<string[]> {
     try {
-      // Récupérer la liste complète des cryptos
       const fullCryptoList = await this.getCryptoCurrencyList();
       
-      // Log pour vérifier les valeurs
       this.logger.log(`Agent parameters - curveSide: ${curveSide}, riskProfile: ${riskProfile}`);
       
-      // Trier la liste par score Left vs. Right
-      const sortedList = [...fullCryptoList].sort((a, b) => 
-        Number(a['Left vs. Right (1-100)']) - Number(b['Left vs. Right (1-100)'])
-      );
+      // Fenêtres de sélection plus strictes
+      let filteredCryptoList: any[] = [];
       
-      // Déterminer le quartile approprié pour l'agent
-      let quartileList: any[] = [];
-      
-      // Cas par défaut: profil de risque non spécifié ou équilibré
-      if (!riskProfile || (riskProfile >= 40 && riskProfile <= 60)) {
-        // Pour les agents équilibrés, prendre des cryptos de l'ensemble du spectre
-        quartileList = sortedList;
-        this.logger.log(`Using full range for balanced agent`);
+      if (riskProfile && riskProfile > 85) {
+        // Agents extrêmement degen: scores <= 30
+        filteredCryptoList = fullCryptoList.filter(crypto => 
+          Number(crypto['Left vs. Right (1-100)']) <= 30
+        );
+        this.logger.log(`Ultra-LEFT: Filtered cryptos with scores <= 30 for high risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
+      } 
+      else if (riskProfile && riskProfile > 70) {
+        // Agents très degen: scores <= 40
+        filteredCryptoList = fullCryptoList.filter(crypto => 
+          Number(crypto['Left vs. Right (1-100)']) <= 40
+        );
+        this.logger.log(`Very LEFT: Filtered cryptos with scores <= 40 for high risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
+      } 
+      else if (riskProfile && riskProfile > 60) {
+        // Agents modérément degen: scores 35-55
+        filteredCryptoList = fullCryptoList.filter(crypto => {
+          const score = Number(crypto['Left vs. Right (1-100)']);
+          return score > 35 && score <= 55;
+        });
+        this.logger.log(`Moderate LEFT: Filtered cryptos with scores 35-55 for moderate-high risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
       }
-      // Profil très degen/left curve
-      else if (riskProfile > 75) {
-        // Premier quartile: les cryptos les plus "left"
-        const quartileSize = Math.ceil(sortedList.length / 4);
-        quartileList = sortedList.slice(0, quartileSize);
-        this.logger.log(`Using 1st quartile (most LEFT) for high risk agent (${riskProfile}): ${quartileList.length} options`);
+      else if (riskProfile && riskProfile > 40) {
+        // Agents légèrement degen: scores 45-65
+        filteredCryptoList = fullCryptoList.filter(crypto => {
+          const score = Number(crypto['Left vs. Right (1-100)']);
+          return score > 45 && score <= 65;
+        });
+        this.logger.log(`Slight LEFT: Filtered cryptos with scores 45-65 for moderate risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
       }
-      // Profil modérément degen/left curve
-      else if (riskProfile > 60) {
-        // Deuxième quartile
-        const quartileSize = Math.ceil(sortedList.length / 4);
-        quartileList = sortedList.slice(quartileSize, quartileSize * 2);
-        this.logger.log(`Using 2nd quartile for moderate-high risk agent (${riskProfile}): ${quartileList.length} options`);
+      else if (riskProfile && riskProfile > 30) {
+        // Agents légèrement serious: scores 55-75
+        filteredCryptoList = fullCryptoList.filter(crypto => {
+          const score = Number(crypto['Left vs. Right (1-100)']);
+          return score > 55 && score <= 75;
+        });
+        this.logger.log(`Slight RIGHT: Filtered cryptos with scores 55-75 for moderate-low risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
       }
-      // Profil modérément serious/right curve
-      else if (riskProfile >= 25) {
-        // Troisième quartile
-        const quartileSize = Math.ceil(sortedList.length / 4);
-        quartileList = sortedList.slice(quartileSize * 2, quartileSize * 3);
-        this.logger.log(`Using 3rd quartile for moderate-low risk agent (${riskProfile}): ${quartileList.length} options`);
+      else if (riskProfile && riskProfile > 15) {
+        // Agents très serious: scores 65-85
+        filteredCryptoList = fullCryptoList.filter(crypto => {
+          const score = Number(crypto['Left vs. Right (1-100)']);
+          return score > 65 && score <= 85;
+        });
+        this.logger.log(`Very RIGHT: Filtered cryptos with scores 65-85 for low risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
       }
-      // Profil très serious/right curve
+      else if (riskProfile) {
+        // Agents extrêmement serious: scores > 75
+        filteredCryptoList = fullCryptoList.filter(crypto => 
+          Number(crypto['Left vs. Right (1-100)']) > 75
+        );
+        this.logger.log(`Ultra-RIGHT: Filtered cryptos with scores > 75 for ultra-low risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
+      }
       else {
-        // Quatrième quartile: les cryptos les plus "right"
-        const quartileSize = Math.ceil(sortedList.length / 4);
-        quartileList = sortedList.slice(quartileSize * 3);
-        this.logger.log(`Using 4th quartile (most RIGHT) for low risk agent (${riskProfile}): ${quartileList.length} options`);
+        // Agents sans profil de risque: gamme complète
+        filteredCryptoList = fullCryptoList;
+        this.logger.log(`No risk profile: Using complete range`);
       }
       
-      // Vérifier que la liste du quartile contient au moins 5 cryptos
-      if (quartileList.length < 5) {
-        this.logger.warn(`Not enough cryptocurrencies in selected quartile (${quartileList.length}). Using extended range.`);
-        // Étendre à un demi-quartile supplémentaire si nécessaire
-        const halfQuartileSize = Math.ceil(sortedList.length / 8);
+      // Si moins de 5 cryptos disponibles, prendre les plus proches
+      if (filteredCryptoList.length < 5) {
+        this.logger.warn(`Not enough cryptocurrencies (${filteredCryptoList.length}). Using closest matches.`);
         
-        if (riskProfile > 75) {
-          quartileList = sortedList.slice(0, Math.ceil(sortedList.length / 4) + halfQuartileSize);
-        } else if (riskProfile > 60) {
-          quartileList = sortedList.slice(Math.ceil(sortedList.length / 4) - halfQuartileSize, Math.ceil(sortedList.length / 4) * 2 + halfQuartileSize);
-        } else if (riskProfile >= 25) {
-          quartileList = sortedList.slice(Math.ceil(sortedList.length / 4) * 2 - halfQuartileSize, Math.ceil(sortedList.length / 4) * 3 + halfQuartileSize);
-        } else {
-          quartileList = sortedList.slice(Math.ceil(sortedList.length / 4) * 3 - halfQuartileSize);
-        }
+        const sortedList = [...fullCryptoList].sort((a, b) => {
+          const scoreA = Number(a['Left vs. Right (1-100)']);
+          const scoreB = Number(b['Left vs. Right (1-100)']);
+          
+          // Pour agents degen, prioriser les scores bas
+          if (riskProfile && riskProfile > 50) {
+            return scoreA - scoreB;
+          } 
+          // Pour agents sérieux, prioriser les scores élevés
+          else if (riskProfile && riskProfile <= 50) {
+            return scoreB - scoreA;
+          }
+          // Sans profil de risque, trier par score (croissant par défaut)
+          return scoreA - scoreB;
+        });
+        
+        // Prendre 10 cryptos qui correspondent le mieux
+        filteredCryptoList = sortedList.slice(0, 10);
+        
+        // Afficher les cryptos sélectionnées avec leurs scores
+        const cryptoScores = filteredCryptoList.map(c => 
+          `${c.Cryptocurrency}:${c['Left vs. Right (1-100)']}`
+        ).join(', ');
+        this.logger.log(`Using sorted cryptos: ${cryptoScores}`);
       }
       
-      // Sélectionner 5 cryptos aléatoirement dans le quartile
+      // Sélection aléatoire des 5 cryptos
       const selectedCryptos: string[] = [];
       const selectedIndices = new Set<number>();
       
       while (selectedCryptos.length < 5) {
-        const randomIndex = Math.floor(Math.random() * quartileList.length);
+        const randomIndex = Math.floor(Math.random() * filteredCryptoList.length);
         
-        // Éviter les doublons
         if (!selectedIndices.has(randomIndex)) {
           selectedIndices.add(randomIndex);
-          selectedCryptos.push(quartileList[randomIndex].Cryptocurrency);
+          const selectedCrypto = filteredCryptoList[randomIndex];
+          selectedCryptos.push(selectedCrypto.Cryptocurrency);
+          this.logger.log(`Selected: ${selectedCrypto.Cryptocurrency} with score: ${selectedCrypto['Left vs. Right (1-100)']}`);
         }
       }
       
-      // Log des cryptos sélectionnées
-      this.logger.log(`Randomly selected cryptocurrencies: ${selectedCryptos.join(', ')}`);
+      this.logger.log(`Final selection: ${selectedCryptos.join(', ')}`);
       
       return selectedCryptos;
     } catch (error) {
