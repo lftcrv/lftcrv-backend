@@ -20,14 +20,21 @@ export class CryptoSelectionService {
 
   /**
    * Load cryptocurrency data from the tradable_crypto.json file
+   * and add risk_tolerance field
    */
   private async getCryptoCurrencyList(): Promise<any[]> {
     try {
       const filePath = path.resolve('config/crypto/tradable_crypto.json');
       const fileData = fs.readFileSync(filePath, 'utf8');
       const cryptoList = JSON.parse(fileData);
+      
+      // Ajouter le champ risk_tolerance à chaque crypto
+      cryptoList.forEach(crypto => {
+        crypto.risk_tolerance = 100 - Number(crypto['Left vs. Right (1-100)']);
+      });
+      
       this.logger.log(
-        `Loaded ${cryptoList.length} cryptocurrencies from tradable_crypto.json`,
+        `Loaded ${cryptoList.length} cryptocurrencies from tradable_crypto.json with risk_tolerance field`,
       );
 
       return cryptoList;
@@ -47,6 +54,7 @@ export class CryptoSelectionService {
           Launched: '2009',
           'Market Cap': '$870 billion',
           'Left vs. Right (1-100)': 60,
+          risk_tolerance: 40, // 100 - 60
         },
         {
           Cryptocurrency: 'ETH',
@@ -58,9 +66,48 @@ export class CryptoSelectionService {
           Launched: '2015',
           'Market Cap': '$310 billion',
           'Left vs. Right (1-100)': 65,
+          risk_tolerance: 35, // 100 - 65
         },
       ];
     }
+  }
+
+  /**
+   * Builds the prompt for Claude API
+   */
+  private buildClaudePrompt(
+    biography: string, 
+    cryptoList: any[], 
+    curveSide?: string, 
+    riskProfile?: number
+  ): string {
+    return `
+I need you to select 5 cryptocurrencies that match this agent's risk profile and preferences.
+
+AGENT BIOGRAPHY:
+"""
+${biography}
+"""
+
+AGENT DETAILS:
+${curveSide ? `Curve Side: ${curveSide}` : ''}
+${riskProfile ? `Risk Tolerance: ${riskProfile}/100` : ''}
+
+CRYPTOCURRENCY OPTIONS:
+${JSON.stringify(cryptoList, null, 2)}
+
+SELECTION CRITERIA:
+1. PRIMARY: Select a set of cryptocurrencies based on two criteria:
+Risk Alignment: The overall selection should reflect the agent’s Risk Tolerance (${riskProfile}/100), aiming for an average risk_tolerance score close to that value.
+Agent Preferences: Respect any specific constraints or preferences stated in the agent’s description (e.g., mandatory inclusion of certain assets).
+When the description imposes low- or high-risk assets, adjust the remaining selections accordingly to balance the average risk profile.
+2. SECONDARY: If the agent's biography mentions specific cryptocurrencies, blockchain technologies, or investment themes, prioritize those.
+3. RANDOMNES : Keep all cryptos selected in 'secondary' — they must be included. For the remaining slots to reach a total of 5, randomly pick from the cryptos selected in 'primary' and for two identical agent's profile, pick the most diversed cryptos.
+
+You MUST select EXACTLY 5 cryptocurrencies from the provided list, no more, no less.
+
+IMPORTANT: Your response must ONLY contain the cryptocurrency tickers separated by commas, with no explanations or additional text. For example: "DOGE,SHIB,PEPE,WIF,BOME"
+`;
   }
 
   /**
@@ -80,116 +127,43 @@ export class CryptoSelectionService {
       
       this.logger.log(`Agent parameters - curveSide: ${curveSide}, riskProfile: ${riskProfile}`);
       
-      // Fenêtres de sélection plus strictes
-      let filteredCryptoList: any[] = [];
+      // Construire le prompt avec la liste complète
+      const prompt = this.buildClaudePrompt(biography, fullCryptoList, curveSide, riskProfile);
       
-      if (riskProfile && riskProfile > 85) {
-        // Agents extrêmement degen: scores <= 30
-        filteredCryptoList = fullCryptoList.filter(crypto => 
-          Number(crypto['Left vs. Right (1-100)']) <= 30
-        );
-        this.logger.log(`Ultra-LEFT: Filtered cryptos with scores <= 30 for high risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      } 
-      else if (riskProfile && riskProfile > 70) {
-        // Agents très degen: scores <= 40
-        filteredCryptoList = fullCryptoList.filter(crypto => 
-          Number(crypto['Left vs. Right (1-100)']) <= 40
-        );
-        this.logger.log(`Very LEFT: Filtered cryptos with scores <= 40 for high risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      } 
-      else if (riskProfile && riskProfile > 60) {
-        // Agents modérément degen: scores 35-55
-        filteredCryptoList = fullCryptoList.filter(crypto => {
-          const score = Number(crypto['Left vs. Right (1-100)']);
-          return score > 35 && score <= 55;
-        });
-        this.logger.log(`Moderate LEFT: Filtered cryptos with scores 35-55 for moderate-high risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      }
-      else if (riskProfile && riskProfile > 40) {
-        // Agents légèrement degen: scores 45-65
-        filteredCryptoList = fullCryptoList.filter(crypto => {
-          const score = Number(crypto['Left vs. Right (1-100)']);
-          return score > 45 && score <= 65;
-        });
-        this.logger.log(`Slight LEFT: Filtered cryptos with scores 45-65 for moderate risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      }
-      else if (riskProfile && riskProfile > 30) {
-        // Agents légèrement serious: scores 55-75
-        filteredCryptoList = fullCryptoList.filter(crypto => {
-          const score = Number(crypto['Left vs. Right (1-100)']);
-          return score > 55 && score <= 75;
-        });
-        this.logger.log(`Slight RIGHT: Filtered cryptos with scores 55-75 for moderate-low risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      }
-      else if (riskProfile && riskProfile > 15) {
-        // Agents très serious: scores 65-85
-        filteredCryptoList = fullCryptoList.filter(crypto => {
-          const score = Number(crypto['Left vs. Right (1-100)']);
-          return score > 65 && score <= 85;
-        });
-        this.logger.log(`Very RIGHT: Filtered cryptos with scores 65-85 for low risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      }
-      else if (riskProfile) {
-        // Agents extrêmement serious: scores > 75
-        filteredCryptoList = fullCryptoList.filter(crypto => 
-          Number(crypto['Left vs. Right (1-100)']) > 75
-        );
-        this.logger.log(`Ultra-RIGHT: Filtered cryptos with scores > 75 for ultra-low risk agent (${riskProfile}): ${filteredCryptoList.length} options`);
-      }
-      else {
-        // Agents sans profil de risque: gamme complète
-        filteredCryptoList = fullCryptoList;
-        this.logger.log(`No risk profile: Using complete range`);
-      }
-      
-      // Si moins de 5 cryptos disponibles, prendre les plus proches
-      if (filteredCryptoList.length < 5) {
-        this.logger.warn(`Not enough cryptocurrencies (${filteredCryptoList.length}). Using closest matches.`);
-        
-        const sortedList = [...fullCryptoList].sort((a, b) => {
-          const scoreA = Number(a['Left vs. Right (1-100)']);
-          const scoreB = Number(b['Left vs. Right (1-100)']);
-          
-          // Pour agents degen, prioriser les scores bas
-          if (riskProfile && riskProfile > 50) {
-            return scoreA - scoreB;
-          } 
-          // Pour agents sérieux, prioriser les scores élevés
-          else if (riskProfile && riskProfile <= 50) {
-            return scoreB - scoreA;
-          }
-          // Sans profil de risque, trier par score (croissant par défaut)
-          return scoreA - scoreB;
-        });
-        
-        // Prendre 10 cryptos qui correspondent le mieux
-        filteredCryptoList = sortedList.slice(0, 10);
-        
-        // Afficher les cryptos sélectionnées avec leurs scores
-        const cryptoScores = filteredCryptoList.map(c => 
-          `${c.Cryptocurrency}:${c['Left vs. Right (1-100)']}`
-        ).join(', ');
-        this.logger.log(`Using sorted cryptos: ${cryptoScores}`);
-      }
-      
-      // Sélection aléatoire des 5 cryptos
-      const selectedCryptos: string[] = [];
-      const selectedIndices = new Set<number>();
-      
-      while (selectedCryptos.length < 5) {
-        const randomIndex = Math.floor(Math.random() * filteredCryptoList.length);
-        
-        if (!selectedIndices.has(randomIndex)) {
-          selectedIndices.add(randomIndex);
-          const selectedCrypto = filteredCryptoList[randomIndex];
-          selectedCryptos.push(selectedCrypto.Cryptocurrency);
-          this.logger.log(`Selected: ${selectedCrypto.Cryptocurrency} with score: ${selectedCrypto['Left vs. Right (1-100)']}`);
+      const response = await axios.post(
+        this.claudeApiUrl,
+        {
+          model: 'claude-3-sonnet-20240229',
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': this.claudeApiKey,
+            'anthropic-version': '2023-06-01',
+          },
         }
-      }
+      );
+
+      // Parse la réponse
+      const claudeResponse = response.data.content[0].text;
+      this.logger.log(`Claude API response: ${claudeResponse}`);
+
+      // Extrait les cryptos de la réponse
+      const cryptos = claudeResponse
+        .trim()
+        .split(',')
+        .map((c) => c.trim());
       
-      this.logger.log(`Final selection: ${selectedCryptos.join(', ')}`);
+      this.logger.log(`Selected cryptocurrencies: ${cryptos.join(', ')}`);
       
-      return selectedCryptos;
+      return cryptos;
     } catch (error) {
       this.logger.error(`Error selecting cryptocurrencies: ${error.message}`);
       
@@ -202,51 +176,6 @@ export class CryptoSelectionService {
         return ['BTC', 'ETH', 'SOL', 'DOT', 'DOGE'];
       }
     }
-  }
-
-  /**
-   * Builds the prompt for Claude API
-   */
-  private buildClaudePrompt(
-    biography: string, 
-    cryptoList: any[], 
-    curveSide?: string, 
-    riskProfile?: number
-  ): string {
-    // Déterminer le profil de l'agent
-    let agentProfile = '';
-    if (riskProfile && riskProfile > 70) {
-      agentProfile = 'HIGH RISK (degen trader)';
-    } else if (riskProfile && riskProfile < 30) {
-      agentProfile = 'LOW RISK (serious investor)';
-    } else {
-      agentProfile = 'MODERATE RISK (balanced)';
-    }
-
-    return `
-Select 5 cryptocurrencies that best match this agent's trading style and risk profile.
-
-AGENT BIOGRAPHY:
-"""
-${biography}
-"""
-
-AGENT PROFILE: ${agentProfile}
-${curveSide ? `CURVE SIDE: ${curveSide}` : ''}
-${riskProfile ? `RISK PROFILE: ${riskProfile}/100` : ''}
-
-CRYPTOCURRENCY OPTIONS:
-${JSON.stringify(cryptoList, null, 2)}
-
-Based on the agent's profile and these cryptocurrency options ONLY, select EXACTLY 5 cryptocurrencies this agent would most likely trade.
-
-For MODERATE agents: Select a balanced mix from across the spectrum (and you can look at the seriousness score to help you).
-Ensure selection directly reflects the agent's explicit risk profile and curve side parameters.
-
-But also, don't hesitate to select some cryptos with total randomness, with no logic at all.
-
-IMPORTANT: Your response must ONLY contain the cryptocurrency tickers separated by commas, with no explanations or additional text. For example: "DOGE,SHIB,PEPE,WIF,BOME"
-`;
   }
 
   private extractRiskProfileFromObjectives(objectives: string[]): number | undefined {
