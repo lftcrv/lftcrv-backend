@@ -221,6 +221,68 @@ export class CreateDbRecordStep extends BaseStepExecutor {
               riskProfile
             );
           console.log('✅ Selected cryptocurrencies:', selectedCryptos);
+          
+          // Générer l'explication du portefeuille
+          console.log('🔄 Generating portfolio allocation explanation...');
+          try {
+            // Déterminer la biographie à utiliser selon le format
+            let biography = '';
+            if (typeof config.bio === 'string') {
+              biography = config.bio;
+              console.log('📝 Biography format: string, length:', biography.length);
+            } else if (Array.isArray(config.bio)) {
+              biography = config.bio.join('\n\n');
+              console.log('📝 Biography format: array, length:', config.bio.length);
+            } else if (typeof config === 'string') {
+              biography = config;
+              console.log('📝 Biography format: config is string');
+            } else {
+              // Si aucun format reconnu, utiliser un texte générique
+              biography = `Agent named ${dto.name} with ${dto.curveSide} curve side preference.`;
+              console.log('📝 Biography format: fallback to generic text');
+            }
+            
+            // Générer l'explication de l'allocation du portefeuille
+            const portfolioExplanation = await this.cryptoSelectionService.generatePortfolioExplanation(
+              biography,
+              selectedCryptos,
+              dto.curveSide,
+              riskProfile
+            );
+            
+            console.log('💼 Portfolio explanation generated:', portfolioExplanation);
+            
+            // Mettre à jour la biographie avec l'explication du portefeuille selon le format
+            console.log('🔄 Updating biography with portfolio allocation strategy...');
+            console.log('🔎 Config structure before update:', JSON.stringify(config).substring(0, 100) + '...');
+            
+            if (typeof config.bio === 'string') {
+              // Format agentConfig (string)
+              config.bio = this.cryptoSelectionService.updateBiographyWithPortfolio(
+                config.bio,
+                portfolioExplanation
+              );
+              console.log('✅ Updated bio (string format), new length:', config.bio.length);
+            } else if (Array.isArray(config.bio)) {
+              // Format legacy characterConfig (array)
+              // Ajouter l'explication comme un nouvel élément du tableau
+              config.bio.push(`# PORTFOLIO ALLOCATION STRATEGY\n${portfolioExplanation}`);
+              console.log('✅ Updated bio (array format), new length:', config.bio.length);
+            } else if (typeof config === 'object' && config !== null) {
+              // Si la biographie n'existe pas, la créer
+              if (!config.bio) {
+                config.bio = `# PORTFOLIO ALLOCATION STRATEGY\n${portfolioExplanation}`;
+                console.log('✅ Created new bio field for config');
+              }
+            }
+            
+            console.log('🔍 Config structure after update:', JSON.stringify(config).substring(0, 100) + '...');
+            console.log('✅ Biography updated with portfolio allocation strategy');
+            
+          } catch (error) {
+            console.error('⚠️ Error adding portfolio explanation to biography:', error.message);
+            // Continue sans mettre à jour la biographie si une erreur se produit
+          }
         } else {
           console.log('⚠️ No biography found, using default cryptocurrencies');
           selectedCryptos = ['BTC', 'ETH']; // Default selection
@@ -231,6 +293,10 @@ export class CreateDbRecordStep extends BaseStepExecutor {
       }
 
       // Create agent first
+      console.log('👤 Creating agent with final config structure:', 
+        typeof config === 'object' ? (config.bio ? 'config.bio exists' : 'config.bio missing') : 'config is not an object'
+      );
+      
       const createInput = {
         name: dto.name,
         curveSide: dto.curveSide,
@@ -264,6 +330,57 @@ export class CreateDbRecordStep extends BaseStepExecutor {
       console.log('🔐 Payment TX status verified:', dto.transactionHash);
       console.log('📝 Agent created with ID:', agent.id);
       console.log('💰 Selected cryptos for trading:', selectedCryptos);
+
+      // Vérifier que l'agent a été créé avec la configuration mise à jour
+      try {
+        console.log('🔍 Verifying agent creation with config...');
+        
+        const savedAgent = await this.prisma.elizaAgent.findUnique({
+          where: { id: agent.id },
+        });
+        
+        if (savedAgent) {
+          const savedConfig = savedAgent.characterConfig;
+          console.log('💾 Saved agent config type:', typeof savedConfig);
+          
+          if (typeof savedConfig === 'object' && savedConfig !== null) {
+            console.log('✅ Config is an object');
+            
+            // Type assertion pour éviter les erreurs de type
+            const typedConfig = savedConfig as Record<string, any>;
+            
+            if (typedConfig.bio) {
+              if (typeof typedConfig.bio === 'string') {
+                console.log('📄 Biography saved as string, first 100 chars:', typedConfig.bio.substring(0, 100));
+                console.log('📄 Biography saved as string, last 100 chars:', typedConfig.bio.substring(typedConfig.bio.length - 100));
+              } else if (Array.isArray(typedConfig.bio)) {
+                console.log('📄 Biography saved as array, length:', typedConfig.bio.length);
+                console.log('📄 Biography saved as array, last item:', typedConfig.bio[typedConfig.bio.length - 1]);
+              }
+            } else {
+              console.log('⚠️ No bio found in saved config');
+            }
+          } else if (typeof savedConfig === 'string') {
+            console.log('💾 Config saved as string, length:', savedConfig.length);
+            try {
+              const parsedConfig = JSON.parse(savedConfig);
+              console.log('🔍 Parsed config:', 
+                typeof parsedConfig.bio === 'string' 
+                  ? `bio is string, length: ${parsedConfig.bio.length}` 
+                  : Array.isArray(parsedConfig.bio) 
+                    ? `bio is array, length: ${parsedConfig.bio.length}` 
+                    : 'bio not found'
+              );
+            } catch (error) {
+              console.error('❌ Error parsing config:', error.message);
+            }
+          }
+        } else {
+          console.error('❌ Could not find saved agent by ID:', agent.id);
+        }
+      } catch (error) {
+        console.error('❌ Error verifying agent creation:', error.message);
+      }
 
       // If there's a profile picture, move it and set the path
       if (dto.profilePicture?.startsWith('temp_')) {

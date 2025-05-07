@@ -98,8 +98,8 @@ ${JSON.stringify(cryptoList, null, 2)}
 
 SELECTION CRITERIA:
 1. PRIMARY: Select a set of cryptocurrencies based on two criteria:
-Risk Alignment: The overall selection should reflect the agent’s Risk Tolerance (${riskProfile}/100), aiming for an average risk_tolerance score close to that value.
-Agent Preferences: Respect any specific constraints or preferences stated in the agent’s description (e.g., mandatory inclusion of certain assets).
+Risk Alignment: The overall selection should reflect the agent's Risk Tolerance (${riskProfile}/100), aiming for an average risk_tolerance score close to that value.
+Agent Preferences: Respect any specific constraints or preferences stated in the agent's description (e.g., mandatory inclusion of certain assets).
 When the description imposes low- or high-risk assets, adjust the remaining selections accordingly to balance the average risk profile.
 2. SECONDARY: If the agent's biography mentions specific cryptocurrencies, blockchain technologies, or investment themes, prioritize those.
 3. RANDOMNES : Keep all cryptos selected in 'secondary' — they must be included. For the remaining slots to reach a total of 5, randomly pick from the cryptos selected in 'primary' and for two identical agent's profile, pick the most diversed cryptos.
@@ -108,6 +108,130 @@ You MUST select EXACTLY 5 cryptocurrencies from the provided list, no more, no l
 
 IMPORTANT: Your response must ONLY contain the cryptocurrency tickers separated by commas, with no explanations or additional text. For example: "DOGE,SHIB,PEPE,WIF,BOME"
 `;
+  }
+
+  /**
+   * Builds a prompt to generate portfolio allocation explanation
+   */
+  private buildPortfolioExplanationPrompt(
+    biography: string,
+    selectedCryptos: string[],
+    cryptoList: any[],
+    curveSide?: string,
+    riskProfile?: number
+  ): string {
+    // Filtrer la liste complète pour ne conserver que les cryptos sélectionnées
+    const selectedCryptoDetails = cryptoList.filter(crypto => 
+      selectedCryptos.includes(crypto.Cryptocurrency)
+    );
+
+    return `
+I need you to generate a detailed explanation of this agent's portfolio allocation strategy.
+
+AGENT BIOGRAPHY:
+"""
+${biography}
+"""
+
+AGENT DETAILS:
+${curveSide ? `Curve Side: ${curveSide}` : ''}
+${riskProfile ? `Risk Tolerance: ${riskProfile}/100` : ''}
+
+SELECTED CRYPTOCURRENCIES:
+${JSON.stringify(selectedCryptoDetails, null, 2)}
+
+TASK:
+1. Create a clear, concise paragraph explaining the agent's portfolio allocation strategy.
+2. Include percentage allocations for each of the 5 cryptocurrencies (they must sum to 100%).
+3. Explain the reasoning behind these allocations based on the agent's character, risk profile, and market philosophy.
+4. The explanation should be written in first person, as if the agent is explaining their own strategy.
+5. The tone should match the character profile of the agent.
+
+Your response should be 3-5 sentences, concise but informative, focusing specifically on portfolio allocation strategy.
+`;
+  }
+
+  /**
+   * Generates portfolio allocation explanation
+   * @param biography The agent's biography
+   * @param selectedCryptos Array of selected cryptocurrency tickers
+   * @param curveSide The agent's curve side
+   * @param riskProfile The agent's risk profile
+   * @returns Portfolio allocation explanation text
+   */
+  async generatePortfolioExplanation(
+    biography: string,
+    selectedCryptos: string[],
+    curveSide?: string,
+    riskProfile?: number
+  ): Promise<string> {
+    try {
+      this.logger.log(`Generating portfolio explanation for agent with ${selectedCryptos.length} cryptos`);
+      this.logger.log(`Biography length: ${biography.length}, CurveSide: ${curveSide}, RiskProfile: ${riskProfile}`);
+      
+      const fullCryptoList = await this.getCryptoCurrencyList();
+      
+      // Construire le prompt pour l'explication du portefeuille
+      const prompt = this.buildPortfolioExplanationPrompt(
+        biography, 
+        selectedCryptos, 
+        fullCryptoList, 
+        curveSide, 
+        riskProfile
+      );
+      
+      this.logger.log(`Calling Claude API for portfolio explanation generation`);
+      
+      const response = await axios.post(
+        this.claudeApiUrl,
+        {
+          model: 'claude-3-sonnet-20240229',
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': this.claudeApiKey,
+            'anthropic-version': '2023-06-01',
+          },
+        }
+      );
+
+      // Parse la réponse
+      const explanation = response.data.content[0].text.trim();
+      this.logger.log(`Generated portfolio explanation: ${explanation}`);
+      
+      return explanation;
+    } catch (error) {
+      this.logger.error(`Error generating portfolio explanation: ${error.message}`);
+      
+      // Retourner une explication par défaut
+      const defaultExplanation = `I allocate my portfolio across ${selectedCryptos.join(', ')} with a balanced approach that matches my trading philosophy and risk profile.`;
+      this.logger.log(`Using default explanation: ${defaultExplanation}`);
+      return defaultExplanation;
+    }
+  }
+
+  /**
+   * Updates the agent biography with portfolio allocation details
+   * @param biography Original biography
+   * @param portfolioExplanation The portfolio explanation to add
+   * @returns Updated biography with portfolio allocation information
+   */
+  updateBiographyWithPortfolio(biography: string, portfolioExplanation: string): string {
+    // Ajouter une section dédiée à la répartition du portefeuille à la fin de la biographie
+    // Utiliser une séparation claire avec des "---" pour être sûr que la section est bien visible
+    const portfolioSection = `\n\n---\n\n# PORTFOLIO ALLOCATION STRATEGY\n\n${portfolioExplanation}\n\n---`;
+    
+    this.logger.log(`Adding portfolio section with length ${portfolioSection.length} to biography with length ${biography.length}`);
+    
+    return biography + portfolioSection;
   }
 
   /**
