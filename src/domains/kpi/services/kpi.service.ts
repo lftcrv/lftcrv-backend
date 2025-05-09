@@ -1,8 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { IAccountBalance } from '../interfaces/kpi.interface';
 import { AccountBalanceDto, TokenBalanceDto } from '../dtos/kpi.dto';
 import { ElizaAgent } from '@prisma/client';
+import { IPriceService } from '../../analysis/technical/interfaces/price.interface';
+import { ConfigService } from '@nestjs/config';
+import { AVNU_TOKENS } from '../../analysis/technical/config/tokens.config';
+import { AnalysisToken } from '../../analysis/technical/interfaces';
 
 // Type extension for PrismaService to handle models not in schema
 interface ExtendedPrismaModels {
@@ -23,11 +27,27 @@ interface ExtendedPrismaModels {
 // Extended PrismaService with additional models
 type ExtendedPrismaService = PrismaService & ExtendedPrismaModels;
 
+// List of standard tokens to validate pricing for
+const STANDARD_TOKENS = ['ETH', 'BTC', 'USDC', 'DAI', 'USDT', 'WBTC', 'WETH', 'STRK'];
+
 @Injectable()
 export class KPIService implements IAccountBalance {
   private readonly logger = new Logger(KPIService.name);
+  private readonly tokenAddressMap: Map<string, string> = new Map();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+    @Inject(AnalysisToken.AvnuPriceService)
+    private readonly avnuPriceService: IPriceService,
+    @Inject(AnalysisToken.ParadexPriceService)
+    private readonly paradexPriceService: IPriceService,
+  ) {
+    // Build token address map for AVNU tokens
+    AVNU_TOKENS.forEach((token) => {
+      this.tokenAddressMap.set(token.name.toUpperCase(), token.address);
+    });
+  }
 
   async createAccountBalanceData(data: AccountBalanceDto): Promise<any> {
     this.logger.log('Creating balance account data:', {
@@ -85,7 +105,10 @@ export class KPIService implements IAccountBalance {
       if (data.tokens && data.tokens.length > 0) {
         this.logger.log(`Processing ${data.tokens.length} token balances`);
 
-        const tokenPromises = data.tokens.map((token) =>
+        // Validate and update token prices if necessary
+        const updatedTokens = await this.validateAndUpdateTokenPrices(data.tokens);
+
+        const tokenPromises = updatedTokens.map((token) =>
           this.createTokenBalanceRecord(balanceRecord.id, token),
         );
 
@@ -104,6 +127,88 @@ export class KPIService implements IAccountBalance {
     } catch (error) {
       this.logger.error('Error creating balance record:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Validates and updates token prices for standard tokens
+   * @param tokens Token balance data
+   * @returns Updated token balance data with accurate prices
+   */
+  private async validateAndUpdateTokenPrices(
+    tokens: TokenBalanceDto[],
+  ): Promise<TokenBalanceDto[]> {
+    const updatedTokens = await Promise.all(
+      tokens.map(async (token) => {
+        // Only validate prices for known standard tokens
+        if (STANDARD_TOKENS.includes(token.symbol.toUpperCase())) {
+          try {
+            // Try to get the current market price
+            const currentPrice = await this.getTokenCurrentPrice(token.symbol);
+            
+            // If we successfully got a price and it's significantly different (more than 5%)
+            if (currentPrice && Math.abs(currentPrice - token.price) / token.price > 0.05) {
+              this.logger.log(
+                `Updating price for ${token.symbol} from ${token.price} to ${currentPrice} (difference: ${(Math.abs(currentPrice - token.price) / token.price * 100).toFixed(2)}%)`,
+              );
+              
+              // Return updated token with corrected price
+              return {
+                ...token,
+                price: currentPrice,
+              };
+            }
+          } catch (error) {
+            this.logger.warn(
+              `Failed to get current price for ${token.symbol}, using provided price: ${error.message}`,
+            );
+          }
+        }
+        // Return original token if not a standard token or price validation failed
+        return token;
+      }),
+    );
+
+    // Recalculate the total portfolio value with updated prices
+    const totalValue = updatedTokens.reduce(
+      (sum, token) => sum + token.balance * token.price, 
+      0
+    );
+    
+    this.logger.log(`Total portfolio value after price validation: ${totalValue}`);
+    
+    return updatedTokens;
+  }
+
+  /**
+   * Gets the current market price for a token
+   * @param tokenSymbol The token symbol (e.g., "ETH")
+   * @returns Current price or null if not available
+   */
+  private async getTokenCurrentPrice(tokenSymbol: string): Promise<number | null> {
+    const symbol = tokenSymbol.toUpperCase();
+    
+    try {
+      // First try AVNU price service for Starknet tokens
+      try {
+        // Get token address from our map instead of calling getter
+        const tokenAddress = this.tokenAddressMap.get(symbol);
+        if (!tokenAddress) {
+          throw new Error(`Token ${symbol} not found in AVNU tokens list`);
+        }
+        
+        const price = await this.avnuPriceService.getCurrentPrice(tokenAddress);
+        this.logger.log(`Got price for ${symbol} from AVNU: ${price}`);
+        return price;
+      } catch (avnuError) {
+        // If AVNU fails, try Paradex
+        const price = await this.paradexPriceService.getCurrentPrice(symbol);
+        this.logger.log(`Got price for ${symbol} from Paradex: ${price}`);
+        return price;
+      }
+    } catch (error) {
+      this.logger.warn(`Could not get current price for ${symbol}: ${error.message}`);
+      return null;
     }
   }
 

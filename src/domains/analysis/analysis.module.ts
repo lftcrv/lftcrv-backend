@@ -16,6 +16,7 @@ import { TechnicalService } from './technical/technical.service';
 import { AvnuPriceService } from './technical/services/price/avnu-price.service';
 import { UnifiedPriceService } from './technical/services/price/unified-price.service';
 import { KeltnerChannelService } from './technical/services/keltnerChannel.service';
+import { AnalysisToken } from './technical/interfaces';
 
 @Module({
   imports: [
@@ -27,6 +28,18 @@ import { KeltnerChannelService } from './technical/services/keltnerChannel.servi
     TechnicalService,
     PrismaService,
     // Technical analysis services
+    {
+      provide: AnalysisToken.ParadexPriceService,
+      useClass: ParadexPriceService,
+    },
+    {
+      provide: AnalysisToken.AvnuPriceService,
+      useClass: AvnuPriceService,
+    },
+    {
+      provide: AnalysisToken.UnifiedPriceService,
+      useClass: UnifiedPriceService,
+    },
     ParadexPriceService,
     AvnuPriceService,
     UnifiedPriceService,
@@ -38,9 +51,24 @@ import { KeltnerChannelService } from './technical/services/keltnerChannel.servi
     IchimokuService,
     PivotService,
     VolumeService,
-    ATRService,
     KeltnerChannelService
   ],
-  exports: [AnalysisService, TechnicalService],
+  exports: [
+    AnalysisService,
+    TechnicalService,
+    // Export price services for other modules to use
+    {
+      provide: AnalysisToken.ParadexPriceService,
+      useClass: ParadexPriceService,
+    },
+    {
+      provide: AnalysisToken.AvnuPriceService,
+      useClass: AvnuPriceService,
+    },
+    {
+      provide: AnalysisToken.UnifiedPriceService,
+      useClass: UnifiedPriceService,
+    },
+  ],
 })
 export class AnalysisModule {}

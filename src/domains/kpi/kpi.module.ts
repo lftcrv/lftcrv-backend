@@ -6,9 +6,15 @@ import { PerformanceSnapshotService } from './services/performance-snapshot.serv
 import { PerformanceSnapshotController } from './controllers/performance-snapshot.controller';
 import { MetricsController } from './controllers/metrics.controller';
 import { ElizaAgentModule } from '../leftcurve-agent/leftcurve-agent.module';
+import { AnalysisModule } from '../analysis/analysis.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [ElizaAgentModule],
+  imports: [
+    ElizaAgentModule,
+    AnalysisModule,
+    ConfigModule,
+  ],
   controllers: [
     KPIController,
     PerformanceSnapshotController,
