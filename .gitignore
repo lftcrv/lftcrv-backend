@@ -19,7 +19,7 @@ infrastructure/cdk.context.json
 # Prisma
 prisma/*.db
 prisma/client
-prisma/migrations/
+# prisma/migrations/
 
 # Logs
 logs

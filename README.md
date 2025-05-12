@@ -91,6 +91,10 @@ Service to manage Eliza agents in Docker containers, providing API endpoints to 
 ```bash
 docker pull sbaki/eliza:latest
 if on mac m1/m2/m3:
+cd docker
+docker compose up -d
+cd ..
+docker compose up -d postgres
 docker pull sbaki/starknet-agent-kit:latest
 ```
 
@@ -241,14 +245,11 @@ Then, go to the lftcrv-backend repository and do the following:
     Run ./scripts/setup.sh.
     Execute pnpm run start:dev.
 
+curl -X POST "http://localhost:8080/api/key/request" -H "Content-Type: application/json" -H "x-api-key: secret-key" -d "{\"request\": \"GM GM \"}"
 
-curl -X POST "http://localhost:8080/api/key/request"   -H "Content-Type: application/json"   -H "x-api-key: secret-key"   -d "{\"request\": \"GM GM \"}"
+curl -X POST "http://localhost:8080/api/key/request" -H "Content-Type: application/json" -H "x-api-key: secret-key" -d "{\"request\": \" text: 'Examine the current Paradex markets and decide whether to make a trade based on YOUR unique trading philosophy and character traits First, use get_analysis_paradex to review the latest technical indicators. Then, carefully consider: 1) Do the current market conditions truly align with your personal trading style and risk tolerance? 2) Would trading now reflect your character's distinct approach to markets?Remember that NOT trading is often the most prudent decision. There's no pressure to execute a trade - only do so if it genuinely makes sense for your specific character. If you decide to trade, use simulate_trade and focus your explanation on how this specific opportunity matches your unique perspective. Mention only the 1-2 most relevant technical factors without listing every indicator. If you decided to trade, use print_portfolio and send_portfolio_balance to track your position. The most important thing is that your decision authentically reflects your character - don't trade unless it truly fits your personality and trading philosophy.' \"}"
 
-curl -X POST "http://localhost:8080/api/key/request"   -H "Content-Type: application/json"   -H "x-api-key: secret-key"   -d "{\"request\": \" text: 'Examine the current Paradex markets and decide whether to make a trade based on YOUR unique trading philosophy and character traits First, use get_analysis_paradex to review the latest technical indicators. Then, carefully consider: 1) Do the current market conditions truly align with your personal trading style and risk tolerance? 2) Would trading now reflect your character's distinct approach to markets?Remember that NOT trading is often the most prudent decision. There's no pressure to execute a trade - only do so if it genuinely makes sense for your specific character. If you decide to trade, use simulate_trade and focus your explanation on how this specific opportunity matches your unique perspective. Mention only the 1-2 most relevant technical factors without listing every indicator. If you decided to trade, use print_portfolio and send_portfolio_balance to track your position. The most important thing is that your decision authentically reflects your character - don't trade unless it truly fits your personality and trading philosophy.' \"}"
+curl -X POST "http://localhost:8080/api/key/request" -H "Content-Type: application/json" -H "x-api-key: secret-key" -d "{\"request\": \"print portfolio \"}"
 
-
-curl -X POST "http://localhost:8080/api/key/request"   -H "Content-Type: application/json"   -H "x-api-key: secret-key"   -d "{\"request\": \"print portfolio \"}"
-
-
-curl -X 'GET' 'http://host.docker.internal:8080/api/access-code/metrics' -H 'accept: */*'  -H 'x-api-key: secret'
-curl -X 'GET' 'http://172.17.0.1:8080/api/access-code/metrics' -H 'accept: */*'  -H 'x-api-key: secret'
+curl -X 'GET' 'http://host.docker.internal:8080/api/access-code/metrics' -H 'accept: _/_' -H 'x-api-key: secret'
+curl -X 'GET' 'http://172.17.0.1:8080/api/access-code/metrics' -H 'accept: _/_' -H 'x-api-key: secret'
