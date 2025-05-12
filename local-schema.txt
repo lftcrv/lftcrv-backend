@@ -1,0 +1,325 @@
+  @@index([accountBalanceId])
+  @@index([agentId])
+  @@index([agentId])
+  @@index([aggregatedPnlCycle])
+  @@index([code])
+  @@index([code])
+  @@index([code])
+  @@index([codeHash])
+  @@index([createdAt, userAddress])
+  @@index([createdAt])
+  @@index([createdAt])
+  @@index([createdAt])
+  @@index([createdAt])
+  @@index([creatorWallet])
+  @@index([evmAddress])
+  @@index([isActive])
+  @@index([marketCap])
+  @@index([pnl24h])
+  @@index([pnlRank])
+  @@index([price])
+  @@index([priceChange24h])
+  @@index([runningAgents])
+  @@index([starknetAddress])
+  @@index([status])
+  @@index([timestamp])
+  @@index([timestamp])
+  @@index([tokenSymbol])
+  @@index([totalBalanceInUSD])
+  @@index([tvl])
+  @@index([type])
+  @@index([type])
+  @@index([usedReferralCode])
+  @@map("access_codes")
+  @@map("agent_performance_snapshots")
+  @@map("agent_token")
+  @@map("agent_wallet")
+  @@map("analyses")
+  @@map("creator_leaderboard_data")
+  @@map("eliza_agents")
+  @@map("latest_market_data")
+  @@map("orchestrations")
+  @@map("paradex_account_balances")
+  @@map("paradex_markets")
+  @@map("portfolio_token_balances")
+  @@map("price_for_token")
+  @@map("referral_codes")
+  @@map("trading_information")
+  @@map("transactions")
+  @@map("users")
+  accessCode           AccessCode?                @relation(fields: [accessCodeId], references: [id])
+  accessCodeId         String?
+  accessGrantedAt      DateTime?
+  accountBalance   ParadexAccountBalance @relation(fields: [accountBalanceId], references: [id], onDelete: Cascade)
+  accountBalanceId String                @map("account_balance_id")
+  AccountBalances      ParadexAccountBalance[]
+  addressType      WalletAddressType
+  ADMIN
+  agent         ElizaAgent              @relation(fields: [agentId], references: [id])
+  agent         ElizaAgent @relation(fields: [agentId], references: [id])
+  agentId       String
+  agentId       String
+  agents      ElizaAgent[]
+  AgentToken  AgentToken @relation(fields: [tokenId], references: [id])
+  AgentToken AgentToken @relation(fields: [tokenId], references: [id])
+  aggregatedPnl24h   Float    @default(0)
+  aggregatedPnlCycle Float    @default(0)
+  amount           Decimal               @db.Decimal(18, 8)
+  assetKind     String
+  balanceInUSD   Float         @default(0)
+  balanceInUSD  Float
+  balanceInUSD  Float
+  baseCurrency  String
+  bestAgentId        String?
+  bestAgentPnlCycle  Float?
+  BONDING
+  bondingStatus  BondingStatus @default(BONDING)
+  buyAmount   BigInt
+  buyTax          Int
+  buyToken    String
+  characterConfig      Json
+  code         String    @unique
+  code        String         @unique
+  code      String    @unique
+  codeHash  String
+  COMPLETED
+  containerId          String?
+  contractAddress       String
+  contractAddress String
+  createdAt             DateTime   @default(now())
+  createdAt            DateTime                   @default(now())
+  createdAt          DateTime @default(now())
+  createdAt        DateTime              @default(now()) @map("created_at")
+  createdAt        DateTime          @default(now())
+  createdAt      DateTime      @default(now())
+  createdAt     DateTime                @default(now())
+  createdAt     DateTime            @default(now())
+  createdAt     DateTime @default(now())
+  createdAt    DateTime   @default(now())
+  createdAt    DateTime  @default(now())
+  createdAt   DateTime       @default(now())
+  createdAt   DateTime   @default(now())
+  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
+  createdBy   String?
+  creatorWallet        String
+  creatorWallet      String   @unique
+  currentStepId String
+  currentUses Int            @default(0)
+  curveSide            CurveSide
+  data          Json
+  data      Json
+  degenScore           Float?                     @default(0)
+  deployedAddress       String?
+  deploymentFeesTxHash String                     @map("deployment_fees_tx_hash")
+  deployTransactionHash String?
+  DERIVED
+  description String?
+  elizaAgent            ElizaAgent @relation(fields: [elizaAgentId], references: [id])
+  elizaAgent      ElizaAgent      @relation(fields: [elizaAgentId], references: [id])
+  elizaAgent     ElizaAgent    @relation(fields: [elizaAgentId], references: [id])
+  elizaAgent   ElizaAgent @relation(fields: [elizaAgentId], references: [id])
+  elizaAgentId          String     @unique
+  elizaAgentId    String          @unique
+  elizaAgentId   String        @unique
+  elizaAgentId String
+  ERROR
+  error         String?
+  ethAccountAddress     String
+  ethPrivateKey         String
+  evmAddress       String?           @unique
+  expiresAt    DateTime?
+  expiresAt   DateTime?
+  FAILED
+  FAILED
+  failureReason        String?
+  forkCount      Int           @default(0)
+  forkedFrom           ElizaAgent?                @relation("AgentForks", fields: [forkedFromId], references: [id])
+  forkedFromId         String?
+  forks                ElizaAgent[]               @relation("AgentForks")
+  fundTransactionHash   String?
+  hash        String
+  holders        Int           @default(0)
+  id                    String     @id @default(uuid())
+  id                   String                     @id @default(uuid())
+  id                 String   @id @default(uuid())
+  id               String                @id @default(uuid())
+  id               String            @id @default(cuid())
+  id              String          @id @default(uuid())
+  id             String        @id @default(uuid())
+  id            String                  @id @default(uuid())
+  id            String              @id @default(uuid())
+  id            String     @id @default(uuid())
+  id            String   @id @default(uuid())
+  id           String     @id @default(uuid())
+  id           String    @id @default(cuid())
+  id          String         @id @default(uuid())
+  id          String     @id @default(uuid())
+  id         String     @id @default(uuid())
+  id        String       @id @default(uuid())
+  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
+  IN_PROGRESS
+  information  Json
+  ipHash    String?
+  isAccessCode Boolean   @default(true)
+  isActive      Boolean  @default(true)
+  isActive    Boolean        @default(true)
+  lastConnection   DateTime?
+  LatestMarketData     LatestMarketData?
+  LEFT
+  LIVE
+  MARKET
+  marketCap      Float         @default(0)
+  marketCap     Float      @default(0)
+  maxUses      Int?
+  maxUses     Int?
+  metadata      Json?
+  metadata  Json?
+  minNotional   String
+  name                 String
+  NATIVE
+  OVERALL
+  PENDING
+  PerformanceSnapshots AgentPerformanceSnapshot[]
+  pnl           Float      @default(0)
+  pnl24h         Float         @default(0)
+  pnl24h        Float      @default(0)
+  pnlCycle       Float         @default(0)
+  pnlCycle      Float      @default(0)
+  pnlPercentage Float      @default(0)
+  pnlRank        Int?
+  port                 Int?
+  positionLimit String
+  price          Float         @default(0)
+  price         Float      @default(0)
+  price      String
+  priceChange24h Float         @default(0)
+  Prices          PriceForToken[]
+  priceUsd         Decimal               @map("price_usd") @db.Decimal(18, 8)
+  privateKey            String
+  profilePicture       String?
+  progress      Float               @default(0)
+  provider = "postgresql"
+  provider = "prisma-client-js"
+  publicKey             String
+  quoteCurrency String
+  REFERRAL
+  referralCode     ReferralCode?     @relation("UserReferralCode")
+  result        Json?
+  RIGHT
+  RUNNING
+  runningAgents      Int      @default(0)
+  runtimeAgentId       String?
+  score     Float?
+  selectedCryptos      String?                    @map("selected_cryptos")
+  sellAmount  BigInt
+  sellTax         Int
+  sellToken   String
+  SENTIMENT
+  starknetAddress  String            @unique
+  STARTING
+  status               AgentStatus                @default(STARTING)
+  status        OrchestrationStatus
+  STOPPED
+  symbol          String
+  symbol        String   @unique
+  TECHNICAL
+  TEMPORARY
+  timestamp     DateTime   @default(now())
+  timestamp  DateTime
+  timestamp DateTime     @default(now())
+  Token                AgentToken?
+  token           String
+  tokenBalances PortfolioTokenBalance[]
+  tokenId     String
+  tokenId    String
+  tokenSymbol      String                @map("token_symbol") @db.VarChar(50)
+  totalAgents        Int      @default(0)
+  totalBalanceInUSD  Float    @default(0)
+  tradeCount     Int           @default(0)
+  tradeCount    Int        @default(0)
+  TradingInformation   TradingInformation[]
+  Transaction     Transaction[]
+  tvl            Float         @default(0)
+  tvl           Float      @default(0)
+  twitterHandle    String?
+  type          String
+  type        AccessCodeType
+  type      AnalysisType
+  updatedAt             DateTime   @updatedAt
+  updatedAt            DateTime                   @updatedAt
+  updatedAt          DateTime @updatedAt
+  updatedAt        DateTime          @updatedAt
+  updatedAt      DateTime      @updatedAt
+  updatedAt     DateTime            @updatedAt
+  updatedAt     DateTime @updatedAt
+  updatedAt    DateTime  @updatedAt
+  updatedAt   DateTime   @updatedAt
+  url      = env("DATABASE_URL")
+  usageCount   Int       @default(0)
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  usedReferralCode String?           @map("used_referral_code")
+  user         User      @relation("UserReferralCode", fields: [userId], references: [id])
+  userAddress String
+  userId       String    @unique
+  valueUsd         Decimal               @map("value_usd") @db.Decimal(18, 8)
+  Wallet               AgentWallet?
+  winScore             Float?                     @default(0)
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+}
+datasource db {
+enum AccessCodeType {
+enum AgentStatus {
+enum AnalysisType {
+enum BondingStatus {
+enum CurveSide {
+enum OrchestrationStatus {
+enum WalletAddressType {
+generator client {
+model AccessCode {
+model AgentPerformanceSnapshot {
+model AgentToken {
+model AgentWallet {
+model Analysis {
+model CreatorLeaderboardData {
+model ElizaAgent {
+model FailedAttempt {
+model LatestMarketData {
+model Orchestration {
+model OTP {
+model ParadexAccountBalance {
+model ParadexMarket {
+model PortfolioTokenBalance {
+model PriceForToken {
+model ReferralCode {
+model TradingInformation {
+model Transaction {
+model User {
