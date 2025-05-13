@@ -148,4 +148,63 @@ export class MessageService {
       throw error;
     }
   }
+
+  /**
+   * Sends the market analysis request followed by portfolio allocation request to an agent
+   * @param runtimeAgentId The runtime ID of the agent
+   * @param delayBetweenRequests Delay in milliseconds between the two requests
+   */
+  async sendTradeAndPortfolioRequests(
+    runtimeAgentId: string,
+    delayBetweenRequests = 20000, // 20 seconds default delay
+  ) {
+    try {
+      this.logger.log(
+        `Sending market analysis and portfolio requests to agent with runtime ID: ${runtimeAgentId}`,
+      );
+
+      // First request: market analysis and trade decision
+      const tradeDecisionRequest = {
+        content: {
+          text: "Examine the current Paradex markets and decide whether to make a trade based on YOUR unique trading philosophy and character traits First, use get_analysis_paradex to review the latest technical indicators. Then, carefully consider: 1) Do the current market conditions truly align with your personal trading style and risk tolerance? 2) Would trading now reflect your character's distinct approach to markets?Remember that NOT trading is often the most prudent decision. There's no pressure to execute a trade - only do so if it genuinely makes sense for your specific character. If you decide to trade, use simulate_trade and focus your explanation on how this specific opportunity matches your unique perspective. Mention only the 1-2 most relevant technical factors without listing every indicator. If you decided to trade, use print_portfolio and send_portfolio_balance to track your position. The most important thing is that your decision authentically reflects your character - don't trade unless it truly fits your personality and trading philosophy.",
+        },
+      };
+
+      // Send first request
+      await this.sendMessageToAgent(runtimeAgentId, tradeDecisionRequest);
+      
+      this.logger.log(
+        `Trade decision request sent successfully. Waiting ${
+          delayBetweenRequests / 1000
+        } seconds before sending portfolio allocation request...`,
+      );
+
+      // Wait before sending the second request
+      await new Promise((resolve) => setTimeout(resolve, delayBetweenRequests));
+
+      // Second request: portfolio allocation
+      const portfolioAllocationRequest = {
+        content: {
+          text: "Review the available analysis and tradable cryptos, then define your portfolio allocation across five selected cryptos and USDC.",
+        },
+      };
+
+      // Send second request
+      await this.sendMessageToAgent(runtimeAgentId, portfolioAllocationRequest);
+      
+      this.logger.log(
+        `Portfolio allocation request sent successfully to agent with runtime ID: ${runtimeAgentId}`,
+      );
+
+      return { 
+        success: true, 
+        message: 'Both requests sent successfully' 
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to send requests to agent with runtime ID ${runtimeAgentId}: ${error.message}`,
+      );
+      throw error;
+    }
+  }
 }
