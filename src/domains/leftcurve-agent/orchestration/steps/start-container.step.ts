@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { IDockerService } from '../../interfaces/docker-service.interface';
 import { ServiceTokens } from '../../interfaces';
 import { PrismaService } from '../../../../shared/prisma/prisma.service';
@@ -13,6 +13,9 @@ import { PerformanceSnapshotService } from 'src/domains/kpi/services/performance
 
 @Injectable()
 export class StartContainerStep extends BaseStepExecutor {
+  private readonly logger = new Logger(StartContainerStep.name);
+  private readonly delayBetweenRequests = 20000; // 20 seconds delay
+
   constructor(
     @Inject(ServiceTokens.Docker)
     private readonly dockerService: IDockerService,
@@ -47,14 +50,43 @@ export class StartContainerStep extends BaseStepExecutor {
         },
       });
 
+      // First request: initialize portfolio
+      this.logger.log(
+        `Sending portfolio balance request to agent with runtime ID: ${runtimeAgentId}`
+      );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
           text: 'execute send_portfolio_balance',
         },
       });
 
+      // Wait before sending the portfolio allocation request
+      this.logger.log(
+        `Initial portfolio request sent successfully. Waiting ${
+          this.delayBetweenRequests / 1000
+        } seconds before sending portfolio allocation request...`
+      );
+      
+      // Create performance snapshot while waiting
       await this.performanceSnapshotService.createAgentPerformanceSnapshot(
         agentId,
+      );
+
+      // Wait for the specified delay
+      await new Promise((resolve) => setTimeout(resolve, this.delayBetweenRequests));
+
+      // Second request: portfolio allocation
+      this.logger.log(
+        `Sending portfolio allocation request to agent with runtime ID: ${runtimeAgentId}`
+      );
+      await this.messageService.sendMessageToAgent(runtimeAgentId, {
+        content: {
+          text: "Review the available analysis and tradable cryptos, then define your portfolio allocation across five selected cryptos and USDC.",
+        },
+      });
+      
+      this.logger.log(
+        `Portfolio allocation request sent successfully to agent with runtime ID: ${runtimeAgentId}`
       );
 
       return this.success(updatedAgent, {
