@@ -81,7 +81,7 @@ export class StartContainerStep extends BaseStepExecutor {
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
-          text: "Review the available analysis and tradable cryptos, then define your portfolio allocation across five selected cryptos and USDC.",
+          text: "Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly.",
         },
       });
       
