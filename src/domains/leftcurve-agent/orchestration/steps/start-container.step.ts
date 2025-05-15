@@ -14,7 +14,7 @@ import { PerformanceSnapshotService } from 'src/domains/kpi/services/performance
 @Injectable()
 export class StartContainerStep extends BaseStepExecutor {
   private readonly logger = new Logger(StartContainerStep.name);
-  private readonly delayBetweenRequests = 20000; // 20 seconds delay
+  private readonly delayBetweenRequests = 8000; // 8 seconds delay
 
   constructor(
     @Inject(ServiceTokens.Docker)
@@ -81,12 +81,34 @@ export class StartContainerStep extends BaseStepExecutor {
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
-          text: "Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly.",
+          text: "Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly (with set_target_allocation action).",
         },
       });
       
       this.logger.log(
         `Portfolio allocation request sent successfully to agent with runtime ID: ${runtimeAgentId}`
+      );
+
+      // Wait before sending the trading strategy request
+      this.logger.log(
+        `Waiting ${this.delayBetweenRequests / 1000} seconds before sending trading strategy request...`
+      );
+      
+      // Wait for the specified delay again
+      await new Promise((resolve) => setTimeout(resolve, this.delayBetweenRequests));
+
+      // Third request: trading strategy
+      this.logger.log(
+        `Sending trading strategy request to agent with runtime ID: ${runtimeAgentId}`
+      );
+      await this.messageService.sendMessageToAgent(runtimeAgentId, {
+        content: {
+          text: "Based on market conditions and your trading personality, define an entry and exit strategy for the five cryptos assigned to you (with set_strategy_text action).",
+        },
+      });
+      
+      this.logger.log(
+        `Trading strategy request sent successfully to agent with runtime ID: ${runtimeAgentId}`
       );
 
       return this.success(updatedAgent, {
