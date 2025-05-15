@@ -199,6 +199,7 @@ export class TasksService {
     );
   }
 
+  // Runs every hour to generate asset analysis for tradable cryptocurrencies on Paradex.
   @Cron(CronExpression.EVERY_HOUR)
   async generateParadexAnalysis() {
     try {
@@ -228,6 +229,7 @@ export class TasksService {
   //   }
   // }
 
+  // Runs every 2 hours at minute 0 to send a trade simulation order to active agents.
   @Cron('0 */2 * * *')
   async sendTradeSimulation() {
     const startTime = Date.now();
@@ -273,6 +275,7 @@ export class TasksService {
    * Update agent performance snapshots every hour
    * This captures historical data for agent performance metrics including PnL
    */
+  // Runs every hour at minute 0 to update agent performance snapshots.
   @Cron('0 * * * *') // Run every hour at minute 0
   async updateAgentPerformanceSnapshots() {
     const startTime = Date.now();
@@ -312,7 +315,8 @@ export class TasksService {
     }
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  // Runs every 5 minutes to calculate and store creator leaderboard data.
+  @Cron('*/5 * * * *')
   async updateCreatorLeaderboard() {
     const startTime = Date.now();
     this.logger.log('Starting creator leaderboard update');
@@ -338,6 +342,7 @@ export class TasksService {
    * - Keep daily data for 90 days
    * - Weekly data is kept indefinitely
    */
+  // Runs daily at midnight to apply data retention policy for performance snapshots.
   @Cron('0 0 * * *') // Run daily at midnight
   async cleanupPerformanceData() {
     const startTime = Date.now();
