@@ -14,7 +14,7 @@ import { PerformanceSnapshotService } from 'src/domains/kpi/services/performance
 @Injectable()
 export class StartContainerStep extends BaseStepExecutor {
   private readonly logger = new Logger(StartContainerStep.name);
-  private readonly delayBetweenRequests = 10000; // 10 seconds delay
+  private readonly delayBetweenRequests = 8000; // 8 seconds delay
 
   constructor(
     @Inject(ServiceTokens.Docker)
@@ -81,7 +81,7 @@ export class StartContainerStep extends BaseStepExecutor {
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
-          text: "Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly.",
+          text: "Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly (with set_target_allocation action).",
         },
       });
       
@@ -103,7 +103,7 @@ export class StartContainerStep extends BaseStepExecutor {
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
-          text: "Based on market conditions and your trading personality, define an entry and exit strategy for the five cryptos assigned to you.",
+          text: "Based on market conditions and your trading personality, define an entry and exit strategy for the five cryptos assigned to you (with set_strategy_text action).",
         },
       });
       
