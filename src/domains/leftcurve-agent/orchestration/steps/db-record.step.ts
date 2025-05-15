@@ -222,67 +222,6 @@ export class CreateDbRecordStep extends BaseStepExecutor {
             );
           console.log('✅ Selected cryptocurrencies:', selectedCryptos);
           
-          // Générer l'explication du portefeuille
-          console.log('🔄 Generating portfolio allocation explanation...');
-          try {
-            // Déterminer la biographie à utiliser selon le format
-            let biography = '';
-            if (typeof config.bio === 'string') {
-              biography = config.bio;
-              console.log('📝 Biography format: string, length:', biography.length);
-            } else if (Array.isArray(config.bio)) {
-              biography = config.bio.join('\n\n');
-              console.log('📝 Biography format: array, length:', config.bio.length);
-            } else if (typeof config === 'string') {
-              biography = config;
-              console.log('📝 Biography format: config is string');
-            } else {
-              // Si aucun format reconnu, utiliser un texte générique
-              biography = `Agent named ${dto.name} with ${dto.curveSide} curve side preference.`;
-              console.log('📝 Biography format: fallback to generic text');
-            }
-            
-            // Générer l'explication de l'allocation du portefeuille
-            const portfolioExplanation = await this.cryptoSelectionService.generatePortfolioExplanation(
-              biography,
-              selectedCryptos,
-              dto.curveSide,
-              riskProfile
-            );
-            
-            console.log('💼 Portfolio explanation generated:', portfolioExplanation);
-            
-            // Mettre à jour la biographie avec l'explication du portefeuille selon le format
-            console.log('🔄 Updating biography with portfolio allocation strategy...');
-            console.log('🔎 Config structure before update:', JSON.stringify(config).substring(0, 100) + '...');
-            
-            if (typeof config.bio === 'string') {
-              // Format agentConfig (string)
-              config.bio = this.cryptoSelectionService.updateBiographyWithPortfolio(
-                config.bio,
-                portfolioExplanation
-              );
-              console.log('✅ Updated bio (string format), new length:', config.bio.length);
-            } else if (Array.isArray(config.bio)) {
-              // Format legacy characterConfig (array)
-              // Ajouter l'explication comme un nouvel élément du tableau
-              config.bio.push(`# PORTFOLIO ALLOCATION STRATEGY\n${portfolioExplanation}`);
-              console.log('✅ Updated bio (array format), new length:', config.bio.length);
-            } else if (typeof config === 'object' && config !== null) {
-              // Si la biographie n'existe pas, la créer
-              if (!config.bio) {
-                config.bio = `# PORTFOLIO ALLOCATION STRATEGY\n${portfolioExplanation}`;
-                console.log('✅ Created new bio field for config');
-              }
-            }
-            
-            console.log('🔍 Config structure after update:', JSON.stringify(config).substring(0, 100) + '...');
-            console.log('✅ Biography updated with portfolio allocation strategy');
-            
-          } catch (error) {
-            console.error('⚠️ Error adding portfolio explanation to biography:', error.message);
-            // Continue sans mettre à jour la biographie si une erreur se produit
-          }
         } else {
           console.log('⚠️ No biography found, using default cryptocurrencies');
           selectedCryptos = ['BTC', 'ETH']; // Default selection
