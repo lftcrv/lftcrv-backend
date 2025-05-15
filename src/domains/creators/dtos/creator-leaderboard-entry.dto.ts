@@ -39,6 +39,12 @@ export class CreatorLeaderboardEntryDto {
   aggregatedPnl24h: number;
 
   @ApiProperty({
+    description: 'Total number of trades executed by all agents of this creator',
+    example: 1500,
+  })
+  totalTradeCount: number;
+
+  @ApiProperty({
     description: 'ID of the best performing agent by PnL cycle',
     example: '123e4567-e89b-12d3-a456-426614174000',
     required: false,

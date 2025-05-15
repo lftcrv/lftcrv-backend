@@ -347,6 +347,7 @@ model CreatorLeaderboardData {
   totalBalanceInUSD     Float    @default(0)
   aggregatedPnlCycle    Float    @default(0)
   aggregatedPnl24h      Float    @default(0)
+  totalTradeCount       Int      @default(0)
   bestAgentId           String?
   bestAgentPnlCycle     Float?
   updatedAt             DateTime @updatedAt

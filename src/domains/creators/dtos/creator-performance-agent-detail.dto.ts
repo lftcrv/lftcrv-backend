@@ -16,11 +16,41 @@ export class CreatorPerformanceAgentDetailDto {
   status: AgentStatus;
 
   @ApiProperty({
-    description: 'Agent Profile Picture URL',
+    description: 'Agent Profile Picture filename',
     required: false,
-    example: '/path/to/image.jpg',
+    example: 'image.jpg',
   })
   profilePicture?: string;
+
+  @ApiProperty({
+    description: 'Full URL to agent profile picture',
+    required: false,
+    example: '/uploads/profile-pictures/image.jpg',
+  })
+  profilePictureUrl?: string | null;
+
+  @ApiProperty({
+    description: 'Token Symbol',
+    required: false,
+    example: 'AGENT',
+  })
+  symbol?: string;
+
+  @ApiProperty({
+    description: 'P&L Cycle Ranking',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  pnlRank?: number | null;
+
+  @ApiProperty({
+    description: 'Number of times this agent has been forked',
+    required: false,
+    type: Number,
+    example: 5,
+  })
+  forkCount?: number | null;
 
   @ApiProperty({
     description: 'Agent Current Balance in USD',

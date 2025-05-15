@@ -148,6 +148,7 @@ export class CreatorsService implements ICreatorsService {
       },
       include: {
         LatestMarketData: true, // Eager load latest data
+        Token: true, // Include token data for symbol
       },
     });
 
@@ -179,7 +180,14 @@ export class CreatorsService implements ICreatorsService {
       agentDetailDto.name = agent.name;
       agentDetailDto.status = agent.status;
       agentDetailDto.profilePicture = agent.profilePicture || undefined;
+      // Add the full profile picture URL
+      agentDetailDto.profilePictureUrl = agent.profilePicture
+        ? `/uploads/profile-pictures/${agent.profilePicture}`
+        : null;
       agentDetailDto.createdAt = agent.createdAt;
+
+      // Add token symbol if available
+      agentDetailDto.symbol = agent.Token?.symbol;
 
       // Check if agent has market data
       if (agent.LatestMarketData) {
@@ -192,6 +200,9 @@ export class CreatorsService implements ICreatorsService {
         agentDetailDto.pnl24h = marketData.pnl24h;
         agentDetailDto.tradeCount = marketData.tradeCount;
         agentDetailDto.marketCap = marketData.marketCap;
+        // Add the new fields from LatestMarketData
+        agentDetailDto.pnlRank = marketData.pnlRank;
+        agentDetailDto.forkCount = marketData.forkCount;
 
         // Update aggregators using helper method
         aggregators = this._updateAggregators(aggregators, marketData);
@@ -218,6 +229,8 @@ export class CreatorsService implements ICreatorsService {
         agentDetailDto.pnl24h = null;
         agentDetailDto.tradeCount = null;
         agentDetailDto.marketCap = null;
+        agentDetailDto.pnlRank = null;
+        agentDetailDto.forkCount = null;
       }
 
       // Count running agents
@@ -324,6 +337,7 @@ export class CreatorsService implements ICreatorsService {
       totalBalanceInUSD: entry.totalBalanceInUSD,
       aggregatedPnlCycle: entry.aggregatedPnlCycle,
       aggregatedPnl24h: entry.aggregatedPnl24h,
+      totalTradeCount: entry.totalTradeCount,
       bestAgentId: entry.bestAgentId || undefined,
       bestAgentPnlCycle: entry.bestAgentPnlCycle || undefined,
       updatedAt: entry.updatedAt,
@@ -395,6 +409,7 @@ export class CreatorsService implements ICreatorsService {
         let totalBalanceInUSD = 0;
         let aggregatedPnlCycle = 0;
         let aggregatedPnl24h = 0;
+        let totalTradeCountForCreator = 0; // Initialize total trade count for the creator
         let bestAgentId: string | null = null;
         // Initialize best PnL to the lowest possible value to ensure any valid PnL becomes the initial best
         let bestAgentPnlCycle = -Infinity;
@@ -414,6 +429,7 @@ export class CreatorsService implements ICreatorsService {
             totalBalanceInUSD += marketData.balanceInUSD || 0;
             aggregatedPnlCycle += marketData.pnlCycle || 0;
             aggregatedPnl24h += marketData.pnl24h || 0;
+            totalTradeCountForCreator += marketData.tradeCount || 0; // Aggregate trade count
 
             // Update best agent if this one has better PnL cycle
             if ((marketData.pnlCycle ?? -Infinity) > bestAgentPnlCycle) {
@@ -434,6 +450,7 @@ export class CreatorsService implements ICreatorsService {
             totalBalanceInUSD,
             aggregatedPnlCycle,
             aggregatedPnl24h,
+            totalTradeCount: totalTradeCountForCreator,
             bestAgentId,
             bestAgentPnlCycle:
               bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
@@ -445,6 +462,7 @@ export class CreatorsService implements ICreatorsService {
             totalBalanceInUSD,
             aggregatedPnlCycle,
             aggregatedPnl24h,
+            totalTradeCount: totalTradeCountForCreator,
             bestAgentId,
             bestAgentPnlCycle:
               bestAgentPnlCycle !== -Infinity ? bestAgentPnlCycle : null,
