@@ -210,7 +210,7 @@ export class MessageService {
   }
 
   // S'exécute 5 minutes après chaque tâche de simulation de trading
-  @Cron('3-59/8 * * * *')  // 5 minutes après l'heure paire
+  @Cron('3-59/8 * * * *') 
   async sendPortfolioBalanceUpdate() {
     const startTime = Date.now();
     this.logger.log('Sending portfolio balance update request to active agents');
