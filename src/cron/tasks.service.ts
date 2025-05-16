@@ -229,8 +229,8 @@ export class TasksService {
   //   }
   // }
 
-  // Runs every 2 hours at minute 0 to send a trade simulation order to active agents.
-  @Cron('*/8 * * * *')
+  // Runs every 4 hours to send a trade simulation order to active agents.
+  @Cron('0 */4 * * *')
   async sendTradeSimulation() {
     const startTime = Date.now();
     this.logger.log('Sending trading simulation order to active agents');
@@ -254,11 +254,7 @@ export class TasksService {
       for (const agent of runningAgents) {
         await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
           content: {
-            text: `Before making any trading decision, FIRST retrieve your target allocation strategy (with get_target_allocation) and your entry/exit strategy (with get_strategy_text) that you previously defined. ONLY focus on the cryptocurrencies that were specifically assigned to you and mentioned in your strategy text.
-
-After reviewing these strategies, assess current market conditions on Paradex. If you see a compelling opportunity that aligns with your predefined entry conditions AND target allocation percentages, simulate a spot trade. If current conditions don't match your personal criteria defined in your strategy text, it's perfectly acceptable to wait.
-
-Your decision MUST be consistent with your previously defined strategies and should only involve the cryptocurrencies specifically assigned to you. Explain your reasoning in your own voice, focusing on how this decision aligns with your predefined strategy.`,
+            text: 'Before making any trading decision, FIRST retrieve your target allocation strategy (with get_target_allocation) and your entry/exit strategy (with get_strategy_text) that you previously defined. ONLY focus on the cryptocurrencies that were specifically assigned to you and mentioned in your strategy text.\n\nAfter reviewing these strategies, assess current market conditions on Paradex. If you see a compelling opportunity that aligns with your predefined entry conditions AND target allocation percentages, simulate a spot trade. If current conditions don't match your personal criteria defined in your strategy text, it's perfectly acceptable to wait.\n\nYour decision MUST be consistent with your previously defined strategies and should only involve the cryptocurrencies specifically assigned to you. Explain your reasoning in your own voice, focusing on how this decision aligns with your predefined strategy.',
           },
         });
       }
