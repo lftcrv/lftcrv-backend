@@ -276,7 +276,7 @@ Your decision MUST be consistent with your previously defined strategies and sho
   }
 
   // Runs every 30 minutes to send portfolio balance update request to active agents
-  @Cron('*/30 * * * *')
+  @Cron('*/5 * * * *')
   async sendPortfolioBalanceUpdate() {
     const startTime = Date.now();
     this.logger.log('Sending portfolio balance update request to active agents');
