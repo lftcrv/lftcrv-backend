@@ -230,7 +230,7 @@ export class TasksService {
   // }
 
   // Runs every 4 hours to send a trade simulation order to active agents.
-  @Cron('0 */2 * * *')
+  @Cron('0 */4 * * *')
   async sendTradeSimulation() {
     const startTime = Date.now();
     this.logger.log('Sending trading simulation order to active agents');
@@ -276,7 +276,7 @@ Your decision MUST be consistent with your previously defined strategies and sho
   }
 
   // Runs every 30 minutes to send portfolio balance update request to active agents
-  @Cron('*/5 * * * *')
+  @Cron('*/30 * * * *')
   async sendPortfolioBalanceUpdate() {
     const startTime = Date.now();
     this.logger.log('Sending portfolio balance update request to active agents');
