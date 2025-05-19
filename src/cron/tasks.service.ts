@@ -275,6 +275,46 @@ Your decision MUST be consistent with your previously defined strategies and sho
     }
   }
 
+  // Runs every 30 minutes to send portfolio balance update request to active agents
+  @Cron('*/30 * * * *')
+  async sendPortfolioBalanceUpdate() {
+    const startTime = Date.now();
+    this.logger.log('Sending portfolio balance update request to active agents');
+    try {
+      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany({
+        where: {
+          status: AgentStatus.RUNNING,
+          runtimeAgentId: { not: null },
+          port: { not: null },
+        },
+      });
+
+      this.logger.debug(`Found ${runningAgents.length} running agents for portfolio update`);
+      if (runningAgents.length === 0) {
+        this.logger.warn('⚠️ No active agent found for portfolio update.');
+        return;
+      }
+
+      for (const agent of runningAgents) {
+        await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
+          content: {
+            text: 'execute send_portfolio_balance',
+          },
+        });
+      }
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Successfully sent portfolio balance update requests to active agents (${duration}ms)`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to send portfolio balance update requests to active agents (${duration}ms): ${error.message}`,
+      );
+    }
+  }
+
   /**
    * Update agent performance snapshots every hour
    * This captures historical data for agent performance metrics including PnL

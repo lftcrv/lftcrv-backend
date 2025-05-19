@@ -17,21 +17,20 @@ import {
 import { AGENT_CREATION_DEFINITION } from './orchestration/agent-creation.definition';
 import { OrchestrationModule } from '../orchestration/orchestration.module';
 import { ElizaConfigService } from './services/leftcurve-config.service';
-import { MessageService } from 'src/message/message.service';
+import { MessageModule } from 'src/message/message.module';
 import { MockWalletService } from './services/mock-wallet.service';
 import { ConfigModule } from '@nestjs/config';
 import { CryptoSelectionService } from './utils/crypto_selection';
 import { PerformanceSnapshotService } from '../kpi/services/performance-snapshot.service';
 
 @Module({
-  imports: [OrchestrationModule, ConfigModule],
+  imports: [OrchestrationModule, ConfigModule, MessageModule],
   controllers: [ElizaAgentController],
   providers: [
     CreateDbRecordStep,
     CreateContainerStep,
     StartContainerStep,
     FileUploadService,
-    MessageService,
     MockWalletService,
     CryptoSelectionService,
     PerformanceSnapshotService,
