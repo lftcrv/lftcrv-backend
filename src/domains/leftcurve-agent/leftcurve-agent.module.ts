@@ -1,4 +1,4 @@
-import { Inject, Module, OnModuleInit } from '@nestjs/common';
+import { Inject, Module, OnModuleInit, forwardRef } from '@nestjs/common';
 import { ElizaAgentController } from './leftcurve-agent.controller';
 import { DockerService } from './services/docker.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
@@ -21,10 +21,15 @@ import { MessageModule } from 'src/message/message.module';
 import { MockWalletService } from './services/mock-wallet.service';
 import { ConfigModule } from '@nestjs/config';
 import { CryptoSelectionService } from './utils/crypto_selection';
-import { PerformanceSnapshotService } from '../kpi/services/performance-snapshot.service';
+import { KPIModule } from '../kpi/kpi.module';
 
 @Module({
-  imports: [OrchestrationModule, ConfigModule, MessageModule],
+  imports: [
+    OrchestrationModule, 
+    ConfigModule, 
+    MessageModule,
+    forwardRef(() => KPIModule),
+  ],
   controllers: [ElizaAgentController],
   providers: [
     CreateDbRecordStep,
@@ -33,7 +38,6 @@ import { PerformanceSnapshotService } from '../kpi/services/performance-snapshot
     FileUploadService,
     MockWalletService,
     CryptoSelectionService,
-    PerformanceSnapshotService,
     {
       provide: ServiceTokens.ElizaAgentQuery,
       useClass: ElizaAgentQueryService,

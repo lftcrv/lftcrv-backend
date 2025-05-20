@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { IAccountBalance } from '../interfaces/kpi.interface';
+import { IAccountBalance, AccountBalanceTokens, IPnLCalculation } from '../interfaces/kpi.interface';
 import { AccountBalanceDto, TokenBalanceDto } from '../dtos/kpi.dto';
 import { ElizaAgent } from '@prisma/client';
 import { IPriceService } from '../../analysis/technical/interfaces/price.interface';
@@ -42,6 +42,8 @@ export class KPIService implements IAccountBalance {
     private readonly avnuPriceService: IPriceService,
     @Inject(AnalysisToken.ParadexPriceService)
     private readonly paradexPriceService: IPriceService,
+    @Inject(AccountBalanceTokens.PnLCalculation)
+    private readonly pnlCalculationService: IPnLCalculation,
   ) {
     // Build token address map for AVNU tokens
     AVNU_TOKENS.forEach((token) => {
@@ -245,38 +247,14 @@ export class KPIService implements IAccountBalance {
     }
   }
 
-  async getAgentPnL(runtimeAgentId: string): Promise<any> {
-    this.logger.log(
-      `Calculating PnL for agent with runtimeAgentId: ${runtimeAgentId}`,
-    );
-
-    // First try to find by runtimeAgentId
-    let agent = await this.findAgentByRuntimeId(runtimeAgentId);
-
-    // If not found, try to find by regular id
-    if (!agent) {
-      agent = await this.prisma.elizaAgent.findUnique({
-        where: { id: runtimeAgentId },
-      });
-    }
-
-    if (!agent) {
-      throw new NotFoundException(
-        `Agent with runtimeAgentId or id ${runtimeAgentId} not found`,
-      );
-    }
-
-    return this.calculatePnLForAgent(agent);
+  async getAgentPnL(runtimeAgentId: string, forceRefresh = false): Promise<any> {
+    // Déléguer au service de calcul de PnL unifié
+    return this.pnlCalculationService.getAgentPnL(runtimeAgentId, forceRefresh);
   }
 
-  async getAllAgentsPnL(): Promise<any[]> {
-    this.logger.log('Calculating PnL for all agents');
-    const agents = await this.prisma.elizaAgent.findMany();
-    const results = await Promise.all(
-      agents.map((agent) => this.calculatePnLForAgent(agent)),
-    );
-
-    return results.sort((a, b) => b.pnl - a.pnl);
+  async getAllAgentsPnL(forceRefresh = false): Promise<any[]> {
+    // Déléguer au service de calcul de PnL unifié
+    return this.pnlCalculationService.getAllAgentsPnL(forceRefresh);
   }
 
   async getBestPerformingAgent(): Promise<any> {
@@ -368,99 +346,9 @@ export class KPIService implements IAccountBalance {
   }
 
   private async calculatePnLForAgent(agent: any): Promise<any> {
-    const extendedPrisma = this.prisma as ExtendedPrismaService;
-    const balances = await extendedPrisma.paradexAccountBalance.findMany({
-      where: {
-        agentId: agent.id,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    if (balances.length === 0) {
-      return {
-        agentId: agent.id,
-        runtimeAgentId: agent.runtimeAgentId,
-        name: agent.name,
-        pnl: 0,
-        pnlPercentage: 0,
-        firstBalance: null,
-        latestBalance: null,
-        message: 'No balance data available for this agent',
-      };
-    }
-
-    // Filter out any zero balance records - these shouldn't be used for PnL calculations
-    const nonZeroBalances = balances.filter(
-      (balance) => balance.balanceInUSD !== 0 && balance.balanceInUSD !== null,
-    );
-
-    if (nonZeroBalances.length === 0) {
-      return {
-        agentId: agent.id,
-        runtimeAgentId: agent.runtimeAgentId,
-        name: agent.name,
-        pnl: 0,
-        pnlPercentage: 0,
-        firstBalance: null,
-        latestBalance: null,
-        message: 'No non-zero balance data available for this agent',
-      };
-    }
-
-    const firstBalanceRecord = nonZeroBalances[0];
-    const latestBalanceRecord = nonZeroBalances[nonZeroBalances.length - 1];
-
-    // Get token balances for the first and latest balance records
-    const firstTokenBalances =
-      await extendedPrisma.portfolioTokenBalance.findMany({
-        where: { accountBalanceId: firstBalanceRecord.id },
-      });
-
-    const latestTokenBalances =
-      await extendedPrisma.portfolioTokenBalance.findMany({
-        where: { accountBalanceId: latestBalanceRecord.id },
-      });
-
-    // Calculate actual balance values
-    const firstTotalValueUsd = firstTokenBalances.reduce(
-      (sum, token) => sum + Number(token.valueUsd),
-      0,
-    );
-
-    const latestTotalValueUsd = latestTokenBalances.reduce(
-      (sum, token) => sum + Number(token.valueUsd),
-      0,
-    );
-
-    // Use calculated values or stored values if very close
-    const actualFirstBalance =
-      Math.abs(firstTotalValueUsd - firstBalanceRecord.balanceInUSD) < 0.01
-        ? firstBalanceRecord.balanceInUSD
-        : firstTotalValueUsd || 0;
-
-    const actualLatestBalance =
-      Math.abs(latestTotalValueUsd - latestBalanceRecord.balanceInUSD) < 0.01
-        ? latestBalanceRecord.balanceInUSD
-        : latestTotalValueUsd || 0;
-
-    const pnl = actualLatestBalance - actualFirstBalance;
-
-    const pnlPercentage =
-      actualFirstBalance !== 0 ? (pnl / actualFirstBalance) * 100 : 0;
-
-    return {
-      agentId: agent.id,
-      runtimeAgentId: agent.runtimeAgentId,
-      name: agent.name,
-      pnl,
-      pnlPercentage,
-      firstBalanceDate: firstBalanceRecord.createdAt,
-      latestBalanceDate: latestBalanceRecord.createdAt,
-      firstBalance: actualFirstBalance,
-      latestBalance: actualLatestBalance,
-    };
+    // Cette méthode est maintenant dépréciée - utilisez le service PnLCalculation à la place
+    this.logger.warn('calculatePnLForAgent is deprecated. Use PnLCalculationService instead.');
+    return this.pnlCalculationService.getAgentPnL(agent.runtimeAgentId);
   }
 
   private async findAgentByRuntimeId(runtimeAgentId: string): Promise<any> {
