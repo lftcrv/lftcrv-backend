@@ -14,10 +14,11 @@ import { ServiceTokens as CreatorsServiceTokens } from '../domains/creators/inte
 import { ICreatorsService } from '../domains/creators/interfaces/creators-service.interface';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
 
 @Injectable()
 export class TasksService {
@@ -431,18 +432,23 @@ Your decision MUST be consistent with your previously defined strategies and sho
   @Cron('55 * * * *')
   async syncTokenPrices() {
     const startTime = Date.now();
-    this.logger.log('Starting token price synchronization');
-
+    this.logger.log(
+      `Starting token price synchronization using ${this.TOKEN_PRICE_SYNC_SCRIPT}`,
+    );
     try {
       // Check if script exists
       if (!fs.existsSync(this.TOKEN_PRICE_SYNC_SCRIPT)) {
-        throw new Error(
+        this.logger.error(
           `Token price sync script not found at ${this.TOKEN_PRICE_SYNC_SCRIPT}`,
         );
+        return;
       }
 
       // Make sure script is executable
-      await execPromise(`chmod +x ${this.TOKEN_PRICE_SYNC_SCRIPT}`);
+      await execFilePromise('chmod', ['+x', this.TOKEN_PRICE_SYNC_SCRIPT]);
+      this.logger.debug(
+        `Ensured ${this.TOKEN_PRICE_SYNC_SCRIPT} is executable.`,
+      );
 
       // Execute the script
       const { stdout, stderr } = await execPromise(

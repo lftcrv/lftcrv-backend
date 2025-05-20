@@ -240,39 +240,61 @@ export class TokenMasterService {
     let updatedCount = 0;
     const notFoundSymbols: string[] = [];
 
-    for (const update of updates) {
-      try {
-        const result = await this.prisma.tokenMaster.updateMany({
-          where: { canonicalSymbol: update.symbol },
-          data: { priceUSD: update.price },
-        });
+    if (updates.length === 0) {
+      return { count: 0, notFound: [] };
+    }
+
+    const operations = updates.map((update) =>
+      this.prisma.tokenMaster.updateMany({
+        where: { canonicalSymbol: update.symbol },
+        data: { priceUSD: update.price },
+      }),
+    );
+
+    try {
+      const results = await this.prisma.$transaction(operations);
+      results.forEach((result, index) => {
         if (result.count > 0) {
           updatedCount += result.count;
         } else {
-          notFoundSymbols.push(update.symbol);
+          notFoundSymbols.push(updates[index].symbol);
           this.logger.warn(
-            `Token with symbol '${update.symbol}' not found for price update.`,
+            `Token with symbol '${updates[index].symbol}' not found or not updated during batch transaction.`,
           );
         }
-      } catch (error) {
-        this.logger.error(
-          `Error updating price for symbol ${update.symbol}: ${error.message}`,
-          error.stack,
-        );
-        notFoundSymbols.push(update.symbol);
-        // Decide if you want to throw or collect errors
-        // For now, we log and add to notFoundSymbols if it was a not-found type issue indirectly
-        // Or just continue if it was another type of error, to let other updates proceed.
-      }
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error during batch price update by symbol transaction: ${error.message}`,
+        error.stack,
+      );
+      // If the transaction fails, all operations are rolled back.
+      // Assume all symbols in this batch might have been affected or the operation was Canceled.
+      updates.forEach((update) => {
+        if (!notFoundSymbols.includes(update.symbol)) {
+          notFoundSymbols.push(update.symbol);
+        }
+      });
+      // It's important to inform the client that the batch operation failed.
+      // Re-throwing or returning a specific error structure might be needed.
+      // For now, we let it proceed to the check below, which might throw NotFoundException.
+      // A more specific error might be: throw new InternalServerErrorException(`Batch price update failed: ${error.message}`);
     }
 
-    if (updatedCount === 0 && notFoundSymbols.length === updates.length) {
+    // Ensure notFoundSymbols are unique in case of transaction error adding all symbols
+    const uniqueNotFoundSymbols = [...new Set(notFoundSymbols)];
+
+    if (
+      updatedCount === 0 &&
+      uniqueNotFoundSymbols.length === updates.length &&
+      updates.length > 0
+    ) {
       throw new NotFoundException(
-        'None of the provided token symbols were found for price update.',
+        'None of the provided token symbols were found or updated.',
       );
     }
 
-    return { count: updatedCount, notFound: notFoundSymbols };
+    return { count: updatedCount, notFound: uniqueNotFoundSymbols };
   }
 
   async remove(id: string): Promise<TokenMaster> {
