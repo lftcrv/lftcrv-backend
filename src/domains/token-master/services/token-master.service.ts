@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { TokenMaster } from '@prisma/client'; // Import the Prisma-generated type
@@ -81,8 +82,7 @@ export class TokenMasterService {
 
   async findAll(): Promise<{ tokens: TokenMaster[]; count: number }> {
     const tokens = await this.prisma.tokenMaster.findMany();
-    const count = await this.prisma.tokenMaster.count();
-    return { tokens, count };
+    return { tokens, count: tokens.length };
   }
 
   async findAllPrices(): Promise<
@@ -269,32 +269,25 @@ export class TokenMasterService {
         error.stack,
       );
       // If the transaction fails, all operations are rolled back.
-      // Assume all symbols in this batch might have been affected or the operation was Canceled.
-      updates.forEach((update) => {
-        if (!notFoundSymbols.includes(update.symbol)) {
-          notFoundSymbols.push(update.symbol);
-        }
-      });
-      // It's important to inform the client that the batch operation failed.
-      // Re-throwing or returning a specific error structure might be needed.
-      // For now, we let it proceed to the check below, which might throw NotFoundException.
-      // A more specific error might be: throw new InternalServerErrorException(`Batch price update failed: ${error.message}`);
-    }
-
-    // Ensure notFoundSymbols are unique in case of transaction error adding all symbols
-    const uniqueNotFoundSymbols = [...new Set(notFoundSymbols)];
-
-    if (
-      updatedCount === 0 &&
-      uniqueNotFoundSymbols.length === updates.length &&
-      updates.length > 0
-    ) {
-      throw new NotFoundException(
-        'None of the provided token symbols were found or updated.',
+      // It's a server-side issue, not just "not found" symbols.
+      throw new InternalServerErrorException(
+        `Batch price update by symbol failed due to a transaction error: ${error.message}`,
       );
     }
 
-    return { count: updatedCount, notFound: uniqueNotFoundSymbols };
+    // This part is now less likely to be hit if the transaction fails above,
+    // but kept for cases where transaction succeeds but updates 0 records.
+    if (
+      updatedCount === 0 &&
+      notFoundSymbols.length === updates.length &&
+      updates.length > 0
+    ) {
+      throw new NotFoundException(
+        'None of the provided token symbols were found or updated (transaction succeeded but no records matched).',
+      );
+    }
+
+    return { count: updatedCount, notFound: [...new Set(notFoundSymbols)] }; // Ensure unique symbols
   }
 
   async remove(id: string): Promise<TokenMaster> {

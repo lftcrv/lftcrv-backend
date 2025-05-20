@@ -53,11 +53,24 @@ declare -a not_found_token_symbols=()
 
 # Fetch all tokens from API instead of reading from a file
 log_message "DEBUG" "Fetching tokens from API: $API_BASE_URL/token-master"
-api_response_json=$(curl -s -H "X-API-KEY: $API_KEY" "$API_BASE_URL/token-master")
+# api_response_json=$(curl -s -H "X-API-KEY: $API_KEY" "$API_BASE_URL/token-master")
+
+response=$(curl -s -f -H "X-API-KEY: $API_KEY" --write-out "\n%{http_code}" "$API_BASE_URL/token-master")
+http_code=$(echo "$response" | tail -n1)
+api_response_json=$(echo "$response" | sed '$d')
+
+# Validate HTTP status code
+if [[ "$http_code" -ne 200 ]]; then
+    log_message "ERROR" "Failed to fetch tokens from API. HTTP status code: $http_code. Response: $api_response_json"
+    exit 1
+fi
 
 # Validate API response (basic check for valid JSON array)
+# The -f flag in curl above will cause curl to exit with an error on HTTP errors,
+# so the script would likely exit before this if http_code is not 2xx.
+# However, keeping this check for non-array valid JSON is still good.
 if ! echo "$api_response_json" | jq -e '. | type == "array"' >/dev/null 2>&1; then
-    log_message "ERROR" "Failed to fetch tokens from API"
+    log_message "ERROR" "Invalid JSON response from API (not an array) after successful HTTP GET. Response: $api_response_json"
     exit 1
 fi
 

@@ -53,6 +53,7 @@ export class CreateTokenMasterDto {
   })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   priceUSD?: number;
 
   @ApiProperty({
