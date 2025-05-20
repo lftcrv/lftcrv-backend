@@ -41,8 +41,8 @@ trap 'log_message "ERROR" "Script ended unexpectedly at or before line $LINENO (
 set -e
 
 # Configuration variables
-API_BASE_URL="http://127.0.0.1:8080/api"
-API_KEY="secret"
+API_BASE_URL= process.env.DATABASE_URL
+API_KEY= process.env.BACKEND_API_KEY
 USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
 ADDRESS_BATCH_SIZE=30
 API_CALL_DELAY_SECONDS=1
