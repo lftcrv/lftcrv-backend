@@ -279,17 +279,23 @@ Your decision MUST be consistent with your previously defined strategies and sho
   @Cron('*/30 * * * *')
   async sendPortfolioBalanceUpdate() {
     const startTime = Date.now();
-    this.logger.log('Sending portfolio balance update request to active agents');
+    this.logger.log(
+      'Sending portfolio balance update request to active agents',
+    );
     try {
-      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany({
-        where: {
-          status: AgentStatus.RUNNING,
-          runtimeAgentId: { not: null },
-          port: { not: null },
+      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany(
+        {
+          where: {
+            status: AgentStatus.RUNNING,
+            runtimeAgentId: { not: null },
+            port: { not: null },
+          },
         },
-      });
+      );
 
-      this.logger.debug(`Found ${runningAgents.length} running agents for portfolio update`);
+      this.logger.debug(
+        `Found ${runningAgents.length} running agents for portfolio update`,
+      );
       if (runningAgents.length === 0) {
         this.logger.warn('⚠️ No active agent found for portfolio update.');
         return;
