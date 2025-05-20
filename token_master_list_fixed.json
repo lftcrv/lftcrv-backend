@@ -1,0 +1,731 @@
+[
+  {
+    "CanonicalSymbol": "KSHIB",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "KSHIB",
+    "ContractAddress": "0x11C0c93035d1302083eB09841042cFa582839A8C",
+    "FoundQuoteSymbol": "WBNB",
+    "PriceUSD": null,
+    "Method": "KSHIB/WBNB on BSC"
+  },
+  {
+    "CanonicalSymbol": "VVV",
+    "ChainID": "base",
+    "DexScreenerSymbol": "VVV",
+    "ContractAddress": "0xacfE6019Ed1A7Dc6f7B508C02d1b04ec88cC21bf",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "VVV/WETH on Base"
+  },
+  {
+    "CanonicalSymbol": "TRX",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "TRX",
+    "ContractAddress": "0x50327c6c5a14DCaDE707ABad2E27eB517df87AB5",
+    "FoundQuoteSymbol": "USDT",
+    "PriceUSD": null,
+    "Method": "TRX/USDT on ETH"
+  },
+  {
+    "CanonicalSymbol": "CHILLGUY",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "CHILLGUY",
+    "ContractAddress": "Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "CHILLGUY/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "FARTCOIN",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "Fartcoin ",
+    "ContractAddress": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
+    "FoundQuoteSymbol": "SOL",
+    "PriceUSD": null,
+    "Method": "FARTCOIN/SOL on SOL"
+  },
+  {
+    "CanonicalSymbol": "MELANIA",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "MELANIA",
+    "ContractAddress": "FUAfBo2jgks6gB4Z4LfZkqSZgzNucisEHqnNebaRxM1P",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "MELANIA/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "TST",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "TST",
+    "ContractAddress": "0x86Bb94DdD16Efc8bc58e6b056e8df71D9e666429",
+    "FoundQuoteSymbol": "WBNB",
+    "PriceUSD": null,
+    "Method": "TST/WBNB on BSC"
+  },
+  {
+    "CanonicalSymbol": "POPCAT",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "POPCAT",
+    "ContractAddress": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "POPCAT/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "BOME",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "BOME",
+    "ContractAddress": "ukHH6c7mMyiWCf1b9pnWe25TSpkDDt3H5pQZgZ74J82",
+    "FoundQuoteSymbol": "SOL",
+    "PriceUSD": null,
+    "Method": "BOME/SOL on SOL"
+  },
+  {
+    "CanonicalSymbol": "DOGE",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "DOGE",
+    "ContractAddress": "9TY6DUg1VSssYH5tFE95qoq5hnAGFak4w3cn72sJNCoV",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "DOGE/USDC on SOL (Wrapped)"
+  },
+  {
+    "CanonicalSymbol": "WLD",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "WLD",
+    "ContractAddress": "DN4L5JE9VuGpMt1SsEWqyybUqyrYuWuywmTq7Q5GVDFK",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "WLD/USDC on SOL (Wrapped)"
+  },
+  {
+    "CanonicalSymbol": "GOAT",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "GOAT",
+    "ContractAddress": "CzLSujWBLFsSjncfkh59rUFqvafWcY5tzedWJSuypump",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "GOAT/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "MOODENG",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "MOODENG",
+    "ContractAddress": "ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "MOODENG/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "PNUT",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "PNUT",
+    "ContractAddress": "7jYfnjn3jHWmUhhgfkZ9uUEKroH3Zz1BvF8RmVQHm86D",
+    "FoundQuoteSymbol": "SOL",
+    "PriceUSD": null,
+    "Method": "PNUT/SOL on SOL"
+  },
+  {
+    "CanonicalSymbol": "VINE",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "VINE",
+    "ContractAddress": "6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "VINE/USDC on SOL (Symbol Search)"
+  },
+  {
+    "CanonicalSymbol": "VIRTUAL",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "VIRTUAL",
+    "ContractAddress": "0x44ff8620b8cA30902395A7bD3F2407e1A091BF73",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "VIRTUAL/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "ORDI",
+    "ChainID": "paradex",
+    "DexScreenerSymbol": "ORDI",
+    "ContractAddress": "0xF06aEd41437F9e6d5b21812bb5D41fd709Bc4f78",
+    "FoundQuoteSymbol": "USDT",
+    "PriceUSD": null,
+    "Method": "ORDI/USDT on BSC"
+  },
+  {
+    "CanonicalSymbol": "RAY",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "RAY",
+    "ContractAddress": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "RAY/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "SAND",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "SAND",
+    "ContractAddress": "0x3845badAde8e6dFF049820680d1F14bD3903a5d0",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "SAND/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "SEI",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "SEI",
+    "ContractAddress": "0xbdF43ecAdC5ceF51B7D1772F722E40596BC1788B",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "SEI/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "XLM",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "XLM",
+    "ContractAddress": "6y4bqoLa2awTjxyvqcKK88RsaTD3UCc4e4UEMZJ6fCTH",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "XLM/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "XRP",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "XRP",
+    "ContractAddress": "0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE",
+    "FoundQuoteSymbol": "USDT",
+    "PriceUSD": null,
+    "Method": "XRP/USDT on BSC"
+  },
+  {
+    "CanonicalSymbol": "ZRO",
+    "ChainID": "arbitrum",
+    "DexScreenerSymbol": "ZRO",
+    "ContractAddress": "0x6985884C4392D348587B19cb9eAAf157F13271cd",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "ZRO/WETH on Arbitrum"
+  },
+  {
+    "CanonicalSymbol": "PENGU",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "PENGU",
+    "ContractAddress": "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "PENGU/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "RED",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "RED",
+    "ContractAddress": "0xc43C6bfeDA065fE2c4c11765Bf838789bd0BB5dE",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "RED/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "APT",
+    "ChainID": "aptos",
+    "DexScreenerSymbol": "APT", 
+    "ContractAddress": "0xa", 
+    "FoundQuoteSymbol": "zUSDC", 
+    "PriceUSD": null,
+    "Method": "APT/zUSDC on Aptos (Native)"
+  },
+  {
+    "CanonicalSymbol": "FLOW",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "FLOW",
+    "ContractAddress": "0xC6e64729931f60D2c8Bc70A27D66D9E0c28D1BF9",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "FLOW/WETH on ETH"
+  },
+  {
+    "CanonicalSymbol": "JTO",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "JTO",
+    "ContractAddress": "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "JTO/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "SOL",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "SOL",
+    "ContractAddress": "So11111111111111111111111111111111111111112",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "SOL (WSOL Addr)/USDC"
+  },
+  {
+    "CanonicalSymbol": "TAO",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "TAO",
+    "ContractAddress": "8oFofqGJRicNSBEXVBYd4JoxAuWmqfS1qq4BTZFso6je",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "TAO/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "TRUMP",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "TRUMP",
+    "ContractAddress": "6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "TRUMP/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "BMT",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "BMT",
+    "ContractAddress": "0x7d814b9eD370Ec0a502EdC3267393bF62d891B62",
+    "FoundQuoteSymbol": "WBNB",
+    "PriceUSD": null,
+    "Method": "BMT/WBNB on BSC"
+  },
+  {
+    "CanonicalSymbol": "KAITO",
+    "ChainID": "base",
+    "DexScreenerSymbol": "KAITO",
+    "ContractAddress": "0x98d0baa52b2D063E780DE12F615f963Fe8537553",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "KAITO/WETH on Base"
+  },
+  {
+    "CanonicalSymbol": "LAYER",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "LAYER",
+    "ContractAddress": "LAYER4xPpTCb3QL8S9u41EAhAX7mhBn8Q6xMTwY2Yzc",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "LAYER/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "MOVE",
+    "ChainID": "ethereum", 
+    "DexScreenerSymbol": "MOVE",
+    "ContractAddress": "0x3073f7aAA4DB83f95e9FFf17424F71D4751a3073",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "MOVE/WETH on ETH by Addr"
+  },
+  {
+    "CanonicalSymbol": "PLUME",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "PLUME",
+    "ContractAddress": "0x4C1746A800D224393fE2470C70A35717eD4eA5F1",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "PLUME/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "CRV",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "CRV",
+    "ContractAddress": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "CRV/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "JUP",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "JUP",
+    "ContractAddress": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "JUP/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "AEVO",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "AEVO",
+    "ContractAddress": "0xB528edBef013aff855ac3c50b381f253aF13b997",
+    "FoundQuoteSymbol": "ETH",
+    "PriceUSD": null,
+    "Method": "AEVO/ETH on ETH"
+  },
+  {
+    "CanonicalSymbol": "ENA",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "ENA",
+    "ContractAddress": "0x57e114B691Db790C35207b2e685D4A43181e6061",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "ENA/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "PYTH",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "PYTH",
+    "ContractAddress": "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "PYTH/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "RUNE",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "RUNE",
+    "ContractAddress": "0x3155BA85D5F96b2d030a4966AF206230e46849cb",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "RUNE Addr/WETH on ETH"
+  },
+  {
+    "CanonicalSymbol": "WIF",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "$WIF",
+    "ContractAddress": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "WIF Addr/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "AIXBT",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "AIXBT",
+    "ContractAddress": "14zP2ToQ79XWvc7FQpm4bRnp9d6Mp1rFfsUW3gpLcRX",
+    "FoundQuoteSymbol": "SOL",
+    "PriceUSD": null,
+    "Method": "AIXBT/SOL on SOL"
+  },
+  {
+    "CanonicalSymbol": "GRASS",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "GRASS",
+    "ContractAddress": "Grass7B4RdKfBCjTKgSqnXkqjwiGvQyFbuSCUJr3XXjs",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "GRASS/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "NEIRO",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "NEIRO",
+    "ContractAddress": "CTg3ZgYx79zrE1MteDVkmkcGniiFrK1hJ6yiabropump",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "NEIRO/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "ARB",
+    "ChainID": "arbitrum",
+    "DexScreenerSymbol": "ARB",
+    "ContractAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "ARB/USDC on Arbitrum"
+  },
+  {
+    "CanonicalSymbol": "DOT",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "DOT",
+    "ContractAddress": "EZzQqEQn9P8HFvpARuvznSEaFoY1Qwr1oMfzZFHB4KQa",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "DOT (Wrapped on SOL)/USDC by Addr"
+  },
+  {
+    "CanonicalSymbol": "BNB",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "WBNB",
+    "ContractAddress": "0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "WBNB/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "MORPHO",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "MORPHO",
+    "ContractAddress": "0x58D97B57BB95320F9a05dC918Aef65434969c2B2",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "MORPHO/WETH on ETH"
+  },
+  {
+    "CanonicalSymbol": "PENDLE",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "PENDLE",
+    "ContractAddress": "0x808507121B80c02388fAd14726482e061B8da827",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "PENDLE/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "TIA",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "TIA",
+    "ContractAddress": "TiARMWkBqag2ohzg8DF94W6etyHtD6D8FWrRU3c2fkM",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "TIA/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "TRB",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "TRB",
+    "ContractAddress": "0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0",
+    "FoundQuoteSymbol": "ETH",
+    "PriceUSD": null,
+    "Method": "TRB/ETH on ETH"
+  },
+  {
+    "CanonicalSymbol": "BERA",
+    "ChainID": "hyperliquid",
+    "DexScreenerSymbol": "BERA",
+    "ContractAddress": "0x0b6ae68f39bfd088744374daa99db226",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "BERA/USDC on Hyperliquid"
+  },
+  {
+    "CanonicalSymbol": "ELX",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "ELX",
+    "ContractAddress": "0x89A8c847f41C0dfA6c8B88638bACca8a0b777Da7",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "ELX/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "IP",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "IP",
+    "ContractAddress": "0xE61B86b8398e0fefa2097a1Bcf9F5Cf47E0d2484",
+    "FoundQuoteSymbol": "WBNB",
+    "PriceUSD": null,
+    "Method": "IP (Interplanetary)/WBNB on BSC"
+  },
+  {
+    "CanonicalSymbol": "OM",
+    "ChainID": "base",
+    "DexScreenerSymbol": "OM",
+    "ContractAddress": "0x3992B27dA26848C2b19CeA6Fd25ad5568B68AB98",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "OM/WETH on Base"
+  },
+  {
+    "CanonicalSymbol": "SCR",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "SCR",
+    "ContractAddress": "5gPT2VaSmKoBqsVf6ee4wSNJZ1xgny8VNxe3TZgxsPXH",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "SCR/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "USUAL",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "USUAL", 
+    "ContractAddress": "0xC4441c2BE5d8fA8126822B9929CA0b81Ea0DE38E",
+    "FoundQuoteSymbol": "USUALX",
+    "PriceUSD": null,
+    "Method": "USUAL/USUALX on ETH by Addr"
+  },
+  {
+    "CanonicalSymbol": "ADA",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "ADA",
+    "ContractAddress": "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+    "FoundQuoteSymbol": "WBNB",
+    "PriceUSD": null,
+    "Method": "ADA Addr/WBNB on BSC"
+  },
+  {
+    "CanonicalSymbol": "AVAX",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "AVAX",
+    "ContractAddress": "AUrMpCDYYcPuHhyNX8gEEqbmDPFUpBpHrNW3vPeCFn5Z",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "AVAX (Wrapped on SOL)/USDC by Addr"
+  },
+  {
+    "CanonicalSymbol": "DYDX",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "DYDX",
+    "ContractAddress": "4Hx6Bj56eGyw8EJrrheM6LBQAvVYRikYCWsALeTrwyRU",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "DYDX (Wrapped on SOL)/USDC by Addr"
+  },
+  {
+    "CanonicalSymbol": "FIL",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "FIL",
+    "ContractAddress": "0x0D8Ce2A99Bb6e3B7Db580eD848240e4a0F9aE153",
+    "FoundQuoteSymbol": "WBNB",
+    "PriceUSD": null,
+    "Method": "FIL/WBNB on BSC by Addr"
+  },
+  {
+    "CanonicalSymbol": "INJ",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "INJ",
+    "ContractAddress": "0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "INJ/WETH on Ethereum"
+  },
+  {
+    "CanonicalSymbol": "LDO",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "LDO",
+    "ContractAddress": "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "LDO/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "OP",
+    "ChainID": "optimism",
+    "DexScreenerSymbol": "OP",
+    "ContractAddress": "0x4200000000000000000000000000000000000042",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "OP/USDC on Optimism"
+  },
+  {
+    "CanonicalSymbol": "XMR",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "XMR",
+    "ContractAddress": "ALBPTUV1dWTa3rY3BX4Qj9GnJS7BDnJWj5CuiWrQXBZq",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "XMR/USDC on SOL"
+  },
+  {
+    "CanonicalSymbol": "LTC",
+    "ChainID": "bsc",
+    "DexScreenerSymbol": "LTC",
+    "ContractAddress": "0x4338665CBB7B2485A8855A139b75D5e34AB0DB94",
+    "FoundQuoteSymbol": "USDT",
+    "PriceUSD": null,
+    "Method": "LTC/USDT on BSC by Addr"
+  },
+  {
+    "CanonicalSymbol": "ONDO",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "ONDO",
+    "ContractAddress": "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "ONDO/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "SUI",
+    "ChainID": "solana",
+    "DexScreenerSymbol": "SUI",
+    "ContractAddress": "FaVZFGC7XPoQU5QS9TkYGu4kiTU9KumkxKqTYPWQVUQ6",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "SUI (Wrapped on SOL)/USDC by Addr"
+  },
+  {
+    "CanonicalSymbol": "TON",
+    "ChainID": "paradex",
+    "DexScreenerSymbol": "TON",
+    "ContractAddress": "J7JwX52PTgpGdBbjoPkg7fbdFqt5DiFVaTedyanNLJJ9",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "TON (Wrapped on SOL)/USDC by Addr"
+  },
+  {
+    "CanonicalSymbol": "HYPE",
+    "ChainID": "hyperliquid",
+    "DexScreenerSymbol": "HYPE",
+    "ContractAddress": "0x0d01dc56dcaaca66ad901c959b4011ec",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "HYPE/USDC on Hyperliquid"
+  },
+  {
+    "CanonicalSymbol": "LINK",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "LINK",
+    "ContractAddress": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "LINK/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "MKR",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "MKR",
+    "ContractAddress": "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2",
+    "FoundQuoteSymbol": "WETH",
+    "PriceUSD": null,
+    "Method": "MKR Addr/WETH on ETH"
+  },
+  {
+    "CanonicalSymbol": "NEAR",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "NEAR",
+    "ContractAddress": "0x85F17Cf997934a597031b2E18a9aB6ebD4B9f6a4",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "NEAR/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "UNI",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "UNI",
+    "ContractAddress": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "UNI/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "EIGEN",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "EIGEN",
+    "ContractAddress": "0xec53bF9167f50cDEB3Ae105f56099aaaB9061F83",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "EIGEN/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "STRK",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "STRK", 
+    "ContractAddress": "0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766",
+    "FoundQuoteSymbol": "WETH", 
+    "PriceUSD": null,
+    "Method": "STRK (Corrected Addr)/WETH on ETH" 
+  },
+  {
+    "CanonicalSymbol": "AAVE",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "AAVE",
+    "ContractAddress": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "AAVE/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "ETH",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "WETH",
+    "ContractAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "WETH/USDC on ETH"
+  },
+  {
+    "CanonicalSymbol": "BTC",
+    "ChainID": "ethereum",
+    "DexScreenerSymbol": "WBTC",
+    "ContractAddress": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    "FoundQuoteSymbol": "USDC",
+    "PriceUSD": null,
+    "Method": "WBTC/USDC on ETH"
+  }
+]
