@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { TokenMaster } from '@prisma/client'; // Import the Prisma-generated type
+import { validate as isValidUUIDv4, version as getUUIDVersion } from 'uuid';
 import {
   CreateTokenMasterDto,
   CreateBatchTokenMasterDto,
@@ -320,8 +321,6 @@ export class TokenMasterService {
 
   // Helper to check if a string is a UUID (simple check)
   private isValidUUID(id: string): boolean {
-    const uuidRegex =
-      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    return uuidRegex.test(id);
+    return isValidUUIDv4(id) && getUUIDVersion(id) === 4;
   }
 }
