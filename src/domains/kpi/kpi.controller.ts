@@ -7,8 +7,9 @@ import {
   Param,
   UseInterceptors,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { LoggingInterceptor } from '../../shared/interceptors/logging.interceptor';
 import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { AccountBalanceDto } from './dtos/kpi.dto';
@@ -43,10 +44,20 @@ export class KPIController {
     description: 'PnL retrieved successfully',
   })
   @ApiResponse({ status: 404, description: 'Agent not found' })
+  @ApiQuery({
+    name: 'forceRefresh',
+    required: false,
+    type: Boolean,
+    description: 'Force refresh the PnL calculation cache',
+  })
   async getAgentPnL(
     @Param('runtimeAgentId') runtimeAgentId: string,
+    @Query('forceRefresh') forceRefresh?: string | boolean,
   ): Promise<any> {
-    return this.balanceAccountService.getAgentPnL(runtimeAgentId);
+    return this.balanceAccountService.getAgentPnL(
+      runtimeAgentId,
+      forceRefresh === true || forceRefresh === 'true',
+    );
   }
 
   @Get('pnl')
@@ -56,8 +67,18 @@ export class KPIController {
     status: 200,
     description: 'PnL for all agents retrieved successfully',
   })
-  async getAllAgentsPnL(): Promise<any[]> {
-    return this.balanceAccountService.getAllAgentsPnL();
+  @ApiQuery({
+    name: 'forceRefresh',
+    required: false,
+    type: Boolean,
+    description: 'Force refresh the PnL calculation cache',
+  })
+  async getAllAgentsPnL(
+    @Query('forceRefresh') forceRefresh?: string | boolean,
+  ): Promise<any[]> {
+    return this.balanceAccountService.getAllAgentsPnL(
+      forceRefresh === true || forceRefresh === 'true',
+    );
   }
 
   @Get('pnl/best')

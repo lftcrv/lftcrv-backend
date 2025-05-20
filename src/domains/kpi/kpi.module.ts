@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { KPIController } from './kpi.controller';
 import { KPIService } from './services/kpi.service';
 import { AccountBalanceTokens } from './interfaces';
@@ -8,10 +8,11 @@ import { MetricsController } from './controllers/metrics.controller';
 import { ElizaAgentModule } from '../leftcurve-agent/leftcurve-agent.module';
 import { AnalysisModule } from '../analysis/analysis.module';
 import { ConfigModule } from '@nestjs/config';
+import { PnLCalculationService } from './services/pnl-calculation.service';
 
 @Module({
   imports: [
-    ElizaAgentModule,
+    forwardRef(() => ElizaAgentModule),
     AnalysisModule,
     ConfigModule,
   ],
@@ -25,12 +26,20 @@ import { ConfigModule } from '@nestjs/config';
       provide: AccountBalanceTokens.AccountBalance,
       useClass: KPIService,
     },
+    {
+      provide: AccountBalanceTokens.PnLCalculation,
+      useClass: PnLCalculationService,
+    },
     PerformanceSnapshotService,
   ],
   exports: [
     {
       provide: AccountBalanceTokens.AccountBalance,
       useClass: KPIService,
+    },
+    {
+      provide: AccountBalanceTokens.PnLCalculation,
+      useClass: PnLCalculationService,
     },
     PerformanceSnapshotService,
   ],

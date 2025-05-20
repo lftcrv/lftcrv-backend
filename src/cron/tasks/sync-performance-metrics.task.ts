@@ -36,7 +36,8 @@ export class SyncPerformanceMetricsTask {
       let skippedCount = 0;
 
       // Get all PnL data at once for efficiency
-      const allPnlData = await this.kpiService.getAllAgentsPnL();
+      // Forcer le rafraîchissement du cache pour obtenir des données à jour
+      const allPnlData = await this.kpiService.getAllAgentsPnL(true);
 
       // Create a map for quick lookups
       const pnlDataMap = new Map();

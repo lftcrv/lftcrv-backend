@@ -1,11 +1,16 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
+import { AccountBalanceTokens, IPnLCalculation } from '../interfaces/kpi.interface';
 
 @Injectable()
 export class PerformanceSnapshotService {
   private readonly logger = new Logger(PerformanceSnapshotService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(AccountBalanceTokens.PnLCalculation)
+    private readonly pnlCalculationService: IPnLCalculation,
+  ) {}
 
   /**
    * Creates a performance snapshot for a specific agent
@@ -25,19 +30,13 @@ export class PerformanceSnapshotService {
       throw new NotFoundException(`Agent with ID ${agentId} not found`);
     }
 
-    // Calculate PnL based on account balances
-    const balancesResult = await this.prisma.$queryRaw`
-      SELECT * FROM paradex_account_balances 
-      WHERE "agentId" = ${agent.id} 
-      ORDER BY "createdAt" ASC
-    `;
+    // Récupérer les données de PnL depuis le nouveau service en forçant le rafraîchissement
+    const pnlData = await this.pnlCalculationService.getAgentPnL(
+      agent.runtimeAgentId,
+      true
+    );
 
-    // Cast the query result to an array
-    const balances = balancesResult as any[];
-
-    const pnlData = this.calculatePnLFromBalances(balances);
-
-    // Calculate 24 hour PnL
+    // Calculer le PnL 24h en utilisant les balances des dernières 24h
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
