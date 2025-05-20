@@ -41,8 +41,18 @@ trap 'log_message "ERROR" "Script ended unexpectedly at or before line $LINENO (
 set -e
 
 # Configuration variables
-API_BASE_URL= process.env.DATABASE_URL
-API_KEY= process.env.BACKEND_API_KEY
+# Attempt to use environment variables.
+# For production, these ENV VARS (PROD_API_BASE_URL, PROD_BACKEND_API_KEY) MUST be set 
+# in the script's execution environment (e.g., cron, systemd, or when calling the script manually).
+API_BASE_URL="${PROD_API_BASE_URL}"
+API_KEY="${PROD_BACKEND_API_KEY}"
+
+# Check if the required variables are set
+if [ -z "$API_BASE_URL" ] || [ -z "$API_KEY" ]; then
+    log_message "ERROR" "Required environment variables PROD_API_BASE_URL or PROD_BACKEND_API_KEY are not set."
+    exit 1
+fi
+
 USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
 ADDRESS_BATCH_SIZE=30
 API_CALL_DELAY_SECONDS=1
