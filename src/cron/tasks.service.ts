@@ -14,6 +14,10 @@ import { ServiceTokens as CreatorsServiceTokens } from '../domains/creators/inte
 import { ICreatorsService } from '../domains/creators/interfaces/creators-service.interface';
 import * as fs from 'fs';
 import * as path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execPromise = promisify(exec);
 
 @Injectable()
 export class TasksService {
@@ -24,6 +28,12 @@ export class TasksService {
   private readonly MAX_BATCH_SIZE = 5;
   // Delay between batches in milliseconds
   private readonly BATCH_DELAY_MS = 15000; // 15 seconds
+  // Path to the token price sync script
+  private readonly TOKEN_PRICE_SYNC_SCRIPT = path.join(
+    process.cwd(),
+    'scripts',
+    'token_price_sync.sh',
+  );
 
   constructor(
     private readonly messageService: MessageService,
@@ -279,17 +289,23 @@ Your decision MUST be consistent with your previously defined strategies and sho
   @Cron('*/30 * * * *')
   async sendPortfolioBalanceUpdate() {
     const startTime = Date.now();
-    this.logger.log('Sending portfolio balance update request to active agents');
+    this.logger.log(
+      'Sending portfolio balance update request to active agents',
+    );
     try {
-      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany({
-        where: {
-          status: AgentStatus.RUNNING,
-          runtimeAgentId: { not: null },
-          port: { not: null },
+      const runningAgents: ElizaAgent[] = await this.prisma.elizaAgent.findMany(
+        {
+          where: {
+            status: AgentStatus.RUNNING,
+            runtimeAgentId: { not: null },
+            port: { not: null },
+          },
         },
-      });
+      );
 
-      this.logger.debug(`Found ${runningAgents.length} running agents for portfolio update`);
+      this.logger.debug(
+        `Found ${runningAgents.length} running agents for portfolio update`,
+      );
       if (runningAgents.length === 0) {
         this.logger.warn('⚠️ No active agent found for portfolio update.');
         return;
@@ -404,6 +420,51 @@ Your decision MUST be consistent with your previously defined strategies and sho
       const duration = Date.now() - startTime;
       this.logger.error(
         `Failed to clean up performance data (${duration}ms): ${error.message}`,
+      );
+    }
+  }
+
+  /**
+   * Run token price synchronization every hour at 55 minutes past the hour
+   * This ensures prices are updated just before other hourly tasks that might need them
+   */
+  @Cron('55 * * * *')
+  async syncTokenPrices() {
+    const startTime = Date.now();
+    this.logger.log('Starting token price synchronization');
+
+    try {
+      // Check if script exists
+      if (!fs.existsSync(this.TOKEN_PRICE_SYNC_SCRIPT)) {
+        throw new Error(
+          `Token price sync script not found at ${this.TOKEN_PRICE_SYNC_SCRIPT}`,
+        );
+      }
+
+      // Make sure script is executable
+      await execPromise(`chmod +x ${this.TOKEN_PRICE_SYNC_SCRIPT}`);
+
+      // Execute the script
+      const { stdout, stderr } = await execPromise(
+        this.TOKEN_PRICE_SYNC_SCRIPT,
+      );
+
+      if (stderr) {
+        this.logger.warn(`Token price sync warnings: ${stderr}`);
+      }
+
+      // Extract key metrics from the stdout (the summary line)
+      const summaryMatch = stdout.match(/\[INFO\] Summary: (.*)/);
+      const summary = summaryMatch ? summaryMatch[1] : 'No summary found';
+
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `Token price synchronization completed: ${summary} (${duration}ms)`,
+      );
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.logger.error(
+        `Failed to sync token prices (${duration}ms): ${error.message}`,
       );
     }
   }

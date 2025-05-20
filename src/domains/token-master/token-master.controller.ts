@@ -33,6 +33,7 @@ import {
   UpdateTokenMasterDto,
   BatchUpdateTokenPriceDto,
 } from './dtos/update-token-master.dto';
+import { BatchUpdateTokenPriceBySymbolDto } from './dtos/batch-update-token-price-by-symbol.dto';
 import { TokenMasterDto } from './dtos/token-master.dto';
 import { RequireApiKey } from '../../shared/auth/decorators/require-api-key.decorator';
 import { Response } from 'express';
@@ -278,6 +279,93 @@ export class TokenMasterController {
     const result =
       await this.tokenMasterService.updatePricesBatch(batchUpdatePriceDto);
     res.header('X-Updated-Count', result.count.toString());
+    return result;
+  }
+
+  @Put('prices/batch-by-id')
+  @RequireApiKey()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Batch update prices for multiple tokens by their UUIDs',
+  })
+  @ApiBody({ type: BatchUpdateTokenPriceDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Batch token prices updated successfully by ID.',
+    schema: { properties: { count: { type: 'number' } } },
+    headers: {
+      'X-Updated-Count': {
+        description: 'Total number of token prices updated.',
+        schema: { type: 'integer' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input or no valid operations to perform.',
+  })
+  async updatePricesBatchById(
+    @Body() batchUpdatePriceDto: BatchUpdateTokenPriceDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ count: number }> {
+    this.logger.log(
+      `Attempting to batch update prices for ${batchUpdatePriceDto.updates.length} tokens by ID.`,
+    );
+    const result =
+      await this.tokenMasterService.updatePricesBatch(batchUpdatePriceDto);
+    res.header('X-Updated-Count', result.count.toString());
+    return result;
+  }
+
+  @Put('prices/batch-by-symbol')
+  @RequireApiKey()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Batch update prices for multiple tokens by their symbols',
+  })
+  @ApiBody({ type: BatchUpdateTokenPriceBySymbolDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Batch token prices updated successfully by symbol.',
+    schema: {
+      properties: {
+        count: { type: 'number' },
+        notFound: { type: 'array', items: { type: 'string' } },
+      },
+    },
+    headers: {
+      'X-Updated-Count': {
+        description: 'Total number of token prices updated.',
+        schema: { type: 'integer' },
+      },
+      'X-Not-Found-Symbols': {
+        description:
+          'Comma-separated list of symbols not found or not updated.',
+        schema: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'None of the provided token symbols were found.',
+  })
+  async updatePricesBatchBySymbol(
+    @Body() batchUpdateDto: BatchUpdateTokenPriceBySymbolDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ count: number; notFound: string[] }> {
+    this.logger.log(
+      `Attempting to batch update prices for ${batchUpdateDto.updates.length} tokens by symbol.`,
+    );
+    const result =
+      await this.tokenMasterService.batchUpdatePricesBySymbol(batchUpdateDto);
+    res.header('X-Updated-Count', result.count.toString());
+    if (result.notFound.length > 0) {
+      res.header('X-Not-Found-Symbols', result.notFound.join(','));
+    }
     return result;
   }
 

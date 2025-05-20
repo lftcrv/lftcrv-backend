@@ -14,6 +14,7 @@ import {
   UpdateTokenMasterDto,
   BatchUpdateTokenPriceDto,
 } from '../dtos/update-token-master.dto';
+import { BatchUpdateTokenPriceBySymbolDto } from '../dtos/batch-update-token-price-by-symbol.dto';
 
 @Injectable()
 export class TokenMasterService {
@@ -229,6 +230,47 @@ export class TokenMasterService {
       );
       throw new BadRequestException('Could not update batch prices.');
     }
+  }
+
+  async batchUpdatePricesBySymbol(
+    batchUpdateDto: BatchUpdateTokenPriceBySymbolDto,
+  ): Promise<{ count: number; notFound: string[] }> {
+    const { updates } = batchUpdateDto;
+    let updatedCount = 0;
+    const notFoundSymbols: string[] = [];
+
+    for (const update of updates) {
+      try {
+        const result = await this.prisma.tokenMaster.updateMany({
+          where: { canonicalSymbol: update.symbol },
+          data: { priceUSD: update.price },
+        });
+        if (result.count > 0) {
+          updatedCount += result.count;
+        } else {
+          notFoundSymbols.push(update.symbol);
+          this.logger.warn(
+            `Token with symbol '${update.symbol}' not found for price update.`,
+          );
+        }
+      } catch (error) {
+        this.logger.error(
+          `Error updating price for symbol ${update.symbol}: ${error.message}`,
+          error.stack,
+        );
+        // Decide if you want to throw or collect errors
+        // For now, we log and add to notFoundSymbols if it was a not-found type issue indirectly
+        // Or just continue if it was another type of error, to let other updates proceed.
+      }
+    }
+
+    if (updatedCount === 0 && notFoundSymbols.length === updates.length) {
+      throw new NotFoundException(
+        'None of the provided token symbols were found for price update.',
+      );
+    }
+
+    return { count: updatedCount, notFound: notFoundSymbols };
   }
 
   async remove(id: string): Promise<TokenMaster> {
