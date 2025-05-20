@@ -29,11 +29,13 @@ import { UserModule } from './domains/user/user.module';
 import { FundingModule } from './domains/blockchain/funding/funding.module';
 import { KPIModule } from './domains/kpi/kpi.module';
 import { CreatorsModule } from './domains/creators/creators.module';
+import { TokenMasterModule } from './domains/token-master/token-master.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true,
       load: [environmentConfig],
       validate: (config: Record<string, unknown>) => {
         const missingVars: string[] = [];
@@ -78,6 +80,7 @@ import { CreatorsModule } from './domains/creators/creators.module';
     OrchestrationModule,
     UserModule,
     CreatorsModule,
+    TokenMasterModule,
     ScheduleModule.forRoot(),
     TerminusModule,
   ],

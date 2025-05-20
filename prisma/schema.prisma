@@ -374,3 +374,19 @@ model ReferralCode {
   @@index([code])
   @@map("referral_codes")
 }
+
+model TokenMaster {
+  id                String    @id @default(uuid())
+  canonicalSymbol   String    @map("canonical_symbol")
+  chainID           String    @map("chain_id")
+  dexScreenerSymbol String    @map("dex_screener_symbol")
+  contractAddress   String    @map("contract_address")
+  foundQuoteSymbol  String    @map("found_quote_symbol")
+  priceUSD          Float?    @map("price_usd")
+  method            String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([contractAddress, chainID], name: "unique_token_on_chain")
+  @@map("token_master")
+}
