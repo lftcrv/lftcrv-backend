@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsString,
   ValidateNested,
+  ArrayMinSize,
 } from 'class-validator';
 
 export class TokenPriceUpdateBySymbol {
@@ -29,6 +30,7 @@ export class BatchUpdateTokenPriceBySymbolDto {
     type: [TokenPriceUpdateBySymbol],
   })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => TokenPriceUpdateBySymbol)
   updates: TokenPriceUpdateBySymbol[];

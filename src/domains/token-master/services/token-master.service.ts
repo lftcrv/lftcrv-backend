@@ -259,6 +259,7 @@ export class TokenMasterService {
           `Error updating price for symbol ${update.symbol}: ${error.message}`,
           error.stack,
         );
+        notFoundSymbols.push(update.symbol);
         // Decide if you want to throw or collect errors
         // For now, we log and add to notFoundSymbols if it was a not-found type issue indirectly
         // Or just continue if it was another type of error, to let other updates proceed.

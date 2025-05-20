@@ -1,4 +1,4 @@
-import { PartialType, ApiProperty } from '@nestjs/swagger';
+import { PartialType, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateTokenMasterDto } from './create-token-master.dto';
 import {
   IsNumber,
@@ -6,19 +6,20 @@ import {
   IsArray,
   ValidateNested,
   ArrayMinSize,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateTokenMasterDto extends PartialType(CreateTokenMasterDto) {}
 
 export class UpdateTokenPriceDto {
-  @ApiProperty({
-    description:
-      'Identifier for the token (UUID, or contractAddress-chainID string)',
-    example: 'clxovq6p0000008l3fgh01234', // or "0x123abc-ethereum"
+  @ApiPropertyOptional({
+    description: 'Unique identifier of the token to update. Must be a UUID.',
+    example: 'clxovq6p0000008l3fgh01234',
   })
   @IsString()
-  id: string; // Can be UUID or a composite key like contractAddress-chainID
+  @IsOptional() // Assuming ID might not always be part of an update if route param is used
+  id?: string; // Must be a UUID
 
   @ApiProperty({
     description: 'New price in USD',
