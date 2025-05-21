@@ -54,10 +54,14 @@ export class TokenPriceSyncService {
 
   private readonly ADDRESS_BATCH_SIZE = 30;
   private readonly API_CALL_DELAY_SECONDS = 1;
-
   private readonly httpClient: AxiosInstance;
+  private readonly syncLogLevel: string;
 
   constructor(private readonly configService: ConfigService) {
+    this.syncLogLevel = this.configService
+      .get<string>('TOKEN_PRICE_SYNC_LOG_LEVEL', 'INFO')
+      .toUpperCase();
+
     const appPort = this.configService.get<string>('PORT', '8080');
     this.ownApiBaseUrl = this.configService.get<string>(
       'APP_API_BASE_URL',
@@ -72,12 +76,32 @@ export class TokenPriceSyncService {
         Accept: 'application/json',
       },
     });
+    this.logger.log(
+      `TokenPriceSyncService initialized with log level: ${this.syncLogLevel}`,
+    );
+  }
+
+  // Helper to check log level
+  private shouldLog(level: 'INFO' | 'WARN' | 'DEBUG'): boolean {
+    const levels = {
+      ERROR: 0, // Errors always logged by logger.error
+      WARN: 1,
+      INFO: 2,
+      DEBUG: 3,
+    } as const; // Added as const for stricter type checking on levels[this.syncLogLevel]
+    const currentLogLevelKey = this.syncLogLevel as keyof typeof levels;
+    const currentLevel = levels[currentLogLevelKey] ?? levels.INFO;
+    const targetLevel = levels[level];
+    return targetLevel <= currentLevel;
   }
 
   async syncPrices(): Promise<void> {
-    this.logger.log(
-      'Starting token price synchronization process (TypeScript version)',
-    );
+    if (this.shouldLog('INFO')) {
+      this.logger.log(
+        'Starting token price synchronization process (TypeScript version)',
+      );
+    }
+
     if (!this.ownApiKey) {
       this.logger.error(
         'API Key for own backend (BACKEND_API_KEY from .env) is not configured. Halting.',
@@ -95,12 +119,16 @@ export class TokenPriceSyncService {
     try {
       allTokens = await this.fetchInitialTokens();
       if (allTokens.length === 0) {
-        this.logger.warn('No tokens received from API. Exiting price sync.');
+        if (this.shouldLog('WARN')) {
+          this.logger.warn('No tokens received from API. Exiting price sync.');
+        }
         return;
       }
-      this.logger.log(
-        `Successfully fetched ${allTokens.length} tokens from API for price sync.`,
-      );
+      if (this.shouldLog('INFO')) {
+        this.logger.log(
+          `Successfully fetched ${allTokens.length} tokens from API for price sync.`,
+        );
+      }
     } catch (error) {
       this.logger.error(
         'Halting price sync due to failure in fetching initial tokens.',
@@ -108,44 +136,44 @@ export class TokenPriceSyncService {
       return;
     }
 
-    // Initialize a set of all symbols that we expect to update.
+    const successfullyFetchedPrices: PriceUpdatePayload[] = [];
+    const explicitApiFailuresOrInvalidPrice: string[] = [];
     const pendingSymbolsToUpdate = new Set<string>(
       allTokens.map((t) => t.canonicalSymbol),
     );
 
-    const successfullyFetchedPrices: PriceUpdatePayload[] = [];
-    // notFoundOrFailedSymbols can still be useful for detailed logging of specific API failures
-    const explicitApiFailuresOrInvalidPrice: string[] = [];
-
-    // Pass pendingSymbolsToUpdate to fetching methods if they need to remove symbols upon success,
-    // OR, more simply, just iterate successfullyFetchedPrices later to remove them.
-    // For simplicity now, we'll update pendingSymbolsToUpdate after all fetches.
+    const chainResults: {
+      [chainId: string]: { success: number; total: number };
+    } = {};
 
     await this._fetchPricesFromDexScreener(
       allTokens,
       successfullyFetchedPrices,
-      explicitApiFailuresOrInvalidPrice, // Log specific API/parse failures here
+      explicitApiFailuresOrInvalidPrice,
+      chainResults,
     );
 
     await this._fetchPricesFromParadex(
       allTokens,
       successfullyFetchedPrices,
-      explicitApiFailuresOrInvalidPrice, // Log specific API/parse failures here
+      explicitApiFailuresOrInvalidPrice,
+      chainResults,
     );
 
-    // Remove symbols for which prices were successfully fetched from the pending set
     for (const fetchedPrice of successfullyFetchedPrices) {
       pendingSymbolsToUpdate.delete(fetchedPrice.symbol);
     }
 
     let dbUpdateCount = 0;
-    let apiReportedNotFound: string[] = []; // Symbols our API said it couldn't find/update
+    let apiReportedNotFound: string[] = [];
 
     if (successfullyFetchedPrices.length > 0) {
       try {
-        this.logger.log(
-          `Attempting to batch update ${successfullyFetchedPrices.length} prices via own API.`,
-        );
+        if (this.shouldLog('INFO')) {
+          this.logger.log(
+            `Attempting to batch update ${successfullyFetchedPrices.length} prices via own API.`,
+          );
+        }
         const updatePayload = { updates: successfullyFetchedPrices };
         const response = await this.httpClient.put<{
           count: number;
@@ -162,11 +190,13 @@ export class TokenPriceSyncService {
         );
         dbUpdateCount = response.data.count;
         apiReportedNotFound = response.data.notFound || [];
-        this.logger.log(
-          `Batch update API call successful. DB updated count: ${dbUpdateCount}. Symbols API reported not found: ${apiReportedNotFound.join(
-            ', ',
-          )}`,
-        );
+        if (this.shouldLog('INFO')) {
+          this.logger.log(
+            `Batch update API call successful. DB updated count: ${dbUpdateCount}. Symbols API reported not found: ${apiReportedNotFound.join(
+              ', ',
+            )}`,
+          );
+        }
       } catch (e) {
         let errorDetails = e.message;
         if (axios.isAxiosError(e)) {
@@ -181,34 +211,65 @@ export class TokenPriceSyncService {
           `Failed to update prices via batch API. ${errorDetails}`,
           e.stack,
         );
-        // Add all attempted symbols to explicitApiFailuresOrInvalidPrice if API call fails entirely
         successfullyFetchedPrices.forEach((p) => {
           if (!explicitApiFailuresOrInvalidPrice.includes(p.symbol)) {
             explicitApiFailuresOrInvalidPrice.push(p.symbol);
-            // Also ensure they remain in pending if they were removed, because DB update failed.
-            pendingSymbolsToUpdate.add(p.symbol);
           }
+          pendingSymbolsToUpdate.add(p.symbol);
         });
       }
     } else {
-      this.logger.log(
-        'No prices were fetched from external APIs, skipping database update call.',
-      );
+      if (this.shouldLog('INFO')) {
+        this.logger.log(
+          'No prices were fetched from external APIs, skipping database update call.',
+        );
+      }
     }
 
-    // finalNotFoundSymbols will now be the symbols that remained in pendingSymbolsToUpdate
-    // plus any symbols the API reported as not found during the update attempt.
-    const finalNotFoundSymbols = new Set([
+    const finalNotFoundSymbolsSet = new Set([
       ...Array.from(pendingSymbolsToUpdate),
       ...apiReportedNotFound,
     ]);
+    const finalNotFoundSymbolsArray = Array.from(finalNotFoundSymbolsSet);
 
-    this.logger.log(
-      `Price sync summary: Attempted to update/process ${allTokens.length} initial tokens. Successfully fetched and attempted to update ${successfullyFetchedPrices.length} prices. DB Update count: ${dbUpdateCount}. Not found/failed: ${Array.from(finalNotFoundSymbols).join(', ') || 'none'}.`,
-    );
-    this.logger.log(
-      'Token price synchronization process (TypeScript version) finished.',
-    );
+    const chainSummaryParts: string[] = [];
+    for (const chainId_key in chainResults) {
+      chainSummaryParts.push(
+        `${chainId_key}:${chainResults[chainId_key].success}/${chainResults[chainId_key].total}`,
+      );
+    }
+    const chainSummary = chainSummaryParts.join(' ') || 'N/A';
+
+    if (this.shouldLog('INFO')) {
+      this.logger.log(
+        `Price sync summary: Fetched ${allTokens.length} tokens | Updated ${dbUpdateCount}/${successfullyFetchedPrices.length} prices | Per chain: ${chainSummary}`,
+      );
+      this.logger.log(
+        `Not updated: ${finalNotFoundSymbolsArray.join(', ') || 'none'}.`,
+      );
+    }
+
+    if (
+      finalNotFoundSymbolsArray.length > 0 &&
+      allTokens.length === finalNotFoundSymbolsArray.length &&
+      successfullyFetchedPrices.length === 0
+    ) {
+      if (this.shouldLog('WARN')) {
+        this.logger.warn(
+          'Script completed, but no prices were successfully fetched or updated for any token.',
+        );
+      }
+    } else if (finalNotFoundSymbolsArray.length > 0) {
+      if (this.shouldLog('INFO')) {
+        this.logger.log('Script completed with some tokens not updated.');
+      }
+    } else {
+      if (this.shouldLog('INFO')) {
+        this.logger.log(
+          'Script completed successfully, all fetched prices updated.',
+        );
+      }
+    }
   }
 
   private _isValidForDexScreenerApiCall(
@@ -239,10 +300,13 @@ export class TokenPriceSyncService {
     allTokens: InternalTokenMaster[],
     successfullyFetchedPrices: PriceUpdatePayload[],
     explicitApiFailuresOrInvalidPrice: string[],
+    chainResults: { [chainId: string]: { success: number; total: number } },
   ): Promise<void> {
-    this.logger.log(
-      'Starting DexScreener price fetching using /tokens/v1 endpoint style...',
-    );
+    if (this.shouldLog('INFO')) {
+      this.logger.log(
+        'Starting DexScreener price fetching using /tokens/v1 endpoint style...',
+      );
+    }
     const dexscreenerChains = [
       ...new Set(
         allTokens
@@ -261,6 +325,9 @@ export class TokenPriceSyncService {
       chainIndex++
     ) {
       const chainId = dexscreenerChains[chainIndex];
+      if (!chainResults[chainId]) {
+        chainResults[chainId] = { success: 0, total: 0 };
+      }
       const tokensOnChain = allTokens.filter((t) => t.chainID === chainId);
       const validTokensForChain = tokensOnChain.filter((token) =>
         this._isValidForDexScreenerApiCall(
@@ -268,10 +335,13 @@ export class TokenPriceSyncService {
           token.contractAddress,
         ),
       );
+      chainResults[chainId].total = validTokensForChain.length;
       if (validTokensForChain.length === 0) {
-        this.logger.debug(
-          `No valid tokens for DexScreener on chain ${chainId}`,
-        );
+        if (this.shouldLog('DEBUG')) {
+          this.logger.debug(
+            `No valid tokens for DexScreener on chain ${chainId}`,
+          );
+        }
         continue;
       }
       for (
@@ -290,11 +360,18 @@ export class TokenPriceSyncService {
           chainIndex === totalDexscreenerChains - 1 &&
           i + this.ADDRESS_BATCH_SIZE >= validTokensForChain.length;
         const apiUrl = `${this.dexscreenerApiBaseUrl}/tokens/v1/${chainId}/${tokenAddressesForApiCall.join(',')}`;
-        this.logger.debug(`Fetching DexScreener URL (v1 style): ${apiUrl}`);
+        if (this.shouldLog('DEBUG')) {
+          this.logger.debug(`Fetching DexScreener URL (v1 style): ${apiUrl}`);
+        }
         try {
           const response = await this.httpClient.get<any>(apiUrl);
           const responseData = response.data;
-          if (responseData && chainIndex === 0 && i === 0) {
+          if (
+            responseData &&
+            chainIndex === 0 &&
+            i === 0 &&
+            this.shouldLog('DEBUG')
+          ) {
             this.logger.debug(
               `Raw response from /tokens/v1 for ${chainId} batch: ${JSON.stringify(responseData).substring(0, 1000)}...`,
             );
@@ -308,16 +385,18 @@ export class TokenPriceSyncService {
             } else if (Array.isArray(responseData.tokens)) {
               itemsToProcess = responseData.tokens;
             }
-            if (itemsToProcess.length === 0) {
+            if (itemsToProcess.length === 0 && this.shouldLog('DEBUG')) {
               this.logger.debug(
                 `No processable items (pairs/tokens array) found in DexScreener v1 response for ${apiUrl}. Raw data: ${JSON.stringify(responseData).substring(0, 500)}`,
               );
             }
           }
           if (itemsToProcess.length === 0) {
-            this.logger.debug(
-              `No items (pairs/tokens) returned from DexScreener for ${apiUrl}`,
-            );
+            if (this.shouldLog('DEBUG')) {
+              this.logger.debug(
+                `No items (pairs/tokens) returned from DexScreener for ${apiUrl}`,
+              );
+            }
             batch.forEach((token) => {
               if (
                 !explicitApiFailuresOrInvalidPrice.includes(
@@ -361,13 +440,18 @@ export class TokenPriceSyncService {
                   price,
                 });
                 foundPriceForToken = true;
-                this.logger.debug(
-                  `DexScreener (v1) price for ${inputToken.canonicalSymbol} (${chainId}): ${price}`,
-                );
+                chainResults[chainId].success++;
+                if (this.shouldLog('DEBUG')) {
+                  this.logger.debug(
+                    `DexScreener (v1) price for ${inputToken.canonicalSymbol} (${chainId}): ${price}`,
+                  );
+                }
               } else {
-                this.logger.debug(
-                  `Invalid priceUsd '${priceUsdFromItem}' for ${inputToken.canonicalSymbol} from DexScreener (v1).`,
-                );
+                if (this.shouldLog('DEBUG')) {
+                  this.logger.debug(
+                    `Invalid priceUsd '${priceUsdFromItem}' for ${inputToken.canonicalSymbol} from DexScreener (v1).`,
+                  );
+                }
                 if (
                   !explicitApiFailuresOrInvalidPrice.includes(
                     inputToken.canonicalSymbol,
@@ -389,9 +473,11 @@ export class TokenPriceSyncService {
                   inputToken.canonicalSymbol,
                 );
               }
-              this.logger.debug(
-                `No valid DexScreener (v1) price found for ${inputToken.canonicalSymbol} (${chainId}) in received items.`,
-              );
+              if (this.shouldLog('DEBUG')) {
+                this.logger.debug(
+                  `No valid DexScreener (v1) price found for ${inputToken.canonicalSymbol} (${chainId}) in received items.`,
+                );
+              }
             }
           }
         } catch (e) {
@@ -419,44 +505,59 @@ export class TokenPriceSyncService {
         const isLastOverallApiCall =
           isLastDexscreenerCall && paradexTokenCount === 0;
         if (!isLastOverallApiCall && this.API_CALL_DELAY_SECONDS > 0) {
-          this.logger.debug(
-            `Delaying for ${this.API_CALL_DELAY_SECONDS}s after DexScreener (v1) call.`,
-          );
+          if (this.shouldLog('DEBUG')) {
+            this.logger.debug(
+              `Delaying for ${this.API_CALL_DELAY_SECONDS}s after DexScreener (v1) call.`,
+            );
+          }
           await this.delay(this.API_CALL_DELAY_SECONDS);
         }
       }
     }
-    this.logger.log(
-      `Finished DexScreener (v1) price fetching. Found ${successfullyFetchedPrices.length} prices so far.`,
-    );
+    if (this.shouldLog('INFO')) {
+      this.logger.log(
+        `Finished DexScreener (v1) price fetching. Found ${successfullyFetchedPrices.length} prices so far.`,
+      );
+    }
   }
 
   private async _fetchPricesFromParadex(
     allTokens: InternalTokenMaster[],
     successfullyFetchedPrices: PriceUpdatePayload[],
     explicitApiFailuresOrInvalidPrice: string[],
+    chainResults: { [chainId: string]: { success: number; total: number } },
   ): Promise<void> {
-    this.logger.log('Starting Paradex price fetching...');
+    if (this.shouldLog('INFO')) {
+      this.logger.log('Starting Paradex price fetching...');
+    }
     const paradexTokens = allTokens.filter(
       (t) => t.chainID.toLowerCase() === 'paradex',
     );
 
     if (paradexTokens.length === 0) {
-      this.logger.log('No tokens configured for Paradex. Skipping.');
+      if (this.shouldLog('INFO')) {
+        this.logger.log('No tokens configured for Paradex. Skipping.');
+      }
       return;
     }
+
+    const chainId = 'paradex';
+    if (!chainResults[chainId]) {
+      chainResults[chainId] = { success: 0, total: 0 };
+    }
+    chainResults[chainId].total = paradexTokens.length;
 
     for (let i = 0; i < paradexTokens.length; i++) {
       const token = paradexTokens[i];
       const apiUrl = `${this.paradexApiBaseUrl}/bbo/${token.canonicalSymbol}-USD-PERP`;
-      this.logger.debug(
-        `Fetching Paradex price for ${token.canonicalSymbol} from ${apiUrl}`,
-      );
-
+      if (this.shouldLog('DEBUG')) {
+        this.logger.debug(
+          `Fetching Paradex price for ${token.canonicalSymbol} from ${apiUrl}`,
+        );
+      }
       try {
         const response = await this.httpClient.get<any>(apiUrl);
         const askPriceStr = response.data?.ask;
-
         if (askPriceStr) {
           const price = parseFloat(askPriceStr);
           if (!isNaN(price) && price > 0) {
@@ -464,13 +565,18 @@ export class TokenPriceSyncService {
               symbol: token.canonicalSymbol,
               price,
             });
-            this.logger.debug(
-              `Paradex price for ${token.canonicalSymbol}: ${price}`,
-            );
+            chainResults[chainId].success++;
+            if (this.shouldLog('DEBUG')) {
+              this.logger.debug(
+                `Paradex price for ${token.canonicalSymbol}: ${price}`,
+              );
+            }
           } else {
-            this.logger.warn(
-              `Invalid ask price '${askPriceStr}' for ${token.canonicalSymbol} from Paradex.`,
-            );
+            if (this.shouldLog('WARN')) {
+              this.logger.warn(
+                `Invalid ask price '${askPriceStr}' for ${token.canonicalSymbol} from Paradex.`,
+              );
+            }
             if (
               !explicitApiFailuresOrInvalidPrice.includes(token.canonicalSymbol)
             ) {
@@ -478,9 +584,11 @@ export class TokenPriceSyncService {
             }
           }
         } else {
-          this.logger.warn(
-            `No ask price found for ${token.canonicalSymbol} from Paradex. Response: ${JSON.stringify(response.data).substring(0, 200)}`,
-          );
+          if (this.shouldLog('WARN')) {
+            this.logger.warn(
+              `No ask price found for ${token.canonicalSymbol} from Paradex. Response: ${JSON.stringify(response.data).substring(0, 200)}`,
+            );
+          }
           if (
             !explicitApiFailuresOrInvalidPrice.includes(token.canonicalSymbol)
           ) {
@@ -507,18 +615,21 @@ export class TokenPriceSyncService {
           explicitApiFailuresOrInvalidPrice.push(token.canonicalSymbol);
         }
       }
-
       const isLastParadexCall = i === paradexTokens.length - 1;
       if (!isLastParadexCall && this.API_CALL_DELAY_SECONDS > 0) {
-        this.logger.debug(
-          `Delaying for ${this.API_CALL_DELAY_SECONDS}s after Paradex call.`,
-        );
+        if (this.shouldLog('DEBUG')) {
+          this.logger.debug(
+            `Delaying for ${this.API_CALL_DELAY_SECONDS}s after Paradex call.`,
+          );
+        }
         await this.delay(this.API_CALL_DELAY_SECONDS);
       }
     }
-    this.logger.log(
-      `Finished Paradex price fetching. Total successful prices now: ${successfullyFetchedPrices.length}.`,
-    );
+    if (this.shouldLog('INFO')) {
+      this.logger.log(
+        `Finished Paradex price fetching. Total successful prices now: ${successfullyFetchedPrices.length}.`,
+      );
+    }
   }
 
   private async fetchInitialTokens(): Promise<InternalTokenMaster[]> {
