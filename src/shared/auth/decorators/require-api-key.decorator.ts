@@ -1,5 +1,5 @@
 import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiHeader, ApiSecurity, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AUTH_CONSTANTS } from '../constants/auth.constants';
 import { ApiKeyGuard } from '../guards/api-key.guard';
 
@@ -9,5 +9,6 @@ export const RequireApiKey = () => {
     UseGuards(ApiKeyGuard),
     ApiHeader(AUTH_CONSTANTS.SWAGGER.API_KEY_HEADER),
     ApiUnauthorizedResponse(AUTH_CONSTANTS.SWAGGER.UNAUTHORIZED_RESPONSE),
+    ApiSecurity('api-key'),
   );
 };
