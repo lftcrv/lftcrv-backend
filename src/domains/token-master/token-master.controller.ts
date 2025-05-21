@@ -87,6 +87,7 @@ export class TokenMasterController {
   }
 
   @Get()
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get all token master records' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -109,6 +110,7 @@ export class TokenMasterController {
   }
 
   @Get('prices')
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get all token symbols and their USD prices' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -132,6 +134,7 @@ export class TokenMasterController {
   }
 
   @Get('prices/by-symbols/:symbols')
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get prices for a list of token symbols' })
   @ApiParam({
     name: 'symbols',
@@ -173,6 +176,7 @@ export class TokenMasterController {
   }
 
   @Get(':id')
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get a token master record by its UUID' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   @ApiResponse({
@@ -192,6 +196,7 @@ export class TokenMasterController {
   }
 
   @Get('lookup/by-contract')
+  @RequireApiKey()
   @ApiOperation({ summary: 'Get a token by contract address and chain ID' })
   @ApiQuery({ name: 'contractAddress', type: 'string', required: true })
   @ApiQuery({ name: 'chainID', type: 'string', required: true })
