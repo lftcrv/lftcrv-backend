@@ -8,6 +8,7 @@ import { BlockchainModule } from '../shared/blockchain/blockchain.module';
 import { KPIModule } from '../domains/kpi/kpi.module';
 import { CreatorsModule } from '../domains/creators/creators.module';
 import { SyncPerformanceMetricsTask } from './tasks/sync-performance-metrics.task';
+import { TokenPriceSyncModule } from '../domains/token-price-sync/token-price-sync.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SyncPerformanceMetricsTask } from './tasks/sync-performance-metrics.tas
     BlockchainModule,
     KPIModule,
     CreatorsModule,
+    TokenPriceSyncModule,
   ],
   providers: [TasksService, SyncPerformanceMetricsTask],
 })

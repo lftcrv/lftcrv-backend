@@ -30,6 +30,7 @@ import { FundingModule } from './domains/blockchain/funding/funding.module';
 import { KPIModule } from './domains/kpi/kpi.module';
 import { CreatorsModule } from './domains/creators/creators.module';
 import { TokenMasterModule } from './domains/token-master/token-master.module';
+import { TokenPriceSyncModule } from './domains/token-price-sync/token-price-sync.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { TokenMasterModule } from './domains/token-master/token-master.module';
     UserModule,
     CreatorsModule,
     TokenMasterModule,
+    TokenPriceSyncModule,
     ScheduleModule.forRoot(),
     TerminusModule,
   ],

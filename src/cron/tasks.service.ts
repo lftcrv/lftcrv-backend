@@ -8,17 +8,13 @@ import {
 } from '../domains/agent-token/interfaces';
 import { ElizaAgent, AgentStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 import { PerformanceSnapshotService } from '../domains/kpi/services/performance-snapshot.service';
 import { ServiceTokens as CreatorsServiceTokens } from '../domains/creators/interfaces';
 import { ICreatorsService } from '../domains/creators/interfaces/creators-service.interface';
+import { TokenPriceSyncService } from '../domains/token-price-sync/token-price-sync.service';
+import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec, execFile } from 'child_process';
-import { promisify } from 'util';
-
-const execPromise = promisify(exec);
-const execFilePromise = promisify(execFile);
 
 @Injectable()
 export class TasksService {
@@ -29,12 +25,6 @@ export class TasksService {
   private readonly MAX_BATCH_SIZE = 5;
   // Delay between batches in milliseconds
   private readonly BATCH_DELAY_MS = 15000; // 15 seconds
-  // Path to the token price sync script
-  private readonly TOKEN_PRICE_SYNC_SCRIPT = path.join(
-    process.cwd(),
-    'scripts',
-    'token_price_sync.sh',
-  );
 
   constructor(
     private readonly messageService: MessageService,
@@ -46,6 +36,7 @@ export class TasksService {
     private readonly schedulerRegistry: SchedulerRegistry,
     @Inject(CreatorsServiceTokens.CreatorsService)
     private readonly creatorsService: ICreatorsService,
+    private readonly tokenPriceSyncService: TokenPriceSyncService,
   ) {
     const host = this.configService.get<string>('HOST_BACKEND');
     const port = this.configService.get<string>('BACKEND_PORT');
@@ -118,18 +109,17 @@ export class TasksService {
    */
   private async getTradableCryptos(): Promise<string[]> {
     try {
-      // Define the path to the tradable_crypto.json file
-      const filePath = path.resolve('config/crypto/tradable_crypto.json');
-
-      // Read the file
+      const filePath = path.join(
+        process.cwd(), // process should be available globally in Node.js
+        'config',
+        'crypto',
+        'tradable_crypto.json',
+      );
       const fileData = fs.readFileSync(filePath, 'utf8');
-
-      // Parse the JSON data
       const cryptoList = JSON.parse(fileData);
-
-      // Extract just the cryptocurrency tickers
-      const cryptoTickers = cryptoList.map((crypto) => crypto.Cryptocurrency);
-
+      const cryptoTickers = cryptoList.map((crypto: any) => {
+        return crypto.Cryptocurrency;
+      });
       this.logger.log(
         `Loaded ${cryptoTickers.length} tradable cryptocurrencies`,
       );
@@ -433,44 +423,19 @@ Your decision MUST be consistent with your previously defined strategies and sho
   async syncTokenPrices() {
     const startTime = Date.now();
     this.logger.log(
-      `Starting token price synchronization using ${this.TOKEN_PRICE_SYNC_SCRIPT}`,
+      'Starting token price synchronization (via TokenPriceSyncService)',
     );
     try {
-      // Check if script exists
-      if (!fs.existsSync(this.TOKEN_PRICE_SYNC_SCRIPT)) {
-        this.logger.error(
-          `Token price sync script not found at ${this.TOKEN_PRICE_SYNC_SCRIPT}`,
-        );
-        return;
-      }
-
-      // Make sure script is executable
-      await execFilePromise('chmod', ['+x', this.TOKEN_PRICE_SYNC_SCRIPT]);
-      this.logger.debug(
-        `Ensured ${this.TOKEN_PRICE_SYNC_SCRIPT} is executable.`,
-      );
-
-      // Execute the script
-      const { stdout, stderr } = await execPromise(
-        this.TOKEN_PRICE_SYNC_SCRIPT,
-      );
-
-      if (stderr) {
-        this.logger.warn(`Token price sync warnings: ${stderr}`);
-      }
-
-      // Extract key metrics from the stdout (the summary line)
-      const summaryMatch = stdout.match(/\[INFO\] Summary: (.*)/);
-      const summary = summaryMatch ? summaryMatch[1] : 'No summary found';
-
+      await this.tokenPriceSyncService.syncPrices();
       const duration = Date.now() - startTime;
       this.logger.log(
-        `Token price synchronization completed: ${summary} (${duration}ms)`,
+        `Token price synchronization (via TokenPriceSyncService) completed successfully (${duration}ms)`,
       );
     } catch (error) {
       const duration = Date.now() - startTime;
       this.logger.error(
-        `Failed to sync token prices (${duration}ms): ${error.message}`,
+        `Failed to sync token prices (via TokenPriceSyncService) (${duration}ms): ${error.message}`,
+        error.stack,
       );
     }
   }
