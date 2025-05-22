@@ -255,11 +255,13 @@ export class TasksService {
       for (const agent of runningAgents) {
         await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
           content: {
-            text: `Before making any trading decision, FIRST retrieve your target allocation strategy (with get_target_allocation) and your entry/exit strategy (with get_strategy_text) that you previously defined. ONLY focus on the cryptocurrencies that were specifically assigned to you and mentioned in your strategy text.
+            text: `Before making any trading decisions, FIRST retrieve your current portfolio (check the portfolio early) and your target allocation strategy (with get_target_allocation) and your entry/exit strategy (with get_strategy_text).
 
-After reviewing these strategies, assess current market conditions on Paradex. If you see a compelling opportunity that aligns with your predefined entry conditions AND target allocation percentages, simulate a spot trade. If current conditions don't match your personal criteria defined in your strategy text, it's perfectly acceptable to wait.
+Based on current market conditions, your portfolio, and these strategies, determine the OPTIMAL ALLOCATION PERCENTAGES for ALL 5 of your assigned cryptocurrencies AT ONCE. Focus only on the cryptocurrencies specifically mentioned in your strategy text.
 
-Your decision MUST be consistent with your previously defined strategies and should only involve the cryptocurrencies specifically assigned to you. Explain your reasoning in your own voice, focusing on how this decision aligns with your predefined strategy.`,
+Once you've determined the ideal allocations, execute the necessary trades to rebalance your portfolio to match these target percentages. Explain your reasoning for the overall allocation strategy, focusing on how it aligns with your predefined entry/exit conditions and market analysis.
+
+Only trade cryptocurrencies specifically assigned to you in your strategy. If current market conditions don't justify changes to your allocation, it's acceptable to maintain your current positions.`,
           },
         });
       }
