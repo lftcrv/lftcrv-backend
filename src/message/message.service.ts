@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../shared/prisma/prisma.service';
 import { AgentStatus, ElizaAgent } from '@prisma/client';
-import { Cron } from '@nestjs/schedule';
 
 interface MessagePayload {
   text: string;
@@ -173,7 +172,7 @@ export class MessageService {
 
       // Send first request
       await this.sendMessageToAgent(runtimeAgentId, tradeDecisionRequest);
-      
+
       this.logger.log(
         `Trade decision request sent successfully. Waiting ${
           delayBetweenRequests / 1000
@@ -186,20 +185,20 @@ export class MessageService {
       // Second request: portfolio allocation
       const portfolioAllocationRequest = {
         content: {
-          text: "Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly.",
+          text: 'Review the available analysis and tradable cryptos. Then, based on current market conditions and the five cryptos assigned to you (plus USDC), define your portfolio allocation strategy accordingly.',
         },
       };
 
       // Send second request
       await this.sendMessageToAgent(runtimeAgentId, portfolioAllocationRequest);
-      
+
       this.logger.log(
         `Portfolio allocation request sent successfully to agent with runtime ID: ${runtimeAgentId}`,
       );
 
-      return { 
-        success: true, 
-        message: 'Both requests sent successfully' 
+      return {
+        success: true,
+        message: 'Both requests sent successfully',
       };
     } catch (error) {
       this.logger.error(
