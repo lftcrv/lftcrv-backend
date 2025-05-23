@@ -49,7 +49,8 @@ export class AccountBalanceDto {
 
   @ApiProperty({
     example: 3000,
-    description: 'Total balance in USD (optional - will be calculated dynamically)',
+    description:
+      'Total balance in USD (optional - will be calculated dynamically)',
     required: false,
   })
   @IsNumber()
