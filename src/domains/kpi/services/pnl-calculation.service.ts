@@ -124,11 +124,11 @@ export class PnLCalculationService {
         latestBalanceDate: null,
         firstBalance:
           balances.length === 1
-            ? this.getActualBalance(balances[0], balances[0].tokenBalances)
+            ? await this.getActualBalance(balances[0], true)
             : 0,
         latestBalance:
           balances.length === 1
-            ? this.getActualBalance(balances[0], balances[0].tokenBalances)
+            ? await this.getActualBalance(balances[0], false)
             : 0,
       };
     }
@@ -136,18 +136,54 @@ export class PnLCalculationService {
     const firstBalanceRecord = balances[0];
     const latestBalanceRecord = balances[balances.length - 1];
 
-    const actualFirstBalance = this.getActualBalance(
+    // Use stored prices for first balance (historical value when portfolio was created)
+    const actualFirstBalance = await this.getActualBalance(
       firstBalanceRecord,
-      firstBalanceRecord.tokenBalances,
+      true,
     );
-    const actualLatestBalance = this.getActualBalance(
+    // Use calculated prices for latest balance (current value with live prices)
+    const actualLatestBalance = await this.getActualBalance(
       latestBalanceRecord,
-      latestBalanceRecord.tokenBalances,
+      false,
     );
 
-    const pnl = actualLatestBalance - actualFirstBalance;
+    // SPECIAL CASE: Handle initial investment scenario
+    // If first balance is 0 (due to old portfolio creation bug) but latest balance shows value,
+    // this likely represents initial investment, not a gain
+    let adjustedFirstBalance = actualFirstBalance;
+    let isInitialInvestmentScenario = false;
+
+    if (actualFirstBalance === 0 && actualLatestBalance > 0) {
+      // Check if this looks like an initial investment (single token, round number)
+      const firstTokenBalances = firstBalanceRecord.tokenBalances || [];
+      const latestTokenBalances = latestBalanceRecord.tokenBalances || [];
+
+      // If we have token balance data and it looks like initial USDC investment
+      if (firstTokenBalances.length === 1 && latestTokenBalances.length === 1) {
+        const firstToken = firstTokenBalances[0];
+        const latestToken = latestTokenBalances[0];
+
+        // Check if it's USDC and amounts are the same (no trading activity)
+        if (
+          firstToken.tokenSymbol === 'USDC' &&
+          latestToken.tokenSymbol === 'USDC' &&
+          Number(firstToken.amount) === Number(latestToken.amount)
+        ) {
+          // This is likely initial investment - use the calculated value as baseline
+          adjustedFirstBalance = actualLatestBalance;
+          isInitialInvestmentScenario = true;
+
+          this.logger.debug(
+            `Detected initial investment scenario for agent ${agent.name}: ` +
+              `adjusting first balance from ${actualFirstBalance} to ${adjustedFirstBalance}`,
+          );
+        }
+      }
+    }
+
+    const pnl = actualLatestBalance - adjustedFirstBalance;
     const pnlPercentage =
-      actualFirstBalance !== 0 ? (pnl / actualFirstBalance) * 100 : 0;
+      adjustedFirstBalance !== 0 ? (pnl / adjustedFirstBalance) * 100 : 0;
 
     return {
       agentId: agent.id,
@@ -159,22 +195,38 @@ export class PnLCalculationService {
       latestBalanceDate: latestBalanceRecord.createdAt,
       firstBalance: actualFirstBalance,
       latestBalance: actualLatestBalance,
+      adjustedFirstBalance: isInitialInvestmentScenario
+        ? adjustedFirstBalance
+        : undefined,
+      isInitialInvestmentScenario,
     };
   }
 
-  private getActualBalance(balanceRecord: any, tokenBalances: any[]): number {
+  private async getActualBalance(
+    balanceRecord: any,
+    useStoredPrices: boolean = false,
+  ): Promise<number> {
     if (!balanceRecord) return 0;
 
-    const totalValueUsdFromTokens = tokenBalances.reduce(
-      (sum, token) => sum + Number(token.valueUsd),
-      0,
-    );
+    // If we want stored prices (for historical first balance), use the stored value
+    if (useStoredPrices) {
+      return balanceRecord.balanceInUSD || 0;
+    }
 
-    // If totalValueUsdFromTokens is 0, this will correctly use/return 0 if balanceInUSD is also 0.
-    // Or use balanceInUSD if it matches, otherwise fallback to totalValueUsdFromTokens.
-    return Math.abs(totalValueUsdFromTokens - balanceRecord.balanceInUSD) < 0.01
-      ? balanceRecord.balanceInUSD
-      : totalValueUsdFromTokens;
+    // Otherwise, use enhanced Prisma service to get calculated values with current prices
+    const enhancedClient = this.prisma.getEnhanced();
+    const calculatedBalance =
+      await enhancedClient.portfolioCalculations.getAccountBalanceWithPrices(
+        balanceRecord.id,
+      );
+
+    if (calculatedBalance) {
+      // Use the calculated balance from our enhanced service
+      return Number(calculatedBalance.calculated_balance_usd) || 0;
+    }
+
+    // Fallback to stored balance if calculation fails
+    return balanceRecord.balanceInUSD || 0;
   }
 
   /**

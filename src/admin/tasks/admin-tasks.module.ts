@@ -9,6 +9,7 @@ import { TokenPriceSyncService } from '../../domains/token-price-sync/token-pric
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { KPIModule } from '../../domains/kpi/kpi.module';
+import { SyncPerformanceMetricsTask } from '../../cron/tasks/sync-performance-metrics.task';
 
 @Module({
   imports: [AgentTokenModule, CreatorsModule, KPIModule],
@@ -19,6 +20,7 @@ import { KPIModule } from '../../domains/kpi/kpi.module';
     TokenPriceSyncService,
     PrismaService,
     ConfigService,
+    SyncPerformanceMetricsTask,
   ],
 })
 export class AdminTasksModule {}

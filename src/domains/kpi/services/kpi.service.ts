@@ -1,6 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { IAccountBalance } from '../interfaces/kpi.interface';
+import {
+  IAccountBalance,
+  IPnLCalculation,
+  AccountBalanceTokens,
+} from '../interfaces/kpi.interface';
 import { AccountBalanceDto, TokenBalanceDto } from '../dtos/kpi.dto';
 import { ElizaAgent } from '@prisma/client';
 
@@ -8,7 +12,11 @@ import { ElizaAgent } from '@prisma/client';
 export class KPIService implements IAccountBalance {
   private readonly logger = new Logger(KPIService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(AccountBalanceTokens.PnLCalculation)
+    private readonly pnlCalculationService: IPnLCalculation,
+  ) {}
 
   /**
    * Create account balance with dynamic price calculation
@@ -39,23 +47,51 @@ export class KPIService implements IAccountBalance {
         },
       });
 
-      // Create token balance records with only symbol and amount
-      await Promise.all(
-        accountBalanceDto.tokens.map(async (token: TokenBalanceDto) => {
+      // Get the real-time calculated values using our enhanced service FIRST
+      // We need this to store proper historical values
+      const enhancedClient = this.prisma.getEnhanced();
+
+      // Create token balance records with calculated prices and values for proper PnL tracking
+      const tokenBalancePromises = accountBalanceDto.tokens.map(
+        async (token: TokenBalanceDto) => {
+          // Get current price for this token
+          let currentPrice = 0;
+          let currentValue = 0;
+
+          if (token.symbol === 'USDC') {
+            // USDC is always $1.00
+            currentPrice = 1.0;
+            currentValue = Number(token.balance) * 1.0;
+          } else {
+            // Get price from TokenMaster
+            try {
+              const tokenPrice = await this.prisma.tokenMaster.findFirst({
+                where: { canonicalSymbol: token.symbol },
+              });
+              currentPrice = Number(tokenPrice?.priceUSD || 0);
+              currentValue = Number(token.balance) * currentPrice;
+            } catch (error) {
+              this.logger.warn(
+                `Could not get price for token ${token.symbol}: ${error.message}`,
+              );
+            }
+          }
+
           return tx.portfolioTokenBalance.create({
             data: {
               accountBalanceId: accountBalance.id,
               tokenSymbol: token.symbol,
               amount: token.balance,
-              priceUsd: 0, // Placeholder - real price comes from TokenMaster
-              valueUsd: 0, // Placeholder - calculated dynamically
+              priceUsd: currentPrice, // Store actual price at creation time
+              valueUsd: currentValue, // Store actual value at creation time
             },
           });
-        }),
+        },
       );
 
-      // Get the real-time calculated values using our enhanced service
-      const enhancedClient = this.prisma.getEnhanced();
+      await Promise.all(tokenBalancePromises);
+
+      // Now get the enhanced calculation to verify and update the account balance
       const calculatedBalance =
         await enhancedClient.portfolioCalculations.getAccountBalanceWithPrices(
           accountBalance.id,
@@ -85,23 +121,18 @@ export class KPIService implements IAccountBalance {
   /**
    * Get agent PnL - delegated to PnLCalculationService
    */
-  async getAgentPnL(runtimeAgentId: string): Promise<any> {
-    // This method should delegate to PnLCalculationService
-    // For now, return a placeholder
-    return {
-      runtimeAgentId,
-      pnl: 0,
-      message: 'PnL calculation delegated to PnLCalculationService',
-    };
+  async getAgentPnL(
+    runtimeAgentId: string,
+    forceRefresh?: boolean,
+  ): Promise<any> {
+    return this.pnlCalculationService.getAgentPnL(runtimeAgentId, forceRefresh);
   }
 
   /**
    * Get all agents PnL - delegated to PnLCalculationService
    */
-  async getAllAgentsPnL(): Promise<any[]> {
-    // This method should delegate to PnLCalculationService
-    // For now, return a placeholder
-    return [];
+  async getAllAgentsPnL(forceRefresh?: boolean): Promise<any[]> {
+    return this.pnlCalculationService.getAllAgentsPnL(forceRefresh);
   }
 
   /**
