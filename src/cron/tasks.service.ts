@@ -255,16 +255,46 @@ export class TasksService {
       for (const agent of runningAgents) {
         await this.messageService.sendMessageToAgent(agent.runtimeAgentId, {
           content: {
-            text: `Before making any trading decisions, FIRST retrieve your current portfolio (check the portfolio early) and your target allocation strategy (with get_target_allocation) and your entry/exit strategy (with get_strategy_text).
-
-Based on current market conditions, your portfolio, and these strategies, determine the OPTIMAL ALLOCATION PERCENTAGES for ALL 5 of your assigned cryptocurrencies AT ONCE. Focus only on the cryptocurrencies specifically mentioned in your strategy text.
-
-Once you've determined the ideal allocations, execute the necessary trades to rebalance your portfolio to match these target percentages. Explain your reasoning for the overall allocation strategy, focusing on how it aligns with your predefined entry/exit conditions and market analysis.
-
-Only trade cryptocurrencies specifically assigned to you in your strategy. If current market conditions don't justify changes to your allocation, it's acceptable to maintain your current positions.`,
+            text: `<execution_agent>
+      
+        <goal>
+          Based on Paradex market analysis, determine the optimal allocation percentages for all 5 of your assigned cryptocurrencies at once.
+          Then, execute the necessary trades to rebalance your portfolio to match these target percentages.
+          Justify your allocation strategy based on:
+          - your predefined entry/exit conditions,
+          - current market analysis,
+          - and your portfolio state.
+        </goal>
+      
+        <tool_usage>
+          Use the following tools to gather all necessary information for your reasoning and decision-making:
+          - print_portfolio: retrieve your current portfolio (especially the allocation field).
+          - get_target_allocation: retrieve your predefined allocation targets.
+          - get_strategy_text: fetch your entry/exit strategy.
+          - get_portfolio_pnl: review your portfolio's performance.
+          - get_agent_explanations: retrieve past decision rationales if available.
+          - get_analysis_paradex: access the latest market analysis from Paradex.
+      
+          For taking actions:
+          - simulate_trade: simulate potential trades.
+          - no_trade: use if no trade is necessary.
+          - set_target_allocation: update your target if needed.
+          - set_strategy_text: adjust your strategy if required.
+        </tool_usage>
+      
+        <execution_guidance>
+          - Always consult the allocation field in your portfolio before planning.
+          - Rebalance only based on calculated optimal percentages — do not overtrade.
+          - Justify all allocation decisions clearly using your strategy and current market data.
+          - Trade only the 5 cryptocurrencies assigned to you in your strategy.
+          - If market conditions don’t require action, maintain your current positions.
+        </execution_guidance>
+      
+      </execution_agent>`,
           },
         });
       }
+      
 
       const duration = Date.now() - startTime;
       this.logger.log(
