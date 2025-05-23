@@ -31,6 +31,7 @@ import { KPIModule } from './domains/kpi/kpi.module';
 import { CreatorsModule } from './domains/creators/creators.module';
 import { TokenMasterModule } from './domains/token-master/token-master.module';
 import { TokenPriceSyncModule } from './domains/token-price-sync/token-price-sync.module';
+import { AdminTasksModule } from './admin/tasks/admin-tasks.module';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { TokenPriceSyncModule } from './domains/token-price-sync/token-price-syn
     CreatorsModule,
     TokenMasterModule,
     TokenPriceSyncModule,
+    AdminTasksModule,
     ScheduleModule.forRoot(),
     TerminusModule,
   ],

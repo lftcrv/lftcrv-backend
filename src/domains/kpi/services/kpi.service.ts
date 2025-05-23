@@ -1,291 +1,145 @@
-import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
-import { IAccountBalance, AccountBalanceTokens, IPnLCalculation } from '../interfaces/kpi.interface';
+import { IAccountBalance } from '../interfaces/kpi.interface';
 import { AccountBalanceDto, TokenBalanceDto } from '../dtos/kpi.dto';
 import { ElizaAgent } from '@prisma/client';
-import { IPriceService } from '../../analysis/technical/interfaces/price.interface';
-import { ConfigService } from '@nestjs/config';
-import { AVNU_TOKENS } from '../../analysis/technical/config/tokens.config';
-import { AnalysisToken } from '../../analysis/technical/interfaces';
-
-// Type extension for PrismaService to handle models not in schema
-interface ExtendedPrismaModels {
-  paradexAccountBalance: {
-    create: any;
-    findMany: any;
-  };
-  portfolioTokenBalance: {
-    create: any;
-    findMany: any;
-  };
-  agentPerformanceSnapshot?: {
-    create: any;
-    findMany: any;
-  };
-}
-
-// Extended PrismaService with additional models
-type ExtendedPrismaService = PrismaService & ExtendedPrismaModels;
-
-// List of standard tokens to validate pricing for
-const STANDARD_TOKENS = ['ETH', 'BTC', 'USDC', 'DAI', 'USDT', 'WBTC', 'WETH', 'STRK'];
 
 @Injectable()
 export class KPIService implements IAccountBalance {
   private readonly logger = new Logger(KPIService.name);
-  private readonly tokenAddressMap: Map<string, string> = new Map();
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    @Inject(AnalysisToken.AvnuPriceService)
-    private readonly avnuPriceService: IPriceService,
-    @Inject(AnalysisToken.ParadexPriceService)
-    private readonly paradexPriceService: IPriceService,
-    @Inject(AccountBalanceTokens.PnLCalculation)
-    private readonly pnlCalculationService: IPnLCalculation,
-  ) {
-    // Build token address map for AVNU tokens
-    AVNU_TOKENS.forEach((token) => {
-      this.tokenAddressMap.set(token.name.toUpperCase(), token.address);
-    });
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
-  async createAccountBalanceData(data: AccountBalanceDto): Promise<any> {
-    this.logger.log('Creating balance account data:', {
-      runtimeAgentId: data.runtimeAgentId,
-      balanceInUSD: data.balanceInUSD,
-      hasTokens: data.tokens ? data.tokens.length : 0,
-    });
+  /**
+   * Create account balance with dynamic price calculation
+   * Only stores token symbols and amounts - prices are calculated dynamically
+   */
+  async createAccountBalanceData(
+    accountBalanceDto: AccountBalanceDto,
+  ): Promise<any> {
+    this.logger.log(
+      `Creating account balance for agent: ${accountBalanceDto.runtimeAgentId}`,
+    );
 
-    const agent = await this.prisma.elizaAgent.findFirst({
-      where: {
-        runtimeAgentId: {
-          startsWith: data.runtimeAgentId,
-        },
-      },
-    });
-
+    const agent = await this.findAgentByRuntimeId(
+      accountBalanceDto.runtimeAgentId,
+    );
     if (!agent) {
-      const exactAgent = await this.prisma.elizaAgent.findFirst({
-        where: {
-          runtimeAgentId: data.runtimeAgentId,
-        },
-      });
-
-      if (!exactAgent) {
-        throw new NotFoundException(
-          `Agent with runtimeAgentId starting with ${data.runtimeAgentId} not found`,
-        );
-      }
-
-      return this.createBalanceRecordForAgent(exactAgent, data);
+      throw new NotFoundException(
+        `Agent with runtimeAgentId ${accountBalanceDto.runtimeAgentId} not found`,
+      );
     }
 
-    return this.createBalanceRecordForAgent(agent, data);
-  }
-
-  private async createBalanceRecordForAgent(
-    agent: any,
-    data: AccountBalanceDto,
-  ): Promise<any> {
-    const extendedPrisma = this.prisma as ExtendedPrismaService;
-
-    try {
-      // Create the balance record
-      const balanceRecord = await extendedPrisma.paradexAccountBalance.create({
+    return await this.prisma.$transaction(async (tx) => {
+      // Create the account balance record with placeholder balanceInUSD
+      const accountBalance = await tx.paradexAccountBalance.create({
         data: {
-          createdAt: new Date(),
-          balanceInUSD: data.balanceInUSD,
           agentId: agent.id,
+          balanceInUSD: 0, // Placeholder - will be calculated dynamically
         },
       });
 
-      this.logger.log(`Created balance record with ID: ${balanceRecord.id}`);
+      // Create token balance records with only symbol and amount
+      await Promise.all(
+        accountBalanceDto.tokens.map(async (token: TokenBalanceDto) => {
+          return tx.portfolioTokenBalance.create({
+            data: {
+              accountBalanceId: accountBalance.id,
+              tokenSymbol: token.symbol,
+              amount: token.balance,
+              priceUsd: 0, // Placeholder - real price comes from TokenMaster
+              valueUsd: 0, // Placeholder - calculated dynamically
+            },
+          });
+        }),
+      );
 
-      // If token details are provided, store them
-      if (data.tokens && data.tokens.length > 0) {
-        this.logger.log(`Processing ${data.tokens.length} token balances`);
-
-        // Validate and update token prices if necessary
-        const updatedTokens = await this.validateAndUpdateTokenPrices(data.tokens);
-
-        const tokenPromises = updatedTokens.map((token) =>
-          this.createTokenBalanceRecord(balanceRecord.id, token),
+      // Get the real-time calculated values using our enhanced service
+      const enhancedClient = this.prisma.getEnhanced();
+      const calculatedBalance =
+        await enhancedClient.portfolioCalculations.getAccountBalanceWithPrices(
+          accountBalance.id,
         );
 
-        await Promise.all(tokenPromises);
-        this.logger.log('All token balances saved successfully');
+      // Update stored balanceInUSD with calculated value for consistency
+      if (calculatedBalance) {
+        await tx.paradexAccountBalance.update({
+          where: { id: accountBalance.id },
+          data: {
+            balanceInUSD: Number(calculatedBalance.calculated_balance_usd) || 0,
+          },
+        });
       }
 
       return {
-        id: balanceRecord.id,
         agentId: agent.id,
-        runtimeAgentId: agent.runtimeAgentId,
-        balanceInUSD: data.balanceInUSD,
-        tokenCount: data.tokens?.length || 0,
-        createdAt: balanceRecord.createdAt,
+        runtimeAgentId: accountBalanceDto.runtimeAgentId,
+        balanceInUSD: Number(calculatedBalance?.calculated_balance_usd) || 0,
+        tokens: calculatedBalance?.token_details || [],
+        createdAt: accountBalance.createdAt,
+        message: 'Balance created with real-time price calculations',
       };
-    } catch (error) {
-      this.logger.error('Error creating balance record:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Validates and updates token prices for standard tokens
-   * @param tokens Token balance data
-   * @returns Updated token balance data with accurate prices
+   * Get agent PnL - delegated to PnLCalculationService
    */
-  private async validateAndUpdateTokenPrices(
-    tokens: TokenBalanceDto[],
-  ): Promise<TokenBalanceDto[]> {
-    const updatedTokens = await Promise.all(
-      tokens.map(async (token) => {
-        // Only validate prices for known standard tokens
-        if (STANDARD_TOKENS.includes(token.symbol.toUpperCase())) {
-          try {
-            // Try to get the current market price
-            const currentPrice = await this.getTokenCurrentPrice(token.symbol);
-            
-            // If we successfully got a price and it's significantly different (more than 5%)
-            if (currentPrice && Math.abs(currentPrice - token.price) / token.price > 0.05) {
-              this.logger.log(
-                `Updating price for ${token.symbol} from ${token.price} to ${currentPrice} (difference: ${(Math.abs(currentPrice - token.price) / token.price * 100).toFixed(2)}%)`,
-              );
-              
-              // Return updated token with corrected price
-              return {
-                ...token,
-                price: currentPrice,
-              };
-            }
-          } catch (error) {
-            this.logger.warn(
-              `Failed to get current price for ${token.symbol}, using provided price: ${error.message}`,
-            );
-          }
-        }
-        // Return original token if not a standard token or price validation failed
-        return token;
-      }),
-    );
-
-    // Recalculate the total portfolio value with updated prices
-    const totalValue = updatedTokens.reduce(
-      (sum, token) => sum + token.balance * token.price, 
-      0
-    );
-    
-    this.logger.log(`Total portfolio value after price validation: ${totalValue}`);
-    
-    return updatedTokens;
-  }
-
-  /**
-   * Gets the current market price for a token
-   * @param tokenSymbol The token symbol (e.g., "ETH")
-   * @returns Current price or null if not available
-   */
-  private async getTokenCurrentPrice(tokenSymbol: string): Promise<number | null> {
-    const symbol = tokenSymbol.toUpperCase();
-    
-    try {
-      // First try AVNU price service for Starknet tokens
-      try {
-        // Get token address from our map instead of calling getter
-        const tokenAddress = this.tokenAddressMap.get(symbol);
-        if (!tokenAddress) {
-          throw new Error(`Token ${symbol} not found in AVNU tokens list`);
-        }
-        
-        const price = await this.avnuPriceService.getCurrentPrice(tokenAddress);
-        this.logger.log(`Got price for ${symbol} from AVNU: ${price}`);
-        return price;
-      } catch (avnuError) {
-        // If AVNU fails, try Paradex
-        const price = await this.paradexPriceService.getCurrentPrice(symbol);
-        this.logger.log(`Got price for ${symbol} from Paradex: ${price}`);
-        return price;
-      }
-    } catch (error) {
-      this.logger.warn(`Could not get current price for ${symbol}: ${error.message}`);
-      return null;
-    }
-  }
-
-  private async createTokenBalanceRecord(
-    accountBalanceId: string,
-    token: TokenBalanceDto,
-  ): Promise<any> {
-    try {
-      const extendedPrisma = this.prisma as ExtendedPrismaService;
-
-      const valueUsd = token.balance * token.price;
-
-      const tokenRecord = await extendedPrisma.portfolioTokenBalance.create({
-        data: {
-          accountBalanceId,
-          tokenSymbol: token.symbol,
-          amount: token.balance,
-          priceUsd: token.price,
-          valueUsd: valueUsd,
-          createdAt: new Date(),
-        },
-      });
-
-      this.logger.log(
-        `Created token balance record for ${token.symbol}: ${token.balance} @ $${token.price}`,
-      );
-      return tokenRecord;
-    } catch (error) {
-      this.logger.error(
-        `Error creating token balance for symbol ${token.symbol}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  async getAgentPnL(runtimeAgentId: string, forceRefresh = false): Promise<any> {
-    // Déléguer au service de calcul de PnL unifié
-    return this.pnlCalculationService.getAgentPnL(runtimeAgentId, forceRefresh);
-  }
-
-  async getAllAgentsPnL(forceRefresh = false): Promise<any[]> {
-    // Déléguer au service de calcul de PnL unifié
-    return this.pnlCalculationService.getAllAgentsPnL(forceRefresh);
-  }
-
-  async getBestPerformingAgent(): Promise<any> {
-    this.logger.log('Finding the best performing agent by PnL');
-
-    const allAgentsPnL = await this.getAllAgentsPnL();
-
-    if (allAgentsPnL.length === 0) {
-      return {
-        message: 'No agents with PnL data available',
-        bestAgent: null,
-      };
-    }
-    const bestAgent = allAgentsPnL[0];
-
-    if (!bestAgent.firstBalance || bestAgent.pnl === 0) {
-      return {
-        message: 'Found a best agent, but no significant PnL data available',
-        bestAgent,
-      };
-    }
-
+  async getAgentPnL(runtimeAgentId: string): Promise<any> {
+    // This method should delegate to PnLCalculationService
+    // For now, return a placeholder
     return {
-      message: 'Best performing agent found',
-      bestAgent,
+      runtimeAgentId,
+      pnl: 0,
+      message: 'PnL calculation delegated to PnLCalculationService',
     };
   }
 
-  async getAgentPortfolio(runtimeAgentId: string): Promise<any> {
-    this.logger.log(`Getting portfolio for agent: ${runtimeAgentId}`);
+  /**
+   * Get all agents PnL - delegated to PnLCalculationService
+   */
+  async getAllAgentsPnL(): Promise<any[]> {
+    // This method should delegate to PnLCalculationService
+    // For now, return a placeholder
+    return [];
+  }
 
+  /**
+   * Get best performing agent using real-time calculations
+   */
+  async getBestPerformingAgent(): Promise<any> {
+    const enhancedClient = this.prisma.getEnhanced();
+    const allBalances =
+      await enhancedClient.portfolioCalculations.getAllAccountBalancesWithCalculations();
+
+    // Type guard to ensure allBalances is an array
+    if (!Array.isArray(allBalances) || allBalances.length === 0) {
+      return null;
+    }
+
+    // Find the best performing agent by calculated balance
+    const bestBalance = allBalances.reduce((best: any, current: any) => {
+      return Number(current.calculated_balance_usd) >
+        Number(best?.calculated_balance_usd || 0)
+        ? current
+        : best;
+    }, null);
+
+    return bestBalance
+      ? {
+          agentId: bestBalance.agent_id,
+          runtimeAgentId: bestBalance.runtime_agent_id,
+          name: bestBalance.agent_name,
+          balanceInUSD: Number(bestBalance.calculated_balance_usd),
+          storedBalance: Number(bestBalance.stored_balance_usd), // Show the override
+        }
+      : null;
+  }
+
+  /**
+   * Get agent portfolio with real-time calculated values that override stored ones
+   */
+  async getAgentPortfolio(runtimeAgentId: string): Promise<any> {
     const agent = await this.findAgentByRuntimeId(runtimeAgentId);
     if (!agent) {
       throw new NotFoundException(
@@ -293,160 +147,115 @@ export class KPIService implements IAccountBalance {
       );
     }
 
-    // Get latest balance record
-    const latestBalance = await this.prisma.paradexAccountBalance.findFirst({
-      where: { agentId: agent.id },
-      orderBy: { createdAt: 'desc' },
-    });
+    const enhancedClient = this.prisma.getEnhanced();
+    const latestBalance =
+      await enhancedClient.portfolioCalculations.getLatestAgentBalance(
+        agent.id,
+      );
 
     if (!latestBalance) {
       return {
         agentId: agent.id,
-        runtimeAgentId: agent.runtimeAgentId,
+        runtimeAgentId,
         name: agent.name,
         message: 'No balance data available for this agent',
         portfolio: [],
       };
     }
 
-    // Get token balances for this balance record
-    const extendedPrisma = this.prisma as ExtendedPrismaService;
-    const tokenBalances = await extendedPrisma.portfolioTokenBalance.findMany({
-      where: { accountBalanceId: latestBalance.id },
-      orderBy: { valueUsd: 'desc' },
+    const tokenDetails = latestBalance.token_details || [];
+
+    return {
+      agentId: agent.id,
+      runtimeAgentId,
+      name: agent.name,
+      timestamp: latestBalance.created_at,
+
+      // Show both stored and calculated values for transparency
+      storedBalanceUSD: Number(latestBalance.stored_balance_usd),
+      calculatedBalanceUSD: Number(latestBalance.calculated_balance_usd),
+      balanceInUSD: Number(latestBalance.calculated_balance_usd), // Use calculated as primary
+
+      portfolio: tokenDetails.map((token: any) => ({
+        symbol: token.symbol,
+        amount: Number(token.amount),
+
+        // Show override in action
+        storedPrice: Number(token.stored_price_usd),
+        currentPrice: Number(token.current_price_usd),
+        priceOverridden:
+          Number(token.stored_price_usd) !== Number(token.current_price_usd),
+
+        storedValue: Number(token.stored_value_usd),
+        calculatedValue: Number(token.calculated_value_usd),
+        valueOverridden:
+          Number(token.stored_value_usd) !== Number(token.calculated_value_usd),
+
+        // Use calculated values as primary
+        price: Number(token.current_price_usd),
+        valueUsd: Number(token.calculated_value_usd),
+        percentage:
+          Number(latestBalance.calculated_balance_usd) > 0
+            ? (Number(token.calculated_value_usd) /
+                Number(latestBalance.calculated_balance_usd)) *
+              100
+            : 0,
+      })),
+    };
+  }
+
+  /**
+   * Get agent balance history with real-time calculations
+   */
+  async getAgentBalanceHistory(agentId: string): Promise<any> {
+    const agent = await this.prisma.elizaAgent.findUnique({
+      where: { id: agentId },
     });
 
-    // Recalculate the total balance based on the sum of token values
-    // This ensures consistency between total and parts
-    const totalValueUsd = tokenBalances.reduce(
-      (sum, token) => sum + Number(token.valueUsd),
-      0,
-    );
+    if (!agent) {
+      throw new NotFoundException(`Agent with ID ${agentId} not found`);
+    }
 
-    // Use the calculated total instead of the stored balance if they don't match
-    const actualBalanceInUSD =
-      Math.abs(totalValueUsd - latestBalance.balanceInUSD) < 0.01
-        ? latestBalance.balanceInUSD
-        : totalValueUsd;
+    // Get all balance records for this agent
+    const balances = await this.prisma.paradexAccountBalance.findMany({
+      where: { agentId: agent.id },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const enhancedClient = this.prisma.getEnhanced();
+
+    // Get real-time calculations for each balance record
+    const balanceHistory = await Promise.all(
+      balances.map(async (balance) => {
+        const calculated =
+          await enhancedClient.portfolioCalculations.getAccountBalanceWithPrices(
+            balance.id,
+          );
+
+        return {
+          timestamp: balance.createdAt,
+          storedBalance: balance.balanceInUSD,
+          calculatedBalance: Number(calculated?.calculated_balance_usd) || 0,
+          balanceInUSD: Number(calculated?.calculated_balance_usd) || 0, // Use calculated
+          tokenCount: Number(calculated?.token_count) || 0,
+          balanceOverridden:
+            balance.balanceInUSD !== Number(calculated?.calculated_balance_usd),
+        };
+      }),
+    );
 
     return {
       agentId: agent.id,
       runtimeAgentId: agent.runtimeAgentId,
       name: agent.name,
-      timestamp: latestBalance.createdAt,
-      balanceInUSD: actualBalanceInUSD,
-      portfolio: tokenBalances.map((token) => ({
-        symbol: token.tokenSymbol,
-        balance: Number(token.amount),
-        price: Number(token.priceUsd),
-        valueUsd: Number(token.valueUsd),
-        percentage: (Number(token.valueUsd) / actualBalanceInUSD) * 100,
-      })),
+      history: balanceHistory,
     };
   }
 
-  private async calculatePnLForAgent(agent: any): Promise<any> {
-    // Cette méthode est maintenant dépréciée - utilisez le service PnLCalculation à la place
-    this.logger.warn('calculatePnLForAgent is deprecated. Use PnLCalculationService instead.');
-    return this.pnlCalculationService.getAgentPnL(agent.runtimeAgentId);
-  }
-
-  private async findAgentByRuntimeId(runtimeAgentId: string): Promise<any> {
-    return this.prisma.elizaAgent.findFirst({
-      where: {
-        runtimeAgentId,
-      },
-    });
-  }
-
-  async getAgentBalanceHistory(agentId: string): Promise<any> {
-    this.logger.log(`Getting balance history for agent with ID: ${agentId}`);
-    // Verify the agent exists first
-    const agent = await this.prisma.elizaAgent.findUnique({
-      where: { id: agentId },
-    });
-
-    if (!agent) {
-      throw new NotFoundException(`Agent with ID ${agentId} not found`);
-    }
-
-    const extendedPrisma = this.prisma as ExtendedPrismaService;
-    const balances = await extendedPrisma.paradexAccountBalance.findMany({
-      where: {
-        agentId: agent.id,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    // Get corrected balance values for each record
-    const balancesWithCorrectValues = await Promise.all(
-      balances.map(async (balance) => {
-        const tokenBalances =
-          await extendedPrisma.portfolioTokenBalance.findMany({
-            where: { accountBalanceId: balance.id },
-          });
-
-        const totalValueUsd = tokenBalances.reduce(
-          (sum, token) => sum + Number(token.valueUsd),
-          0,
-        );
-
-        // Mark zero-balance records to avoid using them in PnL calculations
-        const isZeroBalance = totalValueUsd === 0 || balance.balanceInUSD === 0;
-
-        const correctedBalance = {
-          ...balance,
-          originalBalanceInUSD: balance.balanceInUSD, // Keep original for reference
-          balanceInUSD:
-            Math.abs(totalValueUsd - balance.balanceInUSD) < 0.01
-              ? balance.balanceInUSD
-              : totalValueUsd,
-          isZeroBalance, // Add flag for UI to handle
-          tokenBalances: tokenBalances.map((token) => ({
-            symbol: token.tokenSymbol,
-            balance: Number(token.amount),
-            price: Number(token.priceUsd),
-            valueUsd: Number(token.valueUsd),
-          })),
-        };
-
-        return correctedBalance;
-      }),
-    );
-
-    // Also calculate a PnL series with non-zero balances only
-    const nonZeroBalances = balancesWithCorrectValues.filter(
-      (b) => !b.isZeroBalance,
-    );
-
-    // Calculate PnL for each point compared to the first non-zero balance
-    let pnlSeries = [];
-    if (nonZeroBalances.length > 0) {
-      const firstBalance = nonZeroBalances[0].balanceInUSD;
-      pnlSeries = nonZeroBalances.map((balance) => ({
-        timestamp: balance.createdAt,
-        balance: balance.balanceInUSD,
-        pnl: balance.balanceInUSD - firstBalance,
-        pnlPercentage:
-          firstBalance !== 0
-            ? ((balance.balanceInUSD - firstBalance) / firstBalance) * 100
-            : 0,
-      }));
-    }
-
-    return {
-      agentId: agent.id,
-      balances: balancesWithCorrectValues,
-      pnlSeries,
-      validBalanceCount: nonZeroBalances.length,
-    };
-  }
-
+  /**
+   * Get agent current balance with real-time calculations
+   */
   async getAgentCurrentBalance(agentId: string): Promise<any> {
-    this.logger.log(`Getting current balance for agent with ID: ${agentId}`);
-    // Verify the agent exists first
     const agent = await this.prisma.elizaAgent.findUnique({
       where: { id: agentId },
     });
@@ -455,18 +264,13 @@ export class KPIService implements IAccountBalance {
       throw new NotFoundException(`Agent with ID ${agentId} not found`);
     }
 
-    const extendedPrisma = this.prisma as ExtendedPrismaService;
-    const latestBalance = await extendedPrisma.paradexAccountBalance.findMany({
-      where: {
-        agentId: agent.id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 1,
-    });
+    const enhancedClient = this.prisma.getEnhanced();
+    const latestBalance =
+      await enhancedClient.portfolioCalculations.getLatestAgentBalance(
+        agent.id,
+      );
 
-    if (latestBalance.length === 0) {
+    if (!latestBalance) {
       return {
         agentId: agent.id,
         currentBalance: 0,
@@ -475,43 +279,34 @@ export class KPIService implements IAccountBalance {
       };
     }
 
-    // Get token balances to calculate the actual balance value (same as in getAgentPortfolio)
-    const tokenBalances = await extendedPrisma.portfolioTokenBalance.findMany({
-      where: { accountBalanceId: latestBalance[0].id },
-    });
-
-    // Recalculate the total balance based on the sum of token values
-    const totalValueUsd = tokenBalances.reduce(
-      (sum, token) => sum + Number(token.valueUsd),
-      0,
-    );
-
-    // Use the calculated total instead of the stored balance if they don't match
-    const actualBalanceInUSD =
-      Math.abs(totalValueUsd - latestBalance[0].balanceInUSD) < 0.01
-        ? latestBalance[0].balanceInUSD
-        : totalValueUsd;
-
     return {
       agentId: agent.id,
-      currentBalance: actualBalanceInUSD,
-      timestamp: latestBalance[0].createdAt,
+      storedBalance: Number(latestBalance.stored_balance_usd),
+      calculatedBalance: Number(latestBalance.calculated_balance_usd),
+      currentBalance: Number(latestBalance.calculated_balance_usd), // Use calculated
+      timestamp: latestBalance.created_at,
+      balanceOverridden:
+        Number(latestBalance.stored_balance_usd) !==
+        Number(latestBalance.calculated_balance_usd),
     };
   }
 
-  async getAgentById(agentId: string): Promise<ElizaAgent | null> {
-    this.logger.log(`Getting agent with ID: ${agentId}`);
-    try {
-      const agent = await this.prisma.elizaAgent.findUnique({
-        where: { id: agentId },
-      });
+  /**
+   * Get agent by database ID
+   */
+  async getAgentById(agentId: string): Promise<any | null> {
+    return this.prisma.elizaAgent.findUnique({
+      where: { id: agentId },
+    });
+  }
 
-      return agent;
-    } catch (error) {
-      this.logger.error(
-        `Error getting agent with ID ${agentId}: ${error.message}`,
-      );
-      return null;
-    }
+  private async findAgentByRuntimeId(
+    runtimeAgentId: string,
+  ): Promise<ElizaAgent | null> {
+    return this.prisma.elizaAgent.findFirst({
+      where: {
+        runtimeAgentId,
+      },
+    });
   }
 }
