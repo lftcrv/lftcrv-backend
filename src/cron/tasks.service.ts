@@ -279,7 +279,7 @@ Only trade cryptocurrencies specifically assigned to you in your strategy. If cu
   }
 
   // Runs every 30 minutes to send portfolio balance update request to active agents
-  @Cron('*/30 * * * *')
+  @Cron('04 * * * *')
   async sendPortfolioBalanceUpdate() {
     const startTime = Date.now();
     this.logger.log(

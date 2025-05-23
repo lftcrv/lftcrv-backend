@@ -11,17 +11,6 @@ import { LoggingInterceptor } from '../../../shared/interceptors/logging.interce
 import { RequireApiKey } from '../../../shared/auth/decorators/require-api-key.decorator';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
 
-// Type extension for PrismaService to handle models not in schema
-interface ExtendedPrismaModels {
-  paradexAccountBalance: {
-    findFirst: any;
-    findMany: any;
-  };
-}
-
-// Extended PrismaService with additional models
-type ExtendedPrismaService = PrismaService & ExtendedPrismaModels;
-
 @ApiTags('Metrics')
 @Controller('api/metrics')
 @UseInterceptors(LoggingInterceptor)
@@ -144,23 +133,15 @@ export class MetricsController {
   })
   async getTotalBalance(): Promise<any> {
     try {
-      // For each agent, get their latest balance
-      const agents = await this.prisma.elizaAgent.findMany();
-      let totalBalance = 0;
+      // Use enhanced Prisma service to get calculated balances
+      const enhancedClient = this.prisma.getEnhanced();
+      const allBalances =
+        await enhancedClient.portfolioCalculations.getAllAccountBalancesWithCalculations();
 
-      const extendedPrisma = this.prisma as ExtendedPrismaService;
-
-      for (const agent of agents) {
-        const latestBalance =
-          await extendedPrisma.paradexAccountBalance.findFirst({
-            where: { agentId: agent.id },
-            orderBy: { createdAt: 'desc' },
-          });
-
-        if (latestBalance) {
-          totalBalance += latestBalance.balanceInUSD;
-        }
-      }
+      // Sum up all calculated balances
+      const totalBalance = (allBalances as any[]).reduce((sum, balance) => {
+        return sum + (Number(balance.calculated_balance_usd) || 0);
+      }, 0);
 
       return {
         totalBalance,

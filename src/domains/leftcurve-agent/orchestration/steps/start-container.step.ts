@@ -52,12 +52,13 @@ export class StartContainerStep extends BaseStepExecutor {
       }
 
       // Formater la liste des cryptos
-      const selectedCryptos = agent.selectedCryptos 
-        ? agent.selectedCryptos.split(',').map(crypto => crypto.trim()) 
+      const selectedCryptos = agent.selectedCryptos
+        ? agent.selectedCryptos.split(',').map((crypto) => crypto.trim())
         : [];
-      const cryptoListStr = selectedCryptos.length > 0 
-        ? selectedCryptos.join(', ') 
-        : 'none specifically assigned';
+      const cryptoListStr =
+        selectedCryptos.length > 0
+          ? selectedCryptos.join(', ')
+          : 'none specifically assigned';
 
       const updatedAgent = await this.prisma.elizaAgent.update({
         where: { id: agentId },
@@ -69,7 +70,7 @@ export class StartContainerStep extends BaseStepExecutor {
 
       // First request: initialize portfolio
       this.logger.log(
-        `Sending portfolio balance request to agent with runtime ID: ${runtimeAgentId}`
+        `Sending portfolio balance request to agent with runtime ID: ${runtimeAgentId}`,
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
@@ -81,51 +82,55 @@ export class StartContainerStep extends BaseStepExecutor {
       this.logger.log(
         `Initial portfolio request sent successfully. Waiting ${
           this.delayBetweenRequests / 1000
-        } seconds before sending portfolio allocation request...`
+        } seconds before sending portfolio allocation request...`,
       );
-      
+
       // Create performance snapshot while waiting
       await this.performanceSnapshotService.createAgentPerformanceSnapshot(
         agentId,
       );
 
       // Wait for the specified delay
-      await new Promise((resolve) => setTimeout(resolve, this.delayBetweenRequests));
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.delayBetweenRequests),
+      );
 
       // Second request: portfolio allocation with explicit crypto list
       this.logger.log(
-        `Sending portfolio allocation request to agent with runtime ID: ${runtimeAgentId}`
+        `Sending portfolio allocation request to agent with runtime ID: ${runtimeAgentId}`,
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
           text: `Your assigned cryptocurrencies are: ${cryptoListStr}. Review the available analysis and tradable cryptos. Then, based on current market conditions and ONLY these five cryptos assigned to you (plus USDC), set your target portfolio allocation strategy accordingly (so you need to execute the set_target_allocation action).`,
         },
       });
-      
+
       this.logger.log(
-        `Portfolio allocation request sent successfully to agent with runtime ID: ${runtimeAgentId}`
+        `Portfolio allocation request sent successfully to agent with runtime ID: ${runtimeAgentId}`,
       );
 
       // Wait before sending the trading strategy request
       this.logger.log(
-        `Waiting ${this.delayBetweenRequests / 1000} seconds before sending trading strategy request...`
+        `Waiting ${this.delayBetweenRequests / 1000} seconds before sending trading strategy request...`,
       );
-      
+
       // Wait for the specified delay again
-      await new Promise((resolve) => setTimeout(resolve, this.delayBetweenRequests));
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.delayBetweenRequests),
+      );
 
       // Third request: trading strategy with explicit crypto list
       this.logger.log(
-        `Sending trading strategy request to agent with runtime ID: ${runtimeAgentId}`
+        `Sending trading strategy request to agent with runtime ID: ${runtimeAgentId}`,
       );
       await this.messageService.sendMessageToAgent(runtimeAgentId, {
         content: {
           text: `Your assigned cryptocurrencies are: ${cryptoListStr}. Based on market conditions and your trading personality, define an entry and exit strategy for these five cryptos assigned to you (with set_strategy_text action).`,
         },
       });
-      
+
       this.logger.log(
-        `Trading strategy request sent successfully to agent with runtime ID: ${runtimeAgentId}`
+        `Trading strategy request sent successfully to agent with runtime ID: ${runtimeAgentId}`,
       );
 
       return this.success(updatedAgent, {

@@ -30,6 +30,11 @@ export class PerformanceSnapshotService {
       throw new NotFoundException(`Agent with ID ${agentId} not found`);
     }
 
+    // Get calculated balance using enhanced Prisma service
+    const enhancedClient = this.prisma.getEnhanced();
+    const calculatedBalance = await enhancedClient.portfolioCalculations.getLatestAgentBalance(agentId);
+    const currentBalanceUSD = calculatedBalance ? Number(calculatedBalance.calculated_balance_usd) : 0;
+
     // Récupérer les données de PnL depuis le nouveau service en forçant le rafraîchissement
     const pnlData = await this.pnlCalculationService.getAgentPnL(
       agent.runtimeAgentId,
@@ -40,7 +45,7 @@ export class PerformanceSnapshotService {
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-    // Get balances from the last 24 hours
+    // Get balances from the last 24 hours and calculate with enhanced service
     const balances24h = await this.prisma.$queryRaw`
       SELECT * FROM paradex_account_balances 
       WHERE "agentId" = ${agent.id} 
@@ -48,12 +53,12 @@ export class PerformanceSnapshotService {
       ORDER BY "createdAt" ASC
     `;
 
-    // Calculate PnL for the last 24 hours
-    const pnlData24h = this.calculatePnLFromBalances(balances24h as any[]);
+    // Calculate PnL for the last 24 hours using calculated values
+    const pnlData24h = await this.calculatePnLFromBalancesWithCalculatedValues(balances24h as any[]);
     // If no data in the last 24 hours, use the existing pnl24h value from LatestMarketData
     const pnl24h = pnlData24h.pnl || agent.LatestMarketData?.pnl24h || 0;
 
-    // Create snapshot with all KPIs directly using $queryRaw
+    // Create snapshot with all KPIs directly using $queryRaw - use calculated balance
     await this.prisma.$executeRaw`
       INSERT INTO "agent_performance_snapshots" (
         id, 
@@ -72,7 +77,7 @@ export class PerformanceSnapshotService {
         gen_random_uuid(), 
         ${agent.id}, 
         now(), 
-        ${pnlData.latestBalance || 0}, 
+        ${currentBalanceUSD}, 
         ${pnlData.pnl || 0}, 
         ${pnlData.pnlPercentage || 0}, 
         ${pnl24h}, 
@@ -84,23 +89,23 @@ export class PerformanceSnapshotService {
       )
     `;
 
-    // Update or create the LatestMarketData with the calculated 24h PnL
+    // Update or create the LatestMarketData with the calculated balance and 24h PnL
     if (agent.LatestMarketData) {
-      // Update existing record
+      // Update existing record with calculated balance
       await this.prisma.latestMarketData.update({
         where: { elizaAgentId: agent.id },
         data: {
           pnl24h,
-          balanceInUSD: pnlData.latestBalance || 0,
+          balanceInUSD: currentBalanceUSD,
         },
       });
     } else {
-      // Create new record
+      // Create new record with calculated balance
       await this.prisma.latestMarketData.create({
         data: {
           elizaAgentId: agent.id,
           pnl24h,
-          balanceInUSD: pnlData.latestBalance || 0,
+          balanceInUSD: currentBalanceUSD,
           price: 0,
           priceChange24h: 0,
           holders: 0,
@@ -119,11 +124,11 @@ export class PerformanceSnapshotService {
 
     this.logger.log(`Created performance snapshot for agent ${agentId}`);
 
-    // Return the inserted data for API response
+    // Return the inserted data for API response with calculated balance
     return {
       agentId: agent.id,
       timestamp: new Date(),
-      balanceInUSD: pnlData.latestBalance || 0,
+      balanceInUSD: currentBalanceUSD,
       pnl: pnlData.pnl || 0,
       pnlPercentage: pnlData.pnlPercentage || 0,
       pnl24h,
@@ -410,5 +415,76 @@ export class PerformanceSnapshotService {
       firstBalanceDate: firstBalance.createdAt,
       latestBalanceDate: latestBalance.createdAt,
     };
+  }
+
+  /**
+   * Helper method to calculate PnL from balance history using calculated values
+   */
+  private async calculatePnLFromBalancesWithCalculatedValues(
+    balances: any[]
+  ): Promise<any> {
+    if (balances.length === 0) {
+      return {
+        pnl: 0,
+        pnlPercentage: 0,
+        firstBalance: null,
+        latestBalance: null,
+      };
+    }
+
+    // Use enhanced Prisma service to get calculated values for each balance record
+    const enhancedClient = this.prisma.getEnhanced();
+    
+    try {
+      // Calculate first balance using enhanced service
+      const firstBalanceRecord = balances[0];
+      const firstCalculatedBalance = await enhancedClient.portfolioCalculations.getAccountBalanceWithPrices(
+        firstBalanceRecord.id
+      );
+      const firstBalance = firstCalculatedBalance ? Number(firstCalculatedBalance.calculated_balance_usd) : firstBalanceRecord.balanceInUSD;
+
+      // Calculate latest balance using enhanced service
+      const latestBalanceRecord = balances[balances.length - 1];
+      const latestCalculatedBalance = await enhancedClient.portfolioCalculations.getAccountBalanceWithPrices(
+        latestBalanceRecord.id
+      );
+      const latestBalance = latestCalculatedBalance ? Number(latestCalculatedBalance.calculated_balance_usd) : latestBalanceRecord.balanceInUSD;
+
+      const pnl = latestBalance - firstBalance;
+      const pnlPercentage = firstBalance !== 0 ? (pnl / firstBalance) * 100 : 0;
+
+      this.logger.debug(
+        `24h PnL calculated: ${pnl} (${firstBalance} -> ${latestBalance}), percentage: ${pnlPercentage}%`
+      );
+
+      return {
+        pnl,
+        pnlPercentage,
+        firstBalance,
+        latestBalance,
+        firstBalanceDate: firstBalanceRecord.createdAt,
+        latestBalanceDate: latestBalanceRecord.createdAt,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Failed to calculate 24h PnL with enhanced service, falling back to stored values: ${error.message}`
+      );
+      
+      // Fallback to stored values if enhanced calculation fails
+      const firstBalance = balances[0];
+      const latestBalance = balances[balances.length - 1];
+
+      const pnl = latestBalance.balanceInUSD - firstBalance.balanceInUSD;
+      const pnlPercentage = firstBalance.balanceInUSD !== 0 ? (pnl / firstBalance.balanceInUSD) * 100 : 0;
+
+      return {
+        pnl,
+        pnlPercentage,
+        firstBalance: firstBalance.balanceInUSD,
+        latestBalance: latestBalance.balanceInUSD,
+        firstBalanceDate: firstBalance.createdAt,
+        latestBalanceDate: latestBalance.createdAt,
+      };
+    }
   }
 }

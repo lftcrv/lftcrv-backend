@@ -27,12 +27,12 @@ export class CryptoSelectionService {
       const filePath = path.resolve('config/crypto/tradable_crypto.json');
       const fileData = fs.readFileSync(filePath, 'utf8');
       const cryptoList = JSON.parse(fileData);
-      
+
       // Ajouter le champ risk_tolerance à chaque crypto
-      cryptoList.forEach(crypto => {
+      cryptoList.forEach((crypto) => {
         crypto.risk_tolerance = 100 - Number(crypto['Left vs. Right (1-100)']);
       });
-      
+
       this.logger.log(
         `Loaded ${cryptoList.length} cryptocurrencies from tradable_crypto.json with risk_tolerance field`,
       );
@@ -76,10 +76,10 @@ export class CryptoSelectionService {
    * Builds the prompt for Claude API
    */
   private buildClaudePrompt(
-    biography: string, 
-    cryptoList: any[], 
-    curveSide?: string, 
-    riskProfile?: number
+    biography: string,
+    cryptoList: any[],
+    curveSide?: string,
+    riskProfile?: number,
   ): string {
     return `
 I need you to select 5 cryptocurrencies that match this agent's risk profile and preferences.
@@ -118,11 +118,11 @@ IMPORTANT: Your response must ONLY contain the cryptocurrency tickers separated 
     selectedCryptos: string[],
     cryptoList: any[],
     curveSide?: string,
-    riskProfile?: number
+    riskProfile?: number,
   ): string {
     // Filtrer la liste complète pour ne conserver que les cryptos sélectionnées
-    const selectedCryptoDetails = cryptoList.filter(crypto => 
-      selectedCryptos.includes(crypto.Cryptocurrency)
+    const selectedCryptoDetails = cryptoList.filter((crypto) =>
+      selectedCryptos.includes(crypto.Cryptocurrency),
     );
 
     return `
@@ -163,25 +163,31 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
     biography: string,
     selectedCryptos: string[],
     curveSide?: string,
-    riskProfile?: number
+    riskProfile?: number,
   ): Promise<string> {
     try {
-      this.logger.log(`Generating portfolio explanation for agent with ${selectedCryptos.length} cryptos`);
-      this.logger.log(`Biography length: ${biography.length}, CurveSide: ${curveSide}, RiskProfile: ${riskProfile}`);
-      
+      this.logger.log(
+        `Generating portfolio explanation for agent with ${selectedCryptos.length} cryptos`,
+      );
+      this.logger.log(
+        `Biography length: ${biography.length}, CurveSide: ${curveSide}, RiskProfile: ${riskProfile}`,
+      );
+
       const fullCryptoList = await this.getCryptoCurrencyList();
-      
+
       // Construire le prompt pour l'explication du portefeuille
       const prompt = this.buildPortfolioExplanationPrompt(
-        biography, 
-        selectedCryptos, 
-        fullCryptoList, 
-        curveSide, 
-        riskProfile
+        biography,
+        selectedCryptos,
+        fullCryptoList,
+        curveSide,
+        riskProfile,
       );
-      
-      this.logger.log(`Calling Claude API for portfolio explanation generation`);
-      
+
+      this.logger.log(
+        `Calling Claude API for portfolio explanation generation`,
+      );
+
       const response = await axios.post(
         this.claudeApiUrl,
         {
@@ -200,17 +206,19 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
             'X-API-Key': this.claudeApiKey,
             'anthropic-version': '2023-06-01',
           },
-        }
+        },
       );
 
       // Parse la réponse
       const explanation = response.data.content[0].text.trim();
       this.logger.log(`Generated portfolio explanation: ${explanation}`);
-      
+
       return explanation;
     } catch (error) {
-      this.logger.error(`Error generating portfolio explanation: ${error.message}`);
-      
+      this.logger.error(
+        `Error generating portfolio explanation: ${error.message}`,
+      );
+
       // Retourner une explication par défaut
       const defaultExplanation = `I allocate my portfolio across ${selectedCryptos.join(', ')} with a balanced approach that matches my trading philosophy and risk profile.`;
       this.logger.log(`Using default explanation: ${defaultExplanation}`);
@@ -224,13 +232,18 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
    * @param portfolioExplanation The portfolio explanation to add
    * @returns Updated biography with portfolio allocation information
    */
-  updateBiographyWithPortfolio(biography: string, portfolioExplanation: string): string {
+  updateBiographyWithPortfolio(
+    biography: string,
+    portfolioExplanation: string,
+  ): string {
     // Ajouter une section dédiée à la répartition du portefeuille à la fin de la biographie
     // Utiliser une séparation claire avec des "---" pour être sûr que la section est bien visible
     const portfolioSection = `\n\n---\n\n# PORTFOLIO ALLOCATION STRATEGY\n\n${portfolioExplanation}\n\n---`;
-    
-    this.logger.log(`Adding portfolio section with length ${portfolioSection.length} to biography with length ${biography.length}`);
-    
+
+    this.logger.log(
+      `Adding portfolio section with length ${portfolioSection.length} to biography with length ${biography.length}`,
+    );
+
     return biography + portfolioSection;
   }
 
@@ -242,18 +255,25 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
    * @returns Array of selected cryptocurrency tickers
    */
   async selectCryptosForAgent(
-    biography: string, 
-    curveSide?: string, 
-    riskProfile?: number
+    biography: string,
+    curveSide?: string,
+    riskProfile?: number,
   ): Promise<string[]> {
     try {
       const fullCryptoList = await this.getCryptoCurrencyList();
-      
-      this.logger.log(`Agent parameters - curveSide: ${curveSide}, riskProfile: ${riskProfile}`);
-      
+
+      this.logger.log(
+        `Agent parameters - curveSide: ${curveSide}, riskProfile: ${riskProfile}`,
+      );
+
       // Construire le prompt avec la liste complète
-      const prompt = this.buildClaudePrompt(biography, fullCryptoList, curveSide, riskProfile);
-      
+      const prompt = this.buildClaudePrompt(
+        biography,
+        fullCryptoList,
+        curveSide,
+        riskProfile,
+      );
+
       const response = await axios.post(
         this.claudeApiUrl,
         {
@@ -272,7 +292,7 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
             'X-API-Key': this.claudeApiKey,
             'anthropic-version': '2023-06-01',
           },
-        }
+        },
       );
 
       // Parse la réponse
@@ -284,13 +304,13 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
         .trim()
         .split(',')
         .map((c) => c.trim());
-      
+
       this.logger.log(`Selected cryptocurrencies: ${cryptos.join(', ')}`);
-      
+
       return cryptos;
     } catch (error) {
       this.logger.error(`Error selecting cryptocurrencies: ${error.message}`);
-      
+
       // Retourner des valeurs par défaut adaptées au profil de risque
       if (riskProfile && riskProfile > 70) {
         return ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BOME'];
@@ -302,7 +322,9 @@ Your response should be 3-5 sentences, concise but informative, focusing specifi
     }
   }
 
-  private extractRiskProfileFromObjectives(objectives: string[]): number | undefined {
+  private extractRiskProfileFromObjectives(
+    objectives: string[],
+  ): number | undefined {
     for (const objective of objectives) {
       const match = objective.match(/Risk profile: (\d+)\/100/);
       if (match && match[1]) {

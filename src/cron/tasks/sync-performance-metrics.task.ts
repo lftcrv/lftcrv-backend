@@ -72,18 +72,48 @@ export class SyncPerformanceMetricsTask {
             where: { elizaAgentId: agent.id },
           });
 
-          // Get 24h PnL from the latest performance snapshot
-          const snapshot = await this.prisma.agentPerformanceSnapshot.findFirst(
-            {
-              where: { agentId: agent.id },
-              orderBy: { timestamp: 'desc' },
-            },
-          );
+          // Calculate 24h PnL properly instead of relying on snapshots
+          let pnl24h = 0;
+          try {
+            const twentyFourHoursAgo = new Date();
+            twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+            // Get the closest balance record to 24 hours ago (could be before or after)
+            const balance24hAgo = await this.prisma.paradexAccountBalance.findFirst({
+              where: { 
+                agentId: agent.id,
+                createdAt: { lte: twentyFourHoursAgo }
+              },
+              orderBy: { createdAt: 'desc' }
+            });
+
+            if (balance24hAgo) {
+              // Get current portfolio balance (calculated)
+              const currentPortfolio = await this.kpiService.getAgentPortfolio(
+                agent.runtimeAgentId || agent.id,
+              );
+              const currentBalance = currentPortfolio.calculatedBalanceUSD || currentPortfolio.balanceInUSD || 0;
+
+              // Get 24h ago balance (use stored value for historical comparison)
+              const balance24hAgoValue = balance24hAgo.balanceInUSD;
+
+              pnl24h = currentBalance - balance24hAgoValue;
+              this.logger.debug(
+                `Calculated 24h PnL for agent ${agent.id}: ${pnl24h} (${balance24hAgoValue} -> ${currentBalance})`
+              );
+            } else {
+              this.logger.debug(`No balance data from 24h ago for agent ${agent.id}`);
+            }
+          } catch (error) {
+            this.logger.warn(
+              `Could not calculate 24h PnL for agent ${agent.id}: ${error.message}`
+            );
+          }
 
           // Prepare data to update
           const updateData = {
             pnlCycle: pnlData.pnl || 0,
-            pnl24h: snapshot?.pnl24h || 0,
+            pnl24h: pnl24h,
             tradeCount: tradeCount,
             tvl: 0, // Keep TVL at 0 per requirements
             balanceInUSD: balanceInUSD, // Use the new field for balance
