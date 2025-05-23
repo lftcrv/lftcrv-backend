@@ -334,10 +334,46 @@ export class KPIService implements IAccountBalance {
   private async findAgentByRuntimeId(
     runtimeAgentId: string,
   ): Promise<ElizaAgent | null> {
-    return this.prisma.elizaAgent.findFirst({
+    // First try exact match
+    let agent = await this.prisma.elizaAgent.findFirst({
       where: {
         runtimeAgentId,
       },
     });
+
+    // If no exact match found, try partial matching
+    if (!agent && runtimeAgentId.length >= 6) {
+      this.logger.log(
+        `No exact match for runtimeAgentId ${runtimeAgentId}, trying partial match...`,
+      );
+
+      // Try matching as prefix (agent sends truncated ID)
+      agent = await this.prisma.elizaAgent.findFirst({
+        where: {
+          runtimeAgentId: {
+            startsWith: runtimeAgentId,
+          },
+        },
+      });
+
+      // If still no match, try matching as suffix or contains
+      if (!agent) {
+        agent = await this.prisma.elizaAgent.findFirst({
+          where: {
+            runtimeAgentId: {
+              contains: runtimeAgentId,
+            },
+          },
+        });
+      }
+
+      if (agent) {
+        this.logger.log(
+          `Found agent via partial match: ${runtimeAgentId} -> ${agent.runtimeAgentId}`,
+        );
+      }
+    }
+
+    return agent;
   }
 }
