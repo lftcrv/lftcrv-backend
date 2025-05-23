@@ -185,20 +185,30 @@ export class PortfolioCalculationService {
 
   /**
    * Get all account balances with calculations, ordered by calculated total
+   * Only returns the latest balance record per agent
    */
   async getAllAccountBalancesWithCalculations() {
     return await this.prisma.$queryRaw`
+      WITH latest_balances AS (
+        SELECT DISTINCT ON (pab."agentId") 
+          pab.id,
+          pab."agentId",
+          pab."balanceInUSD" as stored_balance_usd,
+          pab."createdAt"
+        FROM paradex_account_balances pab
+        ORDER BY pab."agentId", pab."createdAt" DESC
+      )
       SELECT 
-        pab.id,
-        pab."agentId",
-        pab."balanceInUSD" as stored_balance_usd,
-        pab."createdAt",
+        lb.id,
+        lb."agentId",
+        lb.stored_balance_usd,
+        lb."createdAt",
         ea.name as agent_name,
         ea."runtimeAgentId",
         COALESCE(token_totals.calculated_total_usd, 0) as calculated_balance_usd,
         token_totals.token_count
-      FROM paradex_account_balances pab
-      LEFT JOIN eliza_agents ea ON pab."agentId" = ea.id
+      FROM latest_balances lb
+      LEFT JOIN eliza_agents ea ON lb."agentId" = ea.id
       LEFT JOIN (
         SELECT 
           ptb.account_balance_id,
@@ -212,7 +222,7 @@ export class PortfolioCalculationService {
         FROM portfolio_token_balances ptb
         LEFT JOIN token_master tm ON ptb.token_symbol = tm.canonical_symbol
         GROUP BY ptb.account_balance_id
-      ) token_totals ON pab.id = token_totals.account_balance_id
+      ) token_totals ON lb.id = token_totals.account_balance_id
       ORDER BY calculated_balance_usd DESC
     `;
   }
