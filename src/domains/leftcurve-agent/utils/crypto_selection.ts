@@ -106,7 +106,7 @@ When the description imposes low- or high-risk assets, adjust the remaining sele
 
 You MUST select EXACTLY 5 cryptocurrencies from the provided list, no more, no less.
 
-IMPORTANT: Your response must ONLY contain the cryptocurrency tickers separated by commas, with no explanations or additional text. For example: "DOGE,SHIB,PEPE,WIF,BOME"
+IMPORTANT: Your response must ONLY contain the cryptocurrency tickers separated by commas, with no explanations or additional text.
 `;
   }
 
